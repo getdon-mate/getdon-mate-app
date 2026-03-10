@@ -21,6 +21,12 @@ import {
 } from "../model/mock-data"
 import type { DuesRecord, GroupAccount, Member, Transaction } from "../model/types"
 import { getCurrentMonthKey } from "../../../shared/lib/date"
+import {
+  getPaymentSummary,
+  getRecentTransactions,
+  getTransactionTotals,
+  groupTransactionsByDate,
+} from "../model/selectors"
 
 type DetailTab = "dashboard" | "dues" | "transactions" | "members" | "settings"
 
@@ -115,13 +121,8 @@ function DashboardTab({
   const [showBalance, setShowBalance] = useState(true)
 
   const currentMonth = getCurrentMonthKey()
-  const currentDues = account.duesRecords.filter((record) => record.month === currentMonth)
-  const paid = currentDues.filter((record) => record.status === "paid").length
-  const exempt = currentDues.filter((record) => record.status === "exempt").length
-  const payableMembers = Math.max(account.members.length - exempt, 1)
-  const progress = Math.round((paid / payableMembers) * 100)
-  const unpaidMembers = currentDues.filter((record) => record.status === "unpaid")
-  const recentTransactions = account.transactions.slice(0, 4)
+  const { paid, payableMembers, progress, unpaidMembers } = getPaymentSummary(account, currentMonth)
+  const recentTransactions = getRecentTransactions(account)
 
   return (
     <View style={styles.stack}>
@@ -192,12 +193,7 @@ function DuesTab({
   const { toggleDues } = useApp()
 
   const monthIndex = availableMonths.indexOf(selectedMonth)
-  const currentDues = account.duesRecords.filter((record) => record.month === selectedMonth)
-  const paid = currentDues.filter((record) => record.status === "paid").length
-  const unpaid = currentDues.filter((record) => record.status === "unpaid").length
-  const exempt = currentDues.filter((record) => record.status === "exempt").length
-  const payableMembers = Math.max(account.members.length - exempt, 1)
-  const progress = Math.round((paid / payableMembers) * 100)
+  const { dues: currentDues, paid, unpaid, exempt, progress } = getPaymentSummary(account, selectedMonth)
 
   return (
     <View style={styles.stack}>
@@ -268,14 +264,8 @@ function TransactionsTab({ account }: { account: GroupAccount }) {
       ? account.transactions
       : account.transactions.filter((tx) => tx.type === filter)
 
-  const income = account.transactions.filter((tx) => tx.type === "income").reduce((sum, tx) => sum + tx.amount, 0)
-  const expense = account.transactions.filter((tx) => tx.type === "expense").reduce((sum, tx) => sum + tx.amount, 0)
-
-  const grouped = filtered.reduce<Record<string, Transaction[]>>((acc, tx) => {
-    if (!acc[tx.date]) acc[tx.date] = []
-    acc[tx.date].push(tx)
-    return acc
-  }, {})
+  const { income, expense } = getTransactionTotals(account)
+  const grouped = groupTransactionsByDate(filtered)
 
   const dates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
 

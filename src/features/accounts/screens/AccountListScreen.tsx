@@ -11,6 +11,7 @@ import {
 import { useApp } from "../../../app/providers/AppProvider"
 import { getCurrentMonthKey } from "../../../shared/lib/date"
 import { formatKRW } from "../model/mock-data"
+import { getPaymentSummary } from "../model/selectors"
 
 export function AccountListScreen() {
   const { currentUser, accounts, selectAccount, createAccount, logout, withdraw } = useApp()
@@ -98,8 +99,7 @@ export function AccountListScreen() {
       <Text style={styles.sectionTitle}>내 모임통장 ({accounts.length})</Text>
 
       {accounts.map((account) => {
-        const currentDues = account.duesRecords.filter((record) => record.month === currentMonth)
-        const paidCount = currentDues.filter((record) => record.status === "paid").length
+        const { paid } = getPaymentSummary(account, currentMonth)
 
         return (
           <Pressable key={account.id} style={styles.accountCard} onPress={() => selectAccount(account.id)}>
@@ -109,7 +109,7 @@ export function AccountListScreen() {
             </View>
             <Text style={styles.accountBalance}>{formatKRW(account.balance)}</Text>
             <Text style={styles.accountMeta}>
-              {account.bankName} · {paidCount}/{account.members.length} 완납
+              {account.bankName} · {paid}/{account.members.length} 완납
             </Text>
           </Pressable>
         )
