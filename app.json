@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "getdon-mate-app",
+    "slug": "getdon-mate-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {},
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
