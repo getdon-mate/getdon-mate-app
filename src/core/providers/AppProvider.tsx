@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
+import { createAccountsBackendV1Adapter } from "@features/accounts/api"
 import {
   defaultAccounts,
   defaultUsers,
@@ -13,29 +14,37 @@ import type {
 
 export type AppView = "login" | "account-list" | "account-detail"
 
+interface CreateAccountInput {
+  groupName: string
+  bankName: string
+  accountNumber: string
+  monthlyDuesAmount: number
+  dueDay: number
+}
+
+interface CreateOneTimeDuesInput {
+  title: string
+  amount: number
+  dueDate: string
+}
+
 interface AppContextType {
   currentUser: AppUser | null
   currentView: AppView
   accounts: GroupAccount[]
   selectedAccountId: string | null
-  login: (email: string, password: string) => boolean
-  signup: (name: string, email: string, password: string) => boolean
+  login: (email: string, password: string) => Promise<boolean>
+  signup: (name: string, email: string, password: string) => Promise<boolean>
   logout: () => void
   withdraw: () => void
   setCurrentView: (view: AppView) => void
   selectAccount: (id: string) => void
-  createAccount: (data: {
-    groupName: string
-    bankName: string
-    accountNumber: string
-    monthlyDuesAmount: number
-    dueDay: number
-  }) => void
-  deleteAccount: (id: string) => void
-  toggleDues: (memberId: string, month: string) => void
-  updateAutoTransfer: (accountId: string, autoTransfer: AutoTransfer) => void
-  createOneTimeDues: (accountId: string, data: { title: string; amount: number; dueDate: string }) => void
-  toggleOneTimeDuesRecord: (accountId: string, duesId: string, memberId: string) => void
+  createAccount: (data: CreateAccountInput) => Promise<void>
+  deleteAccount: (id: string) => Promise<void>
+  toggleDues: (memberId: string, month: string) => Promise<void>
+  updateAutoTransfer: (accountId: string, autoTransfer: AutoTransfer) => Promise<void>
+  createOneTimeDues: (accountId: string, data: CreateOneTimeDuesInput) => Promise<void>
+  toggleOneTimeDuesRecord: (accountId: string, duesId: string, memberId: string) => Promise<void>
   resetDemoData: () => void
 }
 
@@ -49,24 +58,55 @@ export function useApp() {
   return ctx
 }
 
-export function AppProvider({ children }: { children: ReactNode }) {
-  function cloneUsers(source: AppUser[]): AppUser[] {
-    return source.map((user) => ({ ...user }))
-  }
+function cloneUsers(source: AppUser[]): AppUser[] {
+  return source.map((user) => ({ ...user }))
+}
 
-  function cloneAccounts(source: GroupAccount[]): GroupAccount[] {
-    return source.map((account) => ({
-      ...account,
-      members: account.members.map((member) => ({ ...member })),
-      duesRecords: account.duesRecords.map((record) => ({ ...record })),
-      transactions: account.transactions.map((tx) => ({ ...tx })),
-      autoTransfer: { ...account.autoTransfer },
-      oneTimeDues: account.oneTimeDues.map((dues) => ({
-        ...dues,
-        records: dues.records.map((record) => ({ ...record })),
-      })),
-    }))
+function cloneAccounts(source: GroupAccount[]): GroupAccount[] {
+  return source.map((account) => ({
+    ...account,
+    members: account.members.map((member) => ({ ...member })),
+    duesRecords: account.duesRecords.map((record) => ({ ...record })),
+    transactions: account.transactions.map((tx) => ({ ...tx })),
+    autoTransfer: { ...account.autoTransfer },
+    oneTimeDues: account.oneTimeDues.map((dues) => ({
+      ...dues,
+      records: dues.records.map((record) => ({ ...record })),
+    })),
+  }))
+}
+
+function createLocalAccount(data: CreateAccountInput, currentUser: AppUser): GroupAccount {
+  const timestamp = Date.now()
+
+  return {
+    id: `acc${timestamp}`,
+    groupName: data.groupName,
+    bankName: data.bankName,
+    accountNumber: data.accountNumber,
+    balance: 0,
+    monthlyDuesAmount: data.monthlyDuesAmount,
+    dueDay: data.dueDay,
+    members: [
+      {
+        id: `mem${timestamp}`,
+        name: currentUser.name,
+        role: "총무",
+        initials: currentUser.name.slice(-2),
+        phone: "010-0000-0000",
+        joinDate: new Date().toISOString().split("T")[0],
+        color: "#3b82f6",
+      },
+    ],
+    duesRecords: [],
+    transactions: [],
+    autoTransfer: { enabled: false, dayOfMonth: data.dueDay, amount: data.monthlyDuesAmount, fromAccount: "" },
+    oneTimeDues: [],
   }
+}
+
+export function AppProvider({ children }: { children: ReactNode }) {
+  const backendAdapter = useMemo(() => createAccountsBackendV1Adapter(), [])
 
   const [users, setUsers] = useState<AppUser[]>(() => cloneUsers(defaultUsers))
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null)
@@ -74,19 +114,57 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [accounts, setAccounts] = useState<GroupAccount[]>(() => cloneAccounts(defaultAccounts))
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null)
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadBootstrap() {
+      const bootstrap = await backendAdapter.loadBootstrap()
+      if (!bootstrap || cancelled) return
+
+      setUsers(cloneUsers(bootstrap.users))
+      setAccounts(cloneAccounts(bootstrap.accounts))
+    }
+
+    void loadBootstrap()
+
+    return () => {
+      cancelled = true
+    }
+  }, [backendAdapter])
+
   const login = useCallback(
-    (email: string, password: string) => {
+    async (email: string, password: string) => {
+      const remoteAuth = await backendAdapter.login({ email, password })
+      if (remoteAuth?.user) {
+        setCurrentUser(remoteAuth.user)
+        if (remoteAuth.accounts) {
+          setAccounts(cloneAccounts(remoteAuth.accounts))
+        }
+        setCurrentView("account-list")
+        return true
+      }
+
       const user = users.find((u) => u.email === email && u.password === password)
       if (!user) return false
       setCurrentUser(user)
       setCurrentView("account-list")
       return true
     },
-    [users]
+    [backendAdapter, users]
   )
 
   const signup = useCallback(
-    (name: string, email: string, password: string) => {
+    async (name: string, email: string, password: string) => {
+      const remoteAuth = await backendAdapter.signup({ name, email, password })
+      if (remoteAuth?.user) {
+        setCurrentUser(remoteAuth.user)
+        if (remoteAuth.accounts) {
+          setAccounts(cloneAccounts(remoteAuth.accounts))
+        }
+        setCurrentView("account-list")
+        return true
+      }
+
       if (users.some((u) => u.email === email)) return false
       const newUser: AppUser = {
         id: `u${Date.now()}`,
@@ -99,7 +177,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setCurrentView("account-list")
       return true
     },
-    [users]
+    [backendAdapter, users]
   )
 
   const logout = useCallback(() => {
@@ -110,11 +188,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const withdraw = useCallback(() => {
     if (!currentUser) return
-    setUsers((prev) => prev.filter((u) => u.id !== currentUser.id))
+
+    const userId = currentUser.id
+
+    setUsers((prev) => prev.filter((u) => u.id !== userId))
     setCurrentUser(null)
     setSelectedAccountId(null)
     setCurrentView("login")
-  }, [currentUser])
+
+    void backendAdapter.deleteUser(userId)
+  }, [backendAdapter, currentUser])
 
   const selectAccount = useCallback((id: string) => {
     setSelectedAccountId(id)
@@ -122,46 +205,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const createAccount = useCallback(
-    (data: { groupName: string; bankName: string; accountNumber: string; monthlyDuesAmount: number; dueDay: number }) => {
+    async (data: CreateAccountInput) => {
       if (!currentUser) return
-      const account: GroupAccount = {
-        id: `acc${Date.now()}`,
-        groupName: data.groupName,
-        bankName: data.bankName,
-        accountNumber: data.accountNumber,
-        balance: 0,
-        monthlyDuesAmount: data.monthlyDuesAmount,
-        dueDay: data.dueDay,
-        members: [
-          {
-            id: `mem${Date.now()}`,
-            name: currentUser.name,
-            role: "총무",
-            initials: currentUser.name.slice(-2),
-            phone: "010-0000-0000",
-            joinDate: new Date().toISOString().split("T")[0],
-            color: "#3b82f6",
-          },
-        ],
-        duesRecords: [],
-        transactions: [],
-        autoTransfer: { enabled: false, dayOfMonth: data.dueDay, amount: data.monthlyDuesAmount, fromAccount: "" },
-        oneTimeDues: [],
+
+      const remoteAccount = await backendAdapter.createAccount(data)
+      if (remoteAccount) {
+        setAccounts((prev) => [...prev, ...cloneAccounts([remoteAccount])])
+        return
       }
+
+      const account = createLocalAccount(data, currentUser)
       setAccounts((prev) => [...prev, account])
     },
-    [currentUser]
+    [backendAdapter, currentUser]
   )
 
-  const deleteAccount = useCallback((id: string) => {
-    setAccounts((prev) => prev.filter((acc) => acc.id !== id))
-    setSelectedAccountId(null)
-    setCurrentView("account-list")
-  }, [])
+  const deleteAccount = useCallback(
+    async (id: string) => {
+      setAccounts((prev) => prev.filter((acc) => acc.id !== id))
+      setSelectedAccountId(null)
+      setCurrentView("account-list")
+
+      await backendAdapter.deleteAccount(id)
+    },
+    [backendAdapter]
+  )
 
   const toggleDues = useCallback(
-    (memberId: string, month: string) => {
+    async (memberId: string, month: string) => {
       if (!selectedAccountId) return
+
       setAccounts((prev) =>
         prev.map((acc) => {
           if (acc.id !== selectedAccountId) return acc
@@ -189,16 +262,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         })
       )
+
+      await backendAdapter.toggleDues(selectedAccountId, memberId, month)
     },
-    [selectedAccountId]
+    [backendAdapter, selectedAccountId]
   )
 
-  const updateAutoTransfer = useCallback((accountId: string, autoTransfer: AutoTransfer) => {
-    setAccounts((prev) => prev.map((acc) => (acc.id === accountId ? { ...acc, autoTransfer } : acc)))
-  }, [])
+  const updateAutoTransfer = useCallback(
+    async (accountId: string, autoTransfer: AutoTransfer) => {
+      setAccounts((prev) => prev.map((acc) => (acc.id === accountId ? { ...acc, autoTransfer } : acc)))
+      await backendAdapter.updateAutoTransfer(accountId, autoTransfer)
+    },
+    [backendAdapter]
+  )
 
   const createOneTimeDues = useCallback(
-    (accountId: string, data: { title: string; amount: number; dueDate: string }) => {
+    async (accountId: string, data: CreateOneTimeDuesInput) => {
       setAccounts((prev) =>
         prev.map((acc) => {
           if (acc.id !== accountId) return acc
@@ -213,41 +292,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return { ...acc, oneTimeDues: [...acc.oneTimeDues, newDues] }
         })
       )
+
+      await backendAdapter.createOneTimeDues(accountId, data)
     },
-    []
+    [backendAdapter]
   )
 
-  const toggleOneTimeDuesRecord = useCallback((accountId: string, duesId: string, memberId: string) => {
-    setAccounts((prev) =>
-      prev.map((acc) => {
-        if (acc.id !== accountId) return acc
-        return {
-          ...acc,
-          oneTimeDues: acc.oneTimeDues.map((dues) => {
-            if (dues.id !== duesId) return dues
-            return {
-              ...dues,
-              records: dues.records.map((record) => {
-                if (record.memberId !== memberId) return record
-                if (record.status === "unpaid") {
+  const toggleOneTimeDuesRecord = useCallback(
+    async (accountId: string, duesId: string, memberId: string) => {
+      setAccounts((prev) =>
+        prev.map((acc) => {
+          if (acc.id !== accountId) return acc
+          return {
+            ...acc,
+            oneTimeDues: acc.oneTimeDues.map((dues) => {
+              if (dues.id !== duesId) return dues
+              return {
+                ...dues,
+                records: dues.records.map((record) => {
+                  if (record.memberId !== memberId) return record
+                  if (record.status === "unpaid") {
+                    return {
+                      ...record,
+                      status: "paid" as const,
+                      paidDate: new Date().toISOString().split("T")[0],
+                    }
+                  }
                   return {
                     ...record,
-                    status: "paid" as const,
-                    paidDate: new Date().toISOString().split("T")[0],
+                    status: "unpaid" as const,
+                    paidDate: undefined,
                   }
-                }
-                return {
-                  ...record,
-                  status: "unpaid" as const,
-                  paidDate: undefined,
-                }
-              }),
-            }
-          }),
-        }
-      })
-    )
-  }, [])
+                }),
+              }
+            }),
+          }
+        })
+      )
+
+      await backendAdapter.toggleOneTimeDuesRecord(accountId, duesId, memberId)
+    },
+    [backendAdapter]
+  )
 
   const resetDemoData = useCallback(() => {
     setUsers(cloneUsers(defaultUsers))

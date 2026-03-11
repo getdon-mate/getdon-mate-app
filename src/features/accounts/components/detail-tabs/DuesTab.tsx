@@ -83,7 +83,9 @@ export function DuesTab({
                         styles.smallOutlineButton,
                         record.status === "unpaid" ? styles.smallOutlineButtonPrimary : styles.smallOutlineButtonMuted,
                       ]}
-                      onPress={() => toggleDues(record.memberId, selectedMonth)}
+                      onPress={() => {
+                        void toggleDues(record.memberId, selectedMonth)
+                      }}
                     >
                       <Text
                         style={[

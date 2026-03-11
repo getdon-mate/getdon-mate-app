@@ -36,7 +36,7 @@ export function LoginScreen() {
       }
       setSubmitting(true)
       await new Promise((resolve) => setTimeout(resolve, 300))
-      const ok = signup(name.trim(), email.trim(), password)
+      const ok = await signup(name.trim(), email.trim(), password)
       if (!ok) {
         setError("이미 사용 중인 이메일입니다.")
       }
@@ -51,7 +51,7 @@ export function LoginScreen() {
 
     setSubmitting(true)
     await new Promise((resolve) => setTimeout(resolve, 300))
-    const ok = login(email.trim(), password)
+    const ok = await login(email.trim(), password)
     if (!ok) {
       setError("이메일 또는 비밀번호가 올바르지 않습니다.")
     }
