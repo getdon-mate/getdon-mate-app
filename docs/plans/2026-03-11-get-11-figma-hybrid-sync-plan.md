@@ -22,7 +22,7 @@ Run: `sed -n '1,200p' src/features/accounts/components/SectionCard.tsx`
 - border/배경/그림자 값을 Figma 톤에 맞게 조정
 
 **Step 3: 타입 검증**
-Run: `npm run typecheck`
+Run: `pnpm run typecheck`
 
 ### Task 2: Login 화면 정합화
 
@@ -38,7 +38,7 @@ Run: `npm run typecheck`
 - 기존 submitting/입력 검증 동작은 유지
 
 **Step 3: 타입 검증**
-Run: `npm run typecheck`
+Run: `pnpm run typecheck`
 
 ### Task 3: 목록/상세 핵심 영역 정합화
 
@@ -56,7 +56,7 @@ Run: `npm run typecheck`
 - 계좌 정보 Hero 영역 및 거래영역 경계 시각화
 
 **Step 3: 타입 검증**
-Run: `npm run typecheck`
+Run: `pnpm run typecheck`
 
 ### Task 4: 멤버/설정 탭 정합화
 
@@ -70,8 +70,8 @@ Run: `npm run typecheck`
 
 **Step 3: 검증**
 Run:
-- `npm run typecheck`
-- `npm run export:web`
+- `pnpm run typecheck`
+- `pnpm run export:web`
 
 ### Task 5: 문서/Linear/커밋
 

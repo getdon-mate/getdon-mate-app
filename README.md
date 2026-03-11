@@ -6,7 +6,8 @@ Getdon 모임통장 프론트엔드 앱(Expo + React Native) 저장소입니다.
 
 - Runtime: Expo React Native (single app)
 - Language: TypeScript
-- Package manager: npm
+- Package manager: pnpm
+- Lockfile: `pnpm-lock.yaml`
 - Node version: `.nvmrc` 기준
 - Backend: 별도 저장소(API 연동 전까지 mock 데이터 기반 동작)
 
@@ -14,27 +15,28 @@ Getdon 모임통장 프론트엔드 앱(Expo + React Native) 저장소입니다.
 
 ```bash
 nvm use
-npm install
+corepack enable
+pnpm install
 ```
 
-`nvm`이 없다면 `.nvmrc`의 Node 버전을 직접 맞춘 뒤 `npm install`을 실행하세요.
+`nvm`이 없다면 `.nvmrc`의 Node 버전을 직접 맞춘 뒤 `pnpm install`을 실행하세요.
 
 ## 3. Run Commands
 
 ```bash
 # 개발 서버
-npm run start
+pnpm run start
 
 # 플랫폼별 실행
-npm run ios
-npm run android
-npm run web
+pnpm run ios
+pnpm run android
+pnpm run web
 
 # 정적 웹 산출물 생성
-npm run export:web
+pnpm run export:web
 
 # 타입 검증
-npm run typecheck
+pnpm run typecheck
 ```
 
 ## 4. Demo Flow (Mock Data)
@@ -57,8 +59,8 @@ npm run typecheck
 PR 전 최소 검증:
 
 ```bash
-npm run typecheck
-npm run export:web
+pnpm run typecheck
+pnpm run export:web
 ```
 
 `export:web` 성공 시 `dist/` 디렉터리가 생성됩니다.
@@ -68,7 +70,7 @@ npm run export:web
 백엔드/디자인 협업을 위한 웹 프리뷰 배포 경로입니다.
 
 - Framework Preset: `Other`
-- Build Command: `npm run export:web`
+- Build Command: `pnpm run export:web`
 - Output Directory: `dist`
 
 주의:
