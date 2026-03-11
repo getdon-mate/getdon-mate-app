@@ -19,7 +19,7 @@ import {
   getMemberById,
   getMemberPaymentRate,
 } from "../model/mock-data"
-import type { DuesRecord, GroupAccount, Member, Transaction } from "../model/types"
+import type { GroupAccount } from "../model/types"
 import { getCurrentMonthKey } from "../../../shared/lib/date"
 import {
   getPaymentSummary,
@@ -27,6 +27,9 @@ import {
   getTransactionTotals,
   groupTransactionsByDate,
 } from "../model/selectors"
+import { SectionCard } from "../components/SectionCard"
+import { MemberRow } from "../components/MemberRow"
+import { TransactionRow } from "../components/TransactionRow"
 
 type DetailTab = "dashboard" | "dues" | "transactions" | "members" | "settings"
 
@@ -37,10 +40,6 @@ const tabs: { key: DetailTab; label: string }[] = [
   { key: "members", label: "멤버" },
   { key: "settings", label: "관리" },
 ]
-
-function SectionCard({ children }: { children: React.ReactNode }) {
-  return <View style={styles.card}>{children}</View>
-}
 
 export function AccountDetailScreen() {
   const { accounts, selectedAccountId, setCurrentView } = useApp()
@@ -468,51 +467,6 @@ function SettingsTab({ account }: { account: GroupAccount }) {
   )
 }
 
-function MemberRow({ member, rate, duesRecords }: { member: Member; rate: number; duesRecords: DuesRecord[] }) {
-  const history = duesRecords
-    .filter((record) => record.memberId === member.id)
-    .slice(0, 3)
-
-  return (
-    <View style={styles.duesCard}>
-      <View style={styles.rowBetween}>
-        <View style={styles.memberIdentity}>
-          <Text style={[styles.avatar, { backgroundColor: member.color }]}>{member.initials}</Text>
-          <View>
-            <Text style={styles.memberName}>{member.name}</Text>
-            <Text style={styles.memberMeta}>{member.role} · 납부율 {rate}%</Text>
-          </View>
-        </View>
-      </View>
-      {history.map((record) => (
-        <Text key={`${member.id}-${record.month}`} style={styles.memberMeta}>
-          {formatMonth(record.month)} · {record.status === "paid" ? "완납" : record.status === "unpaid" ? "미납" : "면제"}
-        </Text>
-      ))}
-    </View>
-  )
-}
-
-function TransactionRow({ account, tx }: { account: GroupAccount; tx: Transaction }) {
-  const member = tx.memberId ? getMemberById(account.members, tx.memberId) : undefined
-
-  return (
-    <View style={styles.rowBetween}>
-      <View style={styles.stackTiny}>
-        <Text style={styles.memberName}>
-          {tx.description}
-          {member ? ` - ${member.name}` : ""}
-        </Text>
-        <Text style={styles.memberMeta}>{tx.category} · {formatDate(tx.date)}</Text>
-      </View>
-      <Text style={[styles.transactionAmount, tx.type === "income" ? styles.incomeText : styles.expenseText]}>
-        {tx.type === "income" ? "+" : "-"}
-        {formatKRW(tx.amount)}
-      </Text>
-    </View>
-  )
-}
-
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -597,14 +551,6 @@ const styles = StyleSheet.create({
   stackTiny: {
     gap: 2,
     flexShrink: 1,
-  },
-  card: {
-    backgroundColor: "#ffffff",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    padding: 14,
-    gap: 8,
   },
   sectionTitle: {
     fontSize: 15,
@@ -713,16 +659,6 @@ const styles = StyleSheet.create({
   },
   filterChipTextActive: {
     color: "#ffffff",
-  },
-  transactionAmount: {
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  incomeText: {
-    color: "#16a34a",
-  },
-  expenseText: {
-    color: "#0f172a",
   },
   input: {
     borderWidth: 1,
