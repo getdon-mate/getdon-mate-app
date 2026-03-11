@@ -1,7 +1,7 @@
 import { StatusBar } from "expo-status-bar"
 import { SafeAreaProvider } from "react-native-safe-area-context"
-import { AppProvider } from "./src/app/providers/AppProvider"
-import { AppRouter } from "./src/app/AppRouter"
+import { AppProvider } from "./src/core/providers/AppProvider"
+import { AppRouter } from "./src/core/AppRouter"
 
 export default function App() {
   return (

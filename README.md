@@ -12,6 +12,7 @@
 ## Commands
 
 ```bash
+nvm use
 npm install
 npm run start
 npm run ios
@@ -43,3 +44,4 @@ Vercel 설정:
 주의:
 - 이 경로는 웹 프리뷰 공유용입니다.
 - 실제 모바일 앱 배포는 Vercel이 아니라 Expo/EAS 경로로 처리해야 합니다.
+- 로컬 실행 전 `.nvmrc` 기준 Node 버전을 맞추는 것을 권장합니다.

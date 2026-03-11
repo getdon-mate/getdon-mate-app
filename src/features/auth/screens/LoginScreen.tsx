@@ -8,7 +8,7 @@ import {
   TextInput,
   View,
 } from "react-native"
-import { useApp } from "../../../app/providers/AppProvider"
+import { useApp } from "../../../core/providers/AppProvider"
 
 export function LoginScreen() {
   const { login, signup } = useApp()

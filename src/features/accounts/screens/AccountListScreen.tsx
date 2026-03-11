@@ -8,7 +8,7 @@ import {
   TextInput,
   View,
 } from "react-native"
-import { useApp } from "../../../app/providers/AppProvider"
+import { useApp } from "../../../core/providers/AppProvider"
 import { getCurrentMonthKey } from "../../../shared/lib/date"
 import { formatKRW } from "../model/mock-data"
 import { getPaymentSummary } from "../model/selectors"
