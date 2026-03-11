@@ -40,7 +40,20 @@ export function DuesTab({
           </Pressable>
         </View>
 
-        <Text style={styles.metricText}>완납 {paid}명 · 미납 {unpaid}명 · 면제 {exempt}명</Text>
+        <View style={styles.summaryPillRow}>
+          <View style={styles.summaryPill}>
+            <Text style={styles.summaryPillLabel}>완납</Text>
+            <Text style={styles.summaryPillValue}>{paid}</Text>
+          </View>
+          <View style={styles.summaryPill}>
+            <Text style={styles.summaryPillLabel}>미납</Text>
+            <Text style={styles.summaryPillValue}>{unpaid}</Text>
+          </View>
+          <View style={styles.summaryPill}>
+            <Text style={styles.summaryPillLabel}>면제</Text>
+            <Text style={styles.summaryPillValue}>{exempt}</Text>
+          </View>
+        </View>
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: `${progress}%` }]} />
         </View>
@@ -65,10 +78,20 @@ export function DuesTab({
                 </View>
                 {record.status !== "exempt" && (
                   <Pressable
-                    style={styles.smallOutlineButton}
+                    style={[
+                      styles.smallOutlineButton,
+                      record.status === "unpaid" ? styles.smallOutlineButtonPrimary : styles.smallOutlineButtonMuted,
+                    ]}
                     onPress={() => toggleDues(record.memberId, selectedMonth)}
                   >
-                    <Text style={styles.smallOutlineButtonText}>{record.status === "unpaid" ? "완납 처리" : "취소"}</Text>
+                    <Text
+                      style={[
+                        styles.smallOutlineButtonText,
+                        record.status === "unpaid" ? styles.smallOutlineButtonTextPrimary : styles.smallOutlineButtonTextMuted,
+                      ]}
+                    >
+                      {record.status === "unpaid" ? "완납 처리" : "취소"}
+                    </Text>
                   </Pressable>
                 )}
               </View>
@@ -102,6 +125,31 @@ const styles = StyleSheet.create({
   metricText: {
     color: "#111827",
     fontSize: 14,
+    fontWeight: "700",
+  },
+  summaryPillRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  summaryPill: {
+    flex: 1,
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    gap: 2,
+    alignItems: "center",
+  },
+  summaryPillLabel: {
+    color: "#6b7280",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  summaryPillValue: {
+    color: "#111827",
+    fontSize: 16,
     fontWeight: "700",
   },
   progressTrack: {
@@ -164,15 +212,26 @@ const styles = StyleSheet.create({
   },
   smallOutlineButton: {
     borderWidth: 1,
-    borderColor: "#d7dce5",
     borderRadius: 999,
     paddingHorizontal: 11,
     paddingVertical: 7,
+  },
+  smallOutlineButtonPrimary: {
+    borderColor: "#bfdbfe",
+    backgroundColor: "#eff6ff",
+  },
+  smallOutlineButtonMuted: {
+    borderColor: "#d7dce5",
     backgroundColor: "#f9fafb",
   },
   smallOutlineButtonText: {
-    color: "#374151",
     fontSize: 12,
     fontWeight: "600",
+  },
+  smallOutlineButtonTextPrimary: {
+    color: "#2563eb",
+  },
+  smallOutlineButtonTextMuted: {
+    color: "#4b5563",
   },
 })

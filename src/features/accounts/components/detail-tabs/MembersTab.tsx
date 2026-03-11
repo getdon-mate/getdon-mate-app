@@ -11,10 +11,16 @@ export function MembersTab({ account }: { account: GroupAccount }) {
 
   return (
     <View style={styles.stack}>
-      <SectionCard>
-        <Text style={styles.metricText}>총 멤버 {account.members.length}명</Text>
-        <Text style={styles.metricText}>평균 납부율 {Math.round(avgRate)}%</Text>
-      </SectionCard>
+      <View style={styles.summaryRow}>
+        <SectionCard>
+          <Text style={styles.summaryLabel}>총 멤버</Text>
+          <Text style={styles.metricText}>{account.members.length}명</Text>
+        </SectionCard>
+        <SectionCard>
+          <Text style={styles.summaryLabel}>평균 납부율</Text>
+          <Text style={styles.metricText}>{Math.round(avgRate)}%</Text>
+        </SectionCard>
+      </View>
 
       <SectionCard>
         <Text style={styles.sectionTitle}>멤버 목록</Text>
@@ -33,13 +39,22 @@ const styles = StyleSheet.create({
   stack: {
     gap: 14,
   },
+  summaryRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
   stackCompact: {
     gap: 10,
     marginTop: 10,
   },
+  summaryLabel: {
+    color: "#6b7280",
+    fontSize: 12,
+    fontWeight: "600",
+  },
   metricText: {
     color: "#111827",
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "700",
   },
   sectionTitle: {

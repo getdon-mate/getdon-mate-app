@@ -40,7 +40,17 @@ export function DashboardTab({
             <Text style={styles.linkText}>자세히</Text>
           </Pressable>
         </View>
-        <Text style={styles.metricText}>{paid}/{payableMembers}명 완납 ({progress}%)</Text>
+        <View style={styles.summaryPillRow}>
+          <View style={styles.summaryPill}>
+            <Text style={styles.summaryPillLabel}>완납</Text>
+            <Text style={styles.summaryPillValue}>{paid}명</Text>
+          </View>
+          <View style={styles.summaryPill}>
+            <Text style={styles.summaryPillLabel}>진행률</Text>
+            <Text style={styles.summaryPillValue}>{progress}%</Text>
+          </View>
+        </View>
+        <Text style={styles.metricText}>{paid}/{payableMembers}명 완납 상태입니다.</Text>
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: `${progress}%` }]} />
         </View>
@@ -52,9 +62,11 @@ export function DashboardTab({
               const member = getMemberById(account.members, record.memberId)
               if (!member) return null
               return (
-                <View key={record.memberId} style={styles.rowBetween}>
+                <View key={record.memberId} style={styles.unpaidRow}>
                   <Text style={styles.memberName}>{member.name}</Text>
-                  <Text style={styles.unpaidText}>{formatKRW(record.amount)} 미납</Text>
+                  <View style={styles.unpaidBadge}>
+                    <Text style={styles.unpaidText}>{formatKRW(record.amount)} 미납</Text>
+                  </View>
                 </View>
               )
             })}
@@ -136,6 +148,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
   },
+  summaryPillRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  summaryPill: {
+    flex: 1,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    gap: 4,
+  },
+  summaryPillLabel: {
+    color: "#6b7280",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  summaryPillValue: {
+    color: "#111827",
+    fontSize: 16,
+    fontWeight: "700",
+  },
   progressTrack: {
     height: 10,
     borderRadius: 999,
@@ -148,10 +184,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#3b82f6",
     borderRadius: 999,
   },
+  unpaidRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
   memberName: {
     color: "#111827",
     fontSize: 14,
     fontWeight: "700",
+  },
+  unpaidBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "#fff1f2",
+    borderWidth: 1,
+    borderColor: "#fecdd3",
   },
   unpaidText: {
     color: "#dc2626",

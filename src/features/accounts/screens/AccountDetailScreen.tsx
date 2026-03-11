@@ -61,7 +61,10 @@ export function AccountDetailScreen() {
         >
           <Text style={styles.backButtonText}>←</Text>
         </Pressable>
-        <Text style={styles.topHeaderTitle}>{account.groupName}</Text>
+        <View style={styles.topHeaderTextWrap}>
+          <Text style={styles.topHeaderTitle}>{account.groupName}</Text>
+          <Text style={styles.topHeaderMeta}>{account.bankName} · {account.members.length}명</Text>
+        </View>
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
@@ -148,10 +151,17 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   topHeaderTitle: {
-    flex: 1,
     color: "#111827",
     fontSize: 18,
     fontWeight: "700",
+  },
+  topHeaderTextWrap: {
+    flex: 1,
+    gap: 2,
+  },
+  topHeaderMeta: {
+    color: "#6b7280",
+    fontSize: 12,
   },
   content: {
     flex: 1,

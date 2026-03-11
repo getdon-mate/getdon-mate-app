@@ -20,10 +20,16 @@ export function TransactionsTab({ account }: { account: GroupAccount }) {
 
   return (
     <View style={styles.stack}>
-      <SectionCard>
-        <Text style={styles.metricText}>총 입금 +{formatKRW(income)}</Text>
-        <Text style={styles.metricText}>총 출금 -{formatKRW(expense)}</Text>
-      </SectionCard>
+      <View style={styles.summaryRow}>
+        <SectionCard>
+          <Text style={styles.summaryLabel}>총 입금</Text>
+          <Text style={[styles.metricText, styles.incomeText]}>+{formatKRW(income)}</Text>
+        </SectionCard>
+        <SectionCard>
+          <Text style={styles.summaryLabel}>총 출금</Text>
+          <Text style={[styles.metricText, styles.expenseText]}>-{formatKRW(expense)}</Text>
+        </SectionCard>
+      </View>
 
       <View style={styles.filterRow}>
         {(["all", "income", "expense"] as const).map((item) => {
@@ -56,14 +62,28 @@ const styles = StyleSheet.create({
   stack: {
     gap: 14,
   },
+  summaryRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
   stackCompact: {
     gap: 10,
     marginTop: 10,
   },
+  summaryLabel: {
+    color: "#6b7280",
+    fontSize: 12,
+    fontWeight: "600",
+  },
   metricText: {
-    color: "#111827",
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "700",
+  },
+  incomeText: {
+    color: "#16a34a",
+  },
+  expenseText: {
+    color: "#111827",
   },
   filterRow: {
     flexDirection: "row",
