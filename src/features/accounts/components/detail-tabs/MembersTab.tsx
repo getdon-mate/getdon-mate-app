@@ -45,11 +45,11 @@ export function MembersTab({ account }: { account: GroupAccount }) {
 
 const styles = StyleSheet.create({
   stack: {
-    gap: 14,
+    gap: 12,
   },
   summaryRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: 8,
   },
   stackCompact: {
     gap: 10,
@@ -62,11 +62,11 @@ const styles = StyleSheet.create({
   },
   metricText: {
     color: "#111827",
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "800",
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "700",
     color: "#111827",
   },

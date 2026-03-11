@@ -22,7 +22,13 @@
     }
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx"
+    "App.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "exclude": [
+    "figma-sample-design",
+    "dist",
+    "node_modules"
   ]
 }

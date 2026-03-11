@@ -17,14 +17,24 @@ export function AccountSummaryCard({
   return (
     <Pressable style={styles.accountCard} onPress={onPress}>
       <View style={styles.accountHeaderRow}>
-        <Text style={styles.accountTitle}>{account.groupName}</Text>
-        <Text style={styles.accountMembers}>{account.members.length}명</Text>
+        <View style={styles.identityWrap}>
+          <View style={styles.iconBubble}>
+            <Text style={styles.iconText}>{account.groupName.slice(0, 1)}</Text>
+          </View>
+          <View style={styles.identityTextWrap}>
+            <Text style={styles.accountTitle}>{account.groupName}</Text>
+            <Text style={styles.accountMembers}>참여 멤버 {account.members.length}명</Text>
+          </View>
+        </View>
+        <Text style={styles.accountChevron}>›</Text>
       </View>
-      <Text style={styles.accountBalance}>{formatKRW(account.balance)}</Text>
-      <Text style={styles.accountMeta}>
+      <View style={styles.footerRow}>
+        <Text style={styles.accountMeta}>잔액</Text>
+        <Text style={styles.accountBalance}>{formatKRW(account.balance)}</Text>
+      </View>
+      <Text style={styles.accountSubMeta}>
         {account.bankName} · {paid}/{account.members.length} 완납
       </Text>
-      <Text style={styles.accountChevron}>›</Text>
     </Pressable>
   )
 }
@@ -32,43 +42,79 @@ export function AccountSummaryCard({
 const styles = StyleSheet.create({
   accountCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 18,
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: "#e6e9ef",
+    borderColor: "#edf0f4",
     padding: 18,
-    gap: 8,
+    gap: 12,
     position: "relative",
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    elevation: 2,
   },
   accountHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  identityWrap: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  iconBubble: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#dbeafe",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconText: {
+    color: "#2563eb",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  identityTextWrap: {
+    gap: 2,
+    flex: 1,
   },
   accountTitle: {
     color: "#111827",
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "700",
-    flex: 1,
   },
   accountMembers: {
     color: "#6b7280",
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: "500",
   },
   accountBalance: {
     color: "#111827",
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "800",
   },
   accountMeta: {
+    color: "#6b7280",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  accountSubMeta: {
     color: "#64748b",
     fontSize: 13,
   },
+  footerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+  },
   accountChevron: {
-    position: "absolute",
-    right: 16,
-    top: 18,
     fontSize: 22,
     color: "#c5cad3",
+    marginTop: -2,
   },
 })

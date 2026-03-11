@@ -68,11 +68,11 @@ export function TransactionsTab({ account }: { account: GroupAccount }) {
 
 const styles = StyleSheet.create({
   stack: {
-    gap: 14,
+    gap: 12,
   },
   summaryRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: 8,
   },
   stackCompact: {
     gap: 10,
@@ -81,11 +81,11 @@ const styles = StyleSheet.create({
   summaryLabel: {
     color: "#6b7280",
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "500",
   },
   metricText: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "800",
   },
   incomeText: {
     color: "#16a34a",
@@ -95,14 +95,14 @@ const styles = StyleSheet.create({
   },
   filterRow: {
     flexDirection: "row",
-    gap: 8,
+    gap: 7,
   },
   filterChip: {
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 9,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "#d7dce5",
+    borderColor: "#e5e7eb",
     backgroundColor: "#ffffff",
   },
   filterChipActive: {
@@ -120,5 +120,6 @@ const styles = StyleSheet.create({
   subtleText: {
     color: "#6b7280",
     fontSize: 12,
+    fontWeight: "600",
   },
 })

@@ -21,12 +21,16 @@
 - 화면별 데이터 요구사항은 `GET-22` 기준으로 정리됨
 - 즉, 현재 앱이 어떤 화면/탭/액션을 갖는지는 비교 가능한 상태임
 
-## 현재 blocker
+## 기준 소스 확보 상태
 
-- 저장소와 Linear 이슈에서 실제 Figma 파일 URL, node id, 스크린샷, 디자인 명세를 찾지 못함
-- 따라서 “Figma 대비 UI 갭”을 정량적으로 판단할 기준점이 없음
+- `figma-sample-design/` 폴더가 추가되어 실제 화면 구조/스타일 기준을 확인할 수 있음
+- 참조 대상:
+  - `figma-sample-design/src/app/pages/Login.tsx`
+  - `figma-sample-design/src/app/pages/Home.tsx`
+  - `figma-sample-design/src/app/pages/AccountDetail.tsx`
+  - `figma-sample-design/src/app/pages/Members.tsx`
+  - `figma-sample-design/src/app/pages/Settings.tsx`
 - `GET-21`, `GET-22`, `GET-23`, `GET-24`는 2026-03-11 기준 모두 완료됨
-- 현재 남은 blocker는 **실제 Figma 참조 소스 미확보** 1건
 
 ## Figma 확보 후 바로 확인할 항목
 
@@ -51,13 +55,19 @@
 - 대시보드 요약 카드 배치
 - 회비/거래/멤버/설정 탭별 카드 구조
 
+## 반영 결과 (하이브리드)
+
+- Login 화면: 아이콘/타이포/입력 폼 톤 정합화
+- 목록 화면: 상단 헤더 카드/계좌 카드 밀도 및 정보 구조 정합화
+- 상세 화면: 상단 Hero 카드(잔액/액션) + 하단 거래영역 계층 정합화
+- 멤버/설정 탭: 카드 톤/간격/타이포 정합화
+- 공통 카드 표면(`SectionCard`)을 기준 톤으로 통일
+- `tsconfig`에 `figma-sample-design` 제외를 추가해 앱 타입체크 범위 고정
+
 ## 다음 액션
 
-1. Figma 파일 URL 또는 핵심 화면 node id 확보
-2. 화면별 기준 캡처(로그인/목록/상세 탭 5종) 수집
-3. 화면별 갭 체크리스트 작성(레이아웃/타이포/컬러/컴포넌트)
-4. 우선순위(P0/P1/P2)로 수정 커밋 분리
-5. `npm run typecheck`, `npm run export:web` 검증 후 `GET-11` 완료 판정
+1. 실제 Figma 픽셀 매칭이 필요한 항목(P1/P2)만 추가 미세조정
+2. `GET-11` 완료 판정 후 PR 정리
 
 ## 2026-03-11 기준 상태 요약
 

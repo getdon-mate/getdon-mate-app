@@ -32,34 +32,43 @@ export function AuthFormCard({
       <Text style={styles.cardTitle}>{isSignup ? "회원가입" : "로그인"}</Text>
 
       {isSignup && (
-        <TextInput
-          value={name}
-          onChangeText={onChangeName}
-          placeholder="이름"
-          style={styles.input}
-          autoCapitalize="none"
-          editable={!submitting}
-        />
+        <View style={styles.inputBlock}>
+          <Text style={styles.inputLabel}>이름</Text>
+          <TextInput
+            value={name}
+            onChangeText={onChangeName}
+            placeholder="실명을 입력해주세요"
+            style={styles.input}
+            autoCapitalize="none"
+            editable={!submitting}
+          />
+        </View>
       )}
 
-      <TextInput
-        value={email}
-        onChangeText={onChangeEmail}
-        placeholder="이메일"
-        style={styles.input}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        editable={!submitting}
-      />
+      <View style={styles.inputBlock}>
+        <Text style={styles.inputLabel}>이메일</Text>
+        <TextInput
+          value={email}
+          onChangeText={onChangeEmail}
+          placeholder="example@email.com"
+          style={styles.input}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          editable={!submitting}
+        />
+      </View>
 
-      <TextInput
-        value={password}
-        onChangeText={onChangePassword}
-        placeholder="비밀번호"
-        style={styles.input}
-        secureTextEntry
-        editable={!submitting}
-      />
+      <View style={styles.inputBlock}>
+        <Text style={styles.inputLabel}>비밀번호</Text>
+        <TextInput
+          value={password}
+          onChangeText={onChangePassword}
+          placeholder="비밀번호를 입력해주세요"
+          style={styles.input}
+          secureTextEntry
+          editable={!submitting}
+        />
+      </View>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -85,34 +94,48 @@ export function AuthFormCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#ffffff",
-    borderRadius: 18,
-    padding: 18,
-    gap: 12,
+    borderRadius: 22,
+    padding: 20,
+    gap: 14,
     borderWidth: 1,
-    borderColor: "#e6e9ef",
+    borderColor: "#edf0f4",
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.07,
+    shadowRadius: 18,
+    elevation: 2,
   },
   cardTitle: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: "700",
     color: "#111827",
-    marginBottom: 6,
+    marginBottom: 4,
+  },
+  inputBlock: {
+    gap: 6,
+  },
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#374151",
+    paddingHorizontal: 2,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#d7dce5",
-    borderRadius: 12,
+    borderColor: "#e5e7eb",
+    borderRadius: 14,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 13,
     fontSize: 15,
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#ffffff",
   },
   submitButton: {
     backgroundColor: "#2563eb",
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 14,
-    marginTop: 4,
+    paddingVertical: 15,
+    marginTop: 2,
   },
   submitButtonDisabled: {
     opacity: 0.6,
@@ -124,7 +147,7 @@ const styles = StyleSheet.create({
   },
   switchText: {
     textAlign: "center",
-    marginTop: 6,
+    marginTop: 4,
     color: "#2563eb",
     fontSize: 14,
     fontWeight: "600",

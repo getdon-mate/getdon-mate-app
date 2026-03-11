@@ -62,8 +62,28 @@ export function AccountDetailScreen() {
           <Text style={styles.backButtonText}>←</Text>
         </Pressable>
         <View style={styles.topHeaderTextWrap}>
-          <Text style={styles.topHeaderTitle}>{account.groupName}</Text>
-          <Text style={styles.topHeaderMeta}>{account.bankName} · {account.members.length}명</Text>
+          <Text style={styles.topHeaderTitle}>모임통장 상세</Text>
+          <Text style={styles.topHeaderMeta}>{account.bankName}</Text>
+        </View>
+      </View>
+
+      <View style={styles.heroCard}>
+        <View style={styles.heroIdentityRow}>
+          <Text style={styles.heroIcon}>{account.groupName.slice(0, 1)}</Text>
+          <View style={styles.heroTitleWrap}>
+            <Text style={styles.heroTitle}>{account.groupName}</Text>
+            <Text style={styles.heroMeta}>모임원 {account.members.length}명</Text>
+          </View>
+        </View>
+        <Text style={styles.heroBalanceLabel}>총 잔액</Text>
+        <Text style={styles.heroBalanceText}>₩ {account.balance.toLocaleString("ko-KR")}</Text>
+        <View style={styles.heroActionRow}>
+          <Pressable style={styles.heroGhostButton}>
+            <Text style={styles.heroGhostButtonText}>채우기</Text>
+          </Pressable>
+          <Pressable style={styles.heroPrimaryButton}>
+            <Text style={styles.heroPrimaryButtonText}>보내기</Text>
+          </Pressable>
         </View>
       </View>
 
@@ -100,7 +120,7 @@ export function AccountDetailScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#f4f5f7",
+    backgroundColor: "#f8fafc",
   },
   emptyWrap: {
     flex: 1,
@@ -132,27 +152,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
-    backgroundColor: "#ffffff",
+    paddingVertical: 12,
+    backgroundColor: "transparent",
   },
   backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f3f4f6",
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
   backButtonText: {
-    color: "#374151",
+    color: "#111827",
     fontSize: 16,
     fontWeight: "700",
   },
   topHeaderTitle: {
     color: "#111827",
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "700",
   },
   topHeaderTextWrap: {
@@ -161,21 +181,103 @@ const styles = StyleSheet.create({
   },
   topHeaderMeta: {
     color: "#6b7280",
+    fontSize: 11,
+  },
+  heroCard: {
+    marginHorizontal: 14,
+    marginTop: 4,
+    borderRadius: 26,
+    backgroundColor: "#3b82f6",
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+    gap: 8,
+  },
+  heroIdentityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  heroIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "rgba(255,255,255,0.24)",
+    textAlign: "center",
+    textAlignVertical: "center",
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "700",
+    overflow: "hidden",
+    paddingTop: 6,
+  },
+  heroTitleWrap: {
+    gap: 1,
+  },
+  heroTitle: {
+    color: "#ffffff",
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  heroMeta: {
+    color: "rgba(255,255,255,0.86)",
     fontSize: 12,
+    fontWeight: "500",
+  },
+  heroBalanceLabel: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 12,
+    marginTop: 4,
+  },
+  heroBalanceText: {
+    color: "#ffffff",
+    fontSize: 31,
+    fontWeight: "800",
+  },
+  heroActionRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 4,
+  },
+  heroGhostButton: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.22)",
+  },
+  heroGhostButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  heroPrimaryButton: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#ffffff",
+  },
+  heroPrimaryButtonText: {
+    color: "#111827",
+    fontSize: 14,
+    fontWeight: "700",
   },
   content: {
     flex: 1,
+    marginTop: 10,
   },
   contentContainer: {
-    padding: 16,
-    paddingBottom: 18,
+    paddingHorizontal: 14,
+    paddingBottom: 14,
   },
   bottomNav: {
     flexDirection: "row",
     backgroundColor: "#ffffff",
     borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
-    paddingVertical: 10,
+    borderTopColor: "#eef1f5",
+    paddingVertical: 8,
   },
   navItem: {
     flex: 1,

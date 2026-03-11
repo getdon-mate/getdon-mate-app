@@ -18,15 +18,15 @@ export function UserHeaderCard({
         <Text style={styles.profileBadgeText}>{initials}</Text>
       </View>
       <View style={styles.headerInfo}>
-        <Text style={styles.headerName}>{user?.name}님</Text>
-        <Text style={styles.headerEmail}>{user?.email}</Text>
+        <Text style={styles.headerName}>{user?.name}님의 모임</Text>
+        <Text style={styles.headerEmail}>함께하는 통장을 관리해보세요</Text>
       </View>
       <View style={styles.headerActions}>
-        <Pressable style={styles.ghostButton} onPress={onWithdraw}>
-          <Text style={styles.ghostButtonDangerText}>탈퇴</Text>
+        <Pressable style={styles.iconButton} onPress={onLogout}>
+          <Text style={styles.iconButtonText}>로그아웃</Text>
         </Pressable>
-        <Pressable style={styles.ghostButton} onPress={onLogout}>
-          <Text style={styles.ghostButtonText}>로그아웃</Text>
+        <Pressable style={styles.iconButton} onPress={onWithdraw}>
+          <Text style={[styles.iconButtonText, styles.iconButtonDangerText]}>탈퇴</Text>
         </Pressable>
       </View>
     </View>
@@ -36,25 +36,26 @@ export function UserHeaderCard({
 const styles = StyleSheet.create({
   headerCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 18,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#e6e9ef",
-    padding: 18,
+    borderColor: "#eef1f5",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 12,
   },
   profileBadge: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#e7f0ff",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#dbeafe",
     alignItems: "center",
     justifyContent: "center",
   },
   profileBadgeText: {
     color: "#2563eb",
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: "700",
   },
   headerInfo: {
@@ -64,29 +65,28 @@ const styles = StyleSheet.create({
   headerName: {
     color: "#111827",
     fontWeight: "700",
-    fontSize: 16,
+    fontSize: 19,
   },
   headerEmail: {
     color: "#6b7280",
-    fontSize: 13,
+    fontSize: 12,
   },
   headerActions: {
-    gap: 8,
+    flexDirection: "row",
+    gap: 6,
   },
-  ghostButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+  iconButton: {
+    paddingHorizontal: 11,
+    paddingVertical: 8,
     borderRadius: 999,
     backgroundColor: "#f3f4f6",
   },
-  ghostButtonText: {
+  iconButtonText: {
     color: "#334155",
     fontSize: 12,
     fontWeight: "600",
   },
-  ghostButtonDangerText: {
+  iconButtonDangerText: {
     color: "#dc2626",
-    fontSize: 12,
-    fontWeight: "600",
   },
 })

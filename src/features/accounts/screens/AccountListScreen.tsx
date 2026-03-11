@@ -92,7 +92,6 @@ export function AccountListScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.pageTitle}>모임통장</Text>
       <UserHeaderCard user={currentUser} initials={initials} onWithdraw={handleWithdraw} onLogout={logout} />
 
       <Text style={styles.sectionTitle}>내 모임통장 {accounts.length}개</Text>
@@ -156,40 +155,36 @@ export function AccountListScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#f4f5f7",
+    backgroundColor: "#f8fafc",
   },
   content: {
-    padding: 16,
-    gap: 14,
-    paddingBottom: 28,
-  },
-  pageTitle: {
-    color: "#111827",
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 2,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    gap: 16,
+    paddingBottom: 30,
   },
   sectionTitle: {
-    marginTop: 4,
+    marginTop: 2,
     color: "#6b7280",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
-    letterSpacing: 0.2,
+    letterSpacing: 0.35,
+    paddingHorizontal: 2,
   },
   addCard: {
-    borderRadius: 18,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#d7dce5",
+    borderColor: "#dbe3ef",
     borderStyle: "dashed",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 18,
-    backgroundColor: "#ffffff",
+    paddingVertical: 19,
+    backgroundColor: "#eff6ff",
   },
   addCardText: {
     color: "#2563eb",
     fontWeight: "700",
-    fontSize: 14,
+    fontSize: 15,
   },
   resetCard: {
     borderRadius: 16,
