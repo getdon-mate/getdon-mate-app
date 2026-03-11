@@ -11,10 +11,9 @@ import {
 import { useApp } from "@core/providers/AppProvider"
 import { formatKRW, getMemberById } from "../../model/mock-data"
 import type { GroupAccount } from "../../model/types"
-import { SectionCard } from "../SectionCard"
 
 export function SettingsTab({ account }: { account: GroupAccount }) {
-  const { updateAutoTransfer, createOneTimeDues, toggleOneTimeDuesRecord, deleteAccount } = useApp()
+  const { currentUser, updateAutoTransfer, createOneTimeDues, toggleOneTimeDuesRecord, deleteAccount, logout, withdraw } = useApp()
 
   const [enabled, setEnabled] = useState(account.autoTransfer.enabled)
   const [day, setDay] = useState(String(account.autoTransfer.dayOfMonth))
@@ -78,36 +77,62 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
     ])
   }
 
-  return (
-    <View style={styles.stack}>
-      <SectionCard>
-        <Text style={styles.sectionTitle}>통장 정보</Text>
-        <Text style={styles.subtleText}>{account.bankName}</Text>
-        <Text style={styles.metricText}>{account.accountNumber}</Text>
-        <Text style={styles.subtleText}>월 회비 {formatKRW(account.monthlyDuesAmount)} · 납부일 {account.dueDay}일</Text>
-      </SectionCard>
+  function handleAlertPlaceholder(label: string) {
+    Alert.alert(label, "준비 중인 기능입니다.")
+  }
 
-      <SectionCard>
-        <View style={styles.rowBetween}>
-          <Text style={styles.sectionTitle}>자동이체 설정</Text>
-          <Switch value={enabled} onValueChange={setEnabled} />
+  const profileName = currentUser?.name ?? account.members[0]?.name ?? "사용자"
+  const profileEmail = currentUser?.email ?? "email@example.com"
+  const profileInitial = profileName.slice(0, 1)
+
+  return (
+    <View style={styles.screen}>
+      <Text style={styles.pageTitle}>설정</Text>
+
+      <View style={styles.profileCard}>
+        <View style={styles.avatarCircle}>
+          <Text style={styles.avatarText}>{profileInitial}</Text>
+        </View>
+        <View style={styles.profileInfo}>
+          <Text style={styles.profileName}>{profileName}</Text>
+          <Text style={styles.profileEmail}>{profileEmail}</Text>
+        </View>
+      </View>
+
+      <View style={styles.menuGroup}>
+        <SettingsRow label="알림 설정" onPress={() => handleAlertPlaceholder("알림 설정")} />
+        <SettingsRow label="프로필 관리" onPress={() => handleAlertPlaceholder("프로필 관리")} />
+      </View>
+
+      <View style={styles.managementSection}>
+        <Text style={styles.sectionHeading}>모임통장 관리</Text>
+        <View style={styles.infoCard}>
+          <Text style={styles.infoLabel}>계좌 정보</Text>
+          <Text style={styles.infoTitle}>{account.bankName} {account.accountNumber}</Text>
+          <Text style={styles.infoMeta}>월 회비 {formatKRW(account.monthlyDuesAmount)} · 납부일 {account.dueDay}일</Text>
         </View>
 
-        {enabled && (
-          <View style={styles.stackCompact}>
-            <TextInput value={day} onChangeText={setDay} placeholder="이체일 (1~28)" style={styles.input} keyboardType="numeric" />
-            <TextInput value={amount} onChangeText={setAmount} placeholder="금액" style={styles.input} keyboardType="numeric" />
-            <TextInput value={fromAccount} onChangeText={setFromAccount} placeholder="출금 계좌" style={styles.input} />
-            <Pressable style={styles.primaryButton} onPress={handleSaveAutoTransfer}>
-              <Text style={styles.primaryButtonText}>저장</Text>
-            </Pressable>
+        <View style={styles.panelCard}>
+          <View style={styles.rowBetween}>
+            <Text style={styles.panelTitle}>자동이체 설정</Text>
+            <Switch value={enabled} onValueChange={setEnabled} />
           </View>
-        )}
-      </SectionCard>
 
-      <SectionCard>
-        <Text style={styles.sectionTitle}>1회성 회비 생성</Text>
-        <View style={styles.stackCompact}>
+          {enabled && (
+            <View style={styles.formStack}>
+              <TextInput value={day} onChangeText={setDay} placeholder="이체일 (1~28)" style={styles.input} keyboardType="numeric" />
+              <TextInput value={amount} onChangeText={setAmount} placeholder="금액" style={styles.input} keyboardType="numeric" />
+              <TextInput value={fromAccount} onChangeText={setFromAccount} placeholder="출금 계좌" style={styles.input} />
+              <Pressable style={styles.primaryButton} onPress={handleSaveAutoTransfer}>
+                <Text style={styles.primaryButtonText}>저장</Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.panelCard}>
+          <Text style={styles.panelTitle}>1회성 회비 생성</Text>
+          <View style={styles.formStack}>
           <TextInput value={title} onChangeText={setTitle} placeholder="회비 명목" style={styles.input} />
           <TextInput value={duesAmount} onChangeText={setDuesAmount} placeholder="금액" style={styles.input} keyboardType="numeric" />
           <TextInput value={dueDate} onChangeText={setDueDate} placeholder="마감일 (YYYY-MM-DD)" style={styles.input} />
@@ -117,22 +142,32 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
         </View>
 
         {account.oneTimeDues.length > 0 && (
-          <View style={styles.stackCompact}>
+          <View style={styles.duesList}>
             {account.oneTimeDues.map((dues) => (
               <View key={dues.id} style={styles.duesCard}>
-                <Text style={styles.memberName}>{dues.title} · {formatKRW(dues.amount)}</Text>
-                <Text style={styles.memberMeta}>마감 {dues.dueDate}</Text>
+                <Text style={styles.duesTitle}>{dues.title} · {formatKRW(dues.amount)}</Text>
+                <Text style={styles.duesMeta}>마감 {dues.dueDate}</Text>
                 {dues.records.map((record) => {
                   const member = getMemberById(account.members, record.memberId)
                   if (!member) return null
                   return (
                     <View key={`${dues.id}-${record.memberId}`} style={styles.rowBetween}>
-                      <Text style={styles.memberMeta}>{member.name}</Text>
+                      <Text style={styles.recordName}>{member.name}</Text>
                       <Pressable
                         onPress={() => toggleOneTimeDuesRecord(account.id, dues.id, member.id)}
-                        style={styles.smallOutlineButton}
+                        style={[
+                          styles.statusChip,
+                          record.status === "paid" ? styles.statusChipPaid : styles.statusChipUnpaid,
+                        ]}
                       >
-                        <Text style={styles.smallOutlineButtonText}>{record.status === "paid" ? "완납" : "미납"}</Text>
+                        <Text
+                          style={[
+                            styles.statusChipText,
+                            record.status === "paid" ? styles.statusChipTextPaid : styles.statusChipTextUnpaid,
+                          ]}
+                        >
+                          {record.status === "paid" ? "완납" : "미납"}
+                        </Text>
                       </Pressable>
                     </View>
                   )
@@ -141,39 +176,194 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
             ))}
           </View>
         )}
-      </SectionCard>
+        </View>
+      </View>
 
-      <SectionCard>
-        <Text style={styles.sectionTitle}>위험 작업</Text>
-        <Pressable style={styles.dangerButton} onPress={handleDeleteAccount}>
-          <Text style={styles.dangerButtonText}>이 모임통장 삭제</Text>
-        </Pressable>
-      </SectionCard>
+      <View style={styles.menuGroup}>
+        <SettingsRow label="로그아웃" onPress={logout} />
+        <SettingsRow label="회원 탈퇴" onPress={withdraw} tone="danger" />
+      </View>
+
+      <Pressable style={styles.dangerButton} onPress={handleDeleteAccount}>
+        <Text style={styles.dangerButtonText}>이 모임통장 삭제</Text>
+      </Pressable>
     </View>
   )
 }
 
+function SettingsRow({
+  label,
+  onPress,
+  tone = "default",
+}: {
+  label: string
+  onPress: () => void
+  tone?: "default" | "danger"
+}) {
+  return (
+    <Pressable style={styles.menuRow} onPress={onPress}>
+      <View style={styles.menuRowLeft}>
+        <View style={[styles.menuIconBadge, tone === "danger" && styles.menuIconBadgeDanger]}>
+          <View style={[styles.menuIconDot, tone === "danger" && styles.menuIconDotDanger]} />
+        </View>
+        <Text style={[styles.menuLabel, tone === "danger" && styles.menuLabelDanger]}>{label}</Text>
+      </View>
+      <Text style={styles.menuChevron}>›</Text>
+    </Pressable>
+  )
+}
+
 const styles = StyleSheet.create({
-  stack: {
-    gap: 12,
+  screen: {
+    flex: 1,
+    backgroundColor: "#f4f5f7",
   },
-  stackCompact: {
-    gap: 8,
-    marginTop: 8,
+  pageTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111827",
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    backgroundColor: "#ffffff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
   },
-  sectionTitle: {
-    fontSize: 15,
+  content: {
+    paddingBottom: 24,
+  },
+  profileCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingHorizontal: 24,
+    paddingVertical: 22,
+    backgroundColor: "#ffffff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  avatarCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#e7f0ff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarText: {
+    color: "#2563eb",
+    fontSize: 24,
+    fontWeight: "700",
+  },
+  profileInfo: {
+    gap: 6,
+  },
+  profileName: {
+    fontSize: 16,
     fontWeight: "700",
     color: "#0f172a",
   },
-  subtleText: {
-    color: "#64748b",
-    fontSize: 12,
-  },
-  metricText: {
-    color: "#0f172a",
+  profileEmail: {
     fontSize: 14,
+    color: "#6b7280",
+  },
+  menuGroup: {
+    marginTop: 14,
+    backgroundColor: "#ffffff",
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  menuRow: {
+    minHeight: 56,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eef0f3",
+  },
+  menuRowLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  menuIconBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f8fafc",
+  },
+  menuIconBadgeDanger: {
+    borderColor: "#fecaca",
+    backgroundColor: "#fff5f5",
+  },
+  menuIconDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#475569",
+  },
+  menuIconDotDanger: {
+    backgroundColor: "#ef4444",
+  },
+  menuLabel: {
+    fontSize: 15,
+    color: "#1f2937",
+    fontWeight: "500",
+  },
+  menuLabelDanger: {
+    color: "#ef4444",
+  },
+  menuChevron: {
+    fontSize: 22,
+    color: "#c5cad3",
+    marginTop: -2,
+  },
+  managementSection: {
+    gap: 14,
+    paddingHorizontal: 16,
+    paddingTop: 18,
+  },
+  sectionHeading: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#6b7280",
+    paddingHorizontal: 8,
+    letterSpacing: 0.2,
+  },
+  infoCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 18,
+    padding: 18,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "#e6e9ef",
+  },
+  infoLabel: {
+    fontSize: 12,
+    color: "#94a3b8",
     fontWeight: "600",
+  },
+  infoTitle: {
+    fontSize: 16,
+    color: "#111827",
+    fontWeight: "700",
+  },
+  infoMeta: {
+    fontSize: 13,
+    color: "#64748b",
+  },
+  panelCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 18,
+    padding: 18,
+    gap: 14,
+    borderWidth: 1,
+    borderColor: "#e6e9ef",
   },
   rowBetween: {
     flexDirection: "row",
@@ -181,66 +371,96 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 8,
   },
+  panelTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#111827",
+  },
+  formStack: {
+    gap: 10,
+  },
   input: {
     borderWidth: 1,
-    borderColor: "#cbd5e1",
-    borderRadius: 10,
+    borderColor: "#d7dce5",
+    borderRadius: 12,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 11,
     fontSize: 14,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#f9fafb",
   },
   primaryButton: {
     backgroundColor: "#2563eb",
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
   primaryButtonText: {
     color: "#ffffff",
     fontSize: 14,
     fontWeight: "700",
   },
+  duesList: {
+    gap: 10,
+  },
   duesCard: {
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    borderRadius: 10,
-    padding: 10,
-    gap: 6,
+    borderColor: "#e6e9ef",
+    borderRadius: 14,
+    padding: 12,
+    gap: 8,
+    backgroundColor: "#fbfcfe",
   },
-  memberName: {
-    color: "#0f172a",
+  duesTitle: {
+    color: "#111827",
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "700",
   },
-  memberMeta: {
+  duesMeta: {
     color: "#64748b",
     fontSize: 12,
   },
-  smallOutlineButton: {
-    borderWidth: 1,
-    borderColor: "#93c5fd",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+  recordName: {
+    color: "#475569",
+    fontSize: 13,
   },
-  smallOutlineButtonText: {
-    color: "#1d4ed8",
+  statusChip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+  },
+  statusChipPaid: {
+    backgroundColor: "#e8f5e9",
+    borderColor: "#b7e0bc",
+  },
+  statusChipUnpaid: {
+    backgroundColor: "#fff1f2",
+    borderColor: "#fecdd3",
+  },
+  statusChipText: {
     fontSize: 12,
     fontWeight: "600",
   },
+  statusChipTextPaid: {
+    color: "#15803d",
+  },
+  statusChipTextUnpaid: {
+    color: "#dc2626",
+  },
   dangerButton: {
-    backgroundColor: "#fee2e2",
+    marginHorizontal: 16,
+    marginTop: 18,
+    backgroundColor: "#ffffff",
     borderColor: "#fecaca",
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 10,
+    paddingVertical: 14,
   },
   dangerButtonText: {
-    color: "#b91c1c",
+    color: "#ef4444",
     fontSize: 14,
     fontWeight: "700",
   },
