@@ -3,7 +3,6 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { AccountDetailScreen } from "@features/accounts/screens/AccountDetailScreen"
 import { AccountListScreen } from "@features/accounts/screens/AccountListScreen"
 import { LoginScreen } from "@features/auth/screens/LoginScreen"
-import { DevToolbar } from "./components/DevToolbar"
 import { useApp } from "./providers/AppProvider"
 
 export function AppRouter() {
@@ -12,7 +11,6 @@ export function AppRouter() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {__DEV__ && <DevToolbar />}
         {currentView === "login" && <LoginScreen />}
         {currentView === "account-list" && <AccountListScreen />}
         {currentView === "account-detail" && <AccountDetailScreen />}
