@@ -13,23 +13,19 @@ import { useApp } from "../../../core/providers/AppProvider"
 import {
   availableMonths,
   formatDate,
-  formatFullDate,
   formatKRW,
   formatMonth,
   getMemberById,
   getMemberPaymentRate,
 } from "../model/mock-data"
 import type { GroupAccount } from "../model/types"
-import { getCurrentMonthKey } from "../../../shared/lib/date"
 import {
   getPaymentSummary,
-  getRecentTransactions,
-  getTransactionTotals,
-  groupTransactionsByDate,
 } from "../model/selectors"
 import { SectionCard } from "../components/SectionCard"
 import { MemberRow } from "../components/MemberRow"
-import { TransactionRow } from "../components/TransactionRow"
+import { DashboardTab } from "../components/detail-tabs/DashboardTab"
+import { TransactionsTab } from "../components/detail-tabs/TransactionsTab"
 
 type DetailTab = "dashboard" | "dues" | "transactions" | "members" | "settings"
 
@@ -108,78 +104,6 @@ export function AccountDetailScreen() {
   )
 }
 
-function DashboardTab({
-  account,
-  onOpenTransactions,
-  onOpenDues,
-}: {
-  account: GroupAccount
-  onOpenTransactions: () => void
-  onOpenDues: () => void
-}) {
-  const [showBalance, setShowBalance] = useState(true)
-
-  const currentMonth = getCurrentMonthKey()
-  const { paid, payableMembers, progress, unpaidMembers } = getPaymentSummary(account, currentMonth)
-  const recentTransactions = getRecentTransactions(account)
-
-  return (
-    <View style={styles.stack}>
-      <SectionCard>
-        <Text style={styles.subtleText}>{account.bankName} {account.accountNumber}</Text>
-        <Text style={styles.balanceLabel}>현재 잔액</Text>
-        <Text style={styles.balanceText}>{showBalance ? formatKRW(account.balance) : "***,***원"}</Text>
-        <Pressable style={styles.smallOutlineButton} onPress={() => setShowBalance((prev) => !prev)}>
-          <Text style={styles.smallOutlineButtonText}>{showBalance ? "잔액 숨기기" : "잔액 보기"}</Text>
-        </Pressable>
-      </SectionCard>
-
-      <SectionCard>
-        <View style={styles.rowBetween}>
-          <Text style={styles.sectionTitle}>회비 현황</Text>
-          <Pressable onPress={onOpenDues}>
-            <Text style={styles.linkText}>자세히</Text>
-          </Pressable>
-        </View>
-        <Text style={styles.metricText}>{paid}/{payableMembers}명 완납 ({progress}%)</Text>
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${progress}%` }]} />
-        </View>
-
-        {unpaidMembers.length > 0 && (
-          <View style={styles.stackCompact}>
-            <Text style={styles.subtleText}>미납 멤버</Text>
-            {unpaidMembers.map((record) => {
-              const member = getMemberById(account.members, record.memberId)
-              if (!member) return null
-              return (
-                <View key={record.memberId} style={styles.rowBetween}>
-                  <Text style={styles.memberName}>{member.name}</Text>
-                  <Text style={styles.unpaidText}>{formatKRW(record.amount)} 미납</Text>
-                </View>
-              )
-            })}
-          </View>
-        )}
-      </SectionCard>
-
-      <SectionCard>
-        <View style={styles.rowBetween}>
-          <Text style={styles.sectionTitle}>최근 거래내역</Text>
-          <Pressable onPress={onOpenTransactions}>
-            <Text style={styles.linkText}>더보기</Text>
-          </Pressable>
-        </View>
-        <View style={styles.stackCompact}>
-          {recentTransactions.map((tx) => (
-            <TransactionRow key={tx.id} account={account} tx={tx} />
-          ))}
-        </View>
-      </SectionCard>
-    </View>
-  )
-}
-
 function DuesTab({
   account,
   selectedMonth,
@@ -251,53 +175,6 @@ function DuesTab({
           })}
         </View>
       </SectionCard>
-    </View>
-  )
-}
-
-function TransactionsTab({ account }: { account: GroupAccount }) {
-  const [filter, setFilter] = useState<"all" | "income" | "expense">("all")
-
-  const filtered =
-    filter === "all"
-      ? account.transactions
-      : account.transactions.filter((tx) => tx.type === filter)
-
-  const { income, expense } = getTransactionTotals(account)
-  const grouped = groupTransactionsByDate(filtered)
-
-  const dates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
-
-  return (
-    <View style={styles.stack}>
-      <SectionCard>
-        <Text style={styles.metricText}>총 입금 +{formatKRW(income)}</Text>
-        <Text style={styles.metricText}>총 출금 -{formatKRW(expense)}</Text>
-      </SectionCard>
-
-      <View style={styles.filterRow}>
-        {(["all", "income", "expense"] as const).map((item) => {
-          const active = filter === item
-          return (
-            <Pressable key={item} style={[styles.filterChip, active && styles.filterChipActive]} onPress={() => setFilter(item)}>
-              <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
-                {item === "all" ? "전체" : item === "income" ? "입금" : "출금"}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </View>
-
-      {dates.map((date) => (
-        <SectionCard key={date}>
-          <Text style={styles.subtleText}>{formatFullDate(date)}</Text>
-          <View style={styles.stackCompact}>
-            {grouped[date].map((tx) => (
-              <TransactionRow key={tx.id} account={account} tx={tx} />
-            ))}
-          </View>
-        </SectionCard>
-      ))}
     </View>
   )
 }
