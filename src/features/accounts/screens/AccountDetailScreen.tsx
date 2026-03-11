@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react"
+import { useNavigation } from "@react-navigation/native"
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import {
   Pressable,
   ScrollView,
@@ -6,11 +8,11 @@ import {
   Text,
   View,
 } from "react-native"
+import type { RootStackParamList } from "@core/navigation/types"
 import { useApp } from "@core/providers/AppProvider"
 import {
   availableMonths,
 } from "../model/mock-data"
-import type { GroupAccount } from "../model/types"
 import { DashboardTab } from "../components/detail-tabs/DashboardTab"
 import { DuesTab } from "../components/detail-tabs/DuesTab"
 import { MembersTab } from "../components/detail-tabs/MembersTab"
@@ -28,7 +30,8 @@ const tabs: { key: DetailTab; label: string }[] = [
 ]
 
 export function AccountDetailScreen() {
-  const { accounts, selectedAccountId, setCurrentView } = useApp()
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
+  const { accounts, selectedAccountId, clearSelectedAccount } = useApp()
 
   const [tab, setTab] = useState<DetailTab>("dashboard")
   const [selectedMonth, setSelectedMonth] = useState(availableMonths[0])
@@ -38,11 +41,27 @@ export function AccountDetailScreen() {
     [accounts, selectedAccountId]
   )
 
+  function goToList() {
+    setTab("dashboard")
+    clearSelectedAccount()
+    if (navigation.canGoBack()) {
+      navigation.goBack()
+      return
+    }
+    navigation.navigate("AccountList")
+  }
+
   if (!account) {
     return (
       <View style={styles.emptyWrap}>
         <Text style={styles.emptyTitle}>선택된 모임이 없습니다.</Text>
-        <Pressable style={styles.primaryButton} onPress={() => setCurrentView("account-list")}>
+        <Pressable
+          style={styles.primaryButton}
+          onPress={() => {
+            clearSelectedAccount()
+            navigation.navigate("AccountList")
+          }}
+        >
           <Text style={styles.primaryButtonText}>목록으로</Text>
         </Pressable>
       </View>
@@ -52,13 +71,7 @@ export function AccountDetailScreen() {
   return (
     <View style={styles.screen}>
       <View style={styles.topHeader}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => {
-            setTab("dashboard")
-            setCurrentView("account-list")
-          }}
-        >
+        <Pressable style={styles.backButton} onPress={goToList}>
           <Text style={styles.backButtonText}>←</Text>
         </Pressable>
         <View style={styles.topHeaderTextWrap}>
