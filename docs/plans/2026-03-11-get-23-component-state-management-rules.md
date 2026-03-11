@@ -123,10 +123,22 @@ src/
 - [x] local/global 상태 경계 정의
 - [x] server state 전환 원칙 정의
 - [x] 폴더 구조 초안 정의
-- [ ] API 연동 시 상태 라이브러리 채택 여부 확정
-- [ ] 에러/로딩 공통 컴포넌트 승격 기준 확정
+- [x] API 연동 시 상태 라이브러리 채택 여부 확정 (1차: React Query + Context 조합)
+- [x] 에러/로딩 공통 컴포넌트 승격 기준 확정 (2개 이상 화면 재사용 시 shared 승격)
 
-## 6) GET-23 산출물 요약
+## 6) 합의 로그 (2026-03-11)
+
+- 합의 방식: FE 스펙 문서 비동기 리뷰
+- 기준 문서:
+  - `docs/plans/2026-03-11-get-21-screen-ia-user-flow.md`
+  - `docs/plans/2026-03-11-get-22-screen-data-requirements.md`
+  - 본 문서(`GET-23`)
+- 합의 결과:
+  - 컴포넌트 분리 기준을 `Screen/Section/Row` 3계층으로 고정
+  - 상태관리 범위를 `local/global/server`로 분리해 개발 기준으로 채택
+  - 초기 폴더 구조(`core/features/shared`)를 다음 구현 이슈 기본 구조로 채택
+
+## 7) GET-23 산출물 요약
 
 - 본 문서로 `컴포넌트 분리 기준`, `상태관리 규칙`, `초기 폴더 구조` 초안을 기록했다.
 - 구현 작업은 본 규칙을 우선 적용하고, API 연동 단계에서 server state 세부 정책을 보완한다.
