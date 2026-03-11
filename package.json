@@ -9,7 +9,10 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "export:web": "expo export --platform web",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "ci:web": "npm run typecheck && npm run export:web",
+    "deploy:vercel:preview": "bash scripts/vercel-deploy.sh preview",
+    "deploy:vercel:production": "bash scripts/vercel-deploy.sh production"
   },
   "dependencies": {
     "@react-navigation/native": "^7.1.33",

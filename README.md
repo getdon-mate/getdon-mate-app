@@ -35,6 +35,13 @@ npm run export:web
 
 # 타입 검증
 npm run typecheck
+
+# CI용 웹 검증(typecheck + export)
+npm run ci:web
+
+# Vercel 수동 배포
+npm run deploy:vercel:preview
+npm run deploy:vercel:production
 ```
 
 ## 4. Demo Flow (Mock Data)
@@ -57,15 +64,28 @@ npm run typecheck
 PR 전 최소 검증:
 
 ```bash
-npm run typecheck
-npm run export:web
+npm run ci:web
 ```
 
 `export:web` 성공 시 `dist/` 디렉터리가 생성됩니다.
 
-## 6. Vercel Preview
+## 6. Vercel Deployment Pipeline (GET-16)
 
-백엔드/디자인 협업을 위한 웹 프리뷰 배포 경로입니다.
+Expo 웹 정적 산출물(`dist/`)을 기준으로 Preview/Production 배포를 분리합니다.
+
+- Workflow: `.github/workflows/vercel-deploy.yml`
+- Preview deploy: `pull_request`(target=`main`, draft 제외)
+- Production deploy: `push` to `main`
+- 공통 사전 검증: `npm run ci:web`
+- 배포 스크립트: `scripts/vercel-deploy.sh`
+
+필수 GitHub Secrets:
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+Vercel 프로젝트 기본값:
 
 - Framework Preset: `Other`
 - Build Command: `npm run export:web`
@@ -73,7 +93,8 @@ npm run export:web
 
 주의:
 
-- Vercel은 웹 프리뷰 공유 용도입니다.
+- Preview는 PR 리뷰/데모 공유 용도입니다.
+- Production은 `main` 기준 웹 배포 경로입니다.
 - 모바일 앱 배포는 Expo/EAS 경로로 분리합니다.
 
 ## 7. Project Structure
@@ -92,6 +113,7 @@ docs/plans/              # 작업/스펙 문서
 
 - `GET-11`: Figma 대비 UI 갭 분석/수정
 - `GET-14`: Mock 기반 플로우 안정화
+- `GET-16`: Vercel preview/production 배포 파이프라인
 - `GET-17`: package.json 기반 README 재작성
 - `GET-23`: 컴포넌트/상태관리 규칙
 - `GET-24`: FE/BE 계약 동기화 및 착수 게이트
