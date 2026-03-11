@@ -34,13 +34,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-          cache: npm
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
 
       - name: Verify web build prerequisites
-        run: npm run ci:web
+        run: pnpm run ci:web
 
       - name: Ensure Vercel credentials exist
         run: |
@@ -66,13 +69,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-          cache: npm
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
 
       - name: Verify web build prerequisites
-        run: npm run ci:web
+        run: pnpm run ci:web
 
       - name: Ensure Vercel credentials exist
         run: |
