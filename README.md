@@ -6,7 +6,8 @@ Getdon 모임통장 프론트엔드 앱(Expo + React Native) 저장소입니다.
 
 - Runtime: Expo React Native (single app)
 - Language: TypeScript
-- Package manager: npm
+- Package manager: pnpm
+- Lockfile: `pnpm-lock.yaml`
 - Node version: `.nvmrc` 기준
 - Backend: 별도 저장소(API 연동 전까지 mock 데이터 기반 동작)
 
@@ -14,10 +15,11 @@ Getdon 모임통장 프론트엔드 앱(Expo + React Native) 저장소입니다.
 
 ```bash
 nvm use
-npm install
+corepack enable
+pnpm install
 ```
 
-`nvm`이 없다면 `.nvmrc`의 Node 버전을 직접 맞춘 뒤 `npm install`을 실행하세요.
+`nvm`이 없다면 `.nvmrc`의 Node 버전을 직접 맞춘 뒤 `pnpm install`을 실행하세요.
 
 환경변수 파일이 필요하면 `.env.example`을 참고해 `.env`를 생성하세요.
 
@@ -29,25 +31,25 @@ cp .env.example .env
 
 ```bash
 # 개발 서버
-npm run start
+pnpm run start
 
 # 플랫폼별 실행
-npm run ios
-npm run android
-npm run web
+pnpm run ios
+pnpm run android
+pnpm run web
 
 # 정적 웹 산출물 생성
-npm run export:web
+pnpm run export:web
 
 # 타입 검증
-npm run typecheck
+pnpm run typecheck
 
 # CI용 웹 검증(typecheck + export)
-npm run ci:web
+pnpm run ci:web
 
 # Vercel 수동 배포
-npm run deploy:vercel:preview
-npm run deploy:vercel:production
+pnpm run deploy:vercel:preview
+pnpm run deploy:vercel:production
 ```
 
 ## 4. Demo Flow (Mock Data)
@@ -70,7 +72,7 @@ npm run deploy:vercel:production
 PR 전 최소 검증:
 
 ```bash
-npm run ci:web
+pnpm run ci:web
 ```
 
 `export:web` 성공 시 `dist/` 디렉터리가 생성됩니다.
@@ -84,15 +86,14 @@ npm run ci:web
 - `EXPO_PUBLIC_API_BASE_URL`: backend base URL (`http://localhost:4000` 등)
 - `EXPO_PUBLIC_API_TIMEOUT_MS`: 요청 타임아웃(ms, 기본 8000)
 
-## 7. Vercel Preview
-## 6. Vercel Deployment Pipeline (GET-16)
+## 7. Vercel Deployment Pipeline (GET-16)
 
 Expo 웹 정적 산출물(`dist/`)을 기준으로 Preview/Production 배포를 분리합니다.
 
 - Workflow: `.github/workflows/vercel-deploy.yml`
 - Preview deploy: `pull_request`(target=`main`, draft 제외)
 - Production deploy: `push` to `main`
-- 공통 사전 검증: `npm run ci:web`
+- 공통 사전 검증: `pnpm run ci:web`
 - 배포 스크립트: `scripts/vercel-deploy.sh`
 
 필수 GitHub Secrets:
@@ -104,7 +105,7 @@ Expo 웹 정적 산출물(`dist/`)을 기준으로 Preview/Production 배포를 
 Vercel 프로젝트 기본값:
 
 - Framework Preset: `Other`
-- Build Command: `npm run export:web`
+- Build Command: `pnpm run export:web`
 - Output Directory: `dist`
 
 주의:

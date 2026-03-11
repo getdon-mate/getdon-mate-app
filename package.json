@@ -2,6 +2,7 @@
   "name": "getdon-mate-app",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.7.0",
   "main": "expo/AppEntry",
   "scripts": {
     "start": "expo start",
@@ -10,9 +11,9 @@
     "web": "expo start --web",
     "export:web": "expo export --platform web",
     "typecheck": "tsc --noEmit",
-    "ci:web": "npm run typecheck && npm run export:web",
-    "deploy:vercel:preview": "bash scripts/vercel-deploy.sh preview",
-    "deploy:vercel:production": "bash scripts/vercel-deploy.sh production"
+    "ci:web": "pnpm run typecheck && pnpm run export:web",
+    "deploy:vercel:preview": "pnpm exec bash scripts/vercel-deploy.sh preview",
+    "deploy:vercel:production": "pnpm exec bash scripts/vercel-deploy.sh production"
   },
   "dependencies": {
     "@react-navigation/native": "^7.1.33",

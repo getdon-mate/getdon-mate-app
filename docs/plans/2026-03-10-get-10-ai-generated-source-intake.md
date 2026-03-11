@@ -2,11 +2,11 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Reorganize the current Expo-generated Getdon FE app into an app/features/shared structure, remove obvious hardcoding and stale package-manager artifacts, and keep the app typecheckable with npm as the current package manager.
+**Goal:** Reorganize the current Expo-generated Getdon FE app into an app/features/shared structure, remove obvious hardcoding and stale package-manager artifacts, and keep the app typecheckable with pnpm as the current package manager.
 
 **Architecture:** Keep the runtime as a single Expo React Native app. Move view routing and provider code into `src/app`, split feature-specific screens and mock domain data under `src/features`, and leave only generic reusable utilities in `src/shared`. Remove stale assumptions from the previous Next.js source intake where they still affect package-management or code organization.
 
-**Tech Stack:** Expo 52, React Native 0.76, TypeScript, npm
+**Tech Stack:** Expo 52, React Native 0.76, TypeScript, pnpm
 
 ---
 
@@ -31,7 +31,7 @@
 
 **Step 4:** Add a shared date helper for current month keys instead of hardcoded month strings in screens.
 
-**Step 5:** Run `npm run typecheck` and confirm the structure still compiles.
+**Step 5:** Run `pnpm run typecheck` and confirm the structure still compiles.
 
 ### Task 2: Remove first-pass hardcoding and duplication
 
@@ -47,19 +47,19 @@
 
 **Step 3:** Preserve current behavior while reducing cross-file coupling and duplicated formatting access patterns.
 
-**Step 4:** Run `npm run typecheck` and confirm green status.
+**Step 4:** Run `pnpm run typecheck` and confirm green status.
 
-### Task 3: Clean package-manager artifacts for current npm baseline
+### Task 3: Clean package-manager artifacts for current pnpm baseline
 
 **Files:**
 - Modify: `.gitignore`
 - Modify: `README.md`
-- Modify: `package-lock.json`
+- Modify: `pnpm-lock.yaml`
 
-**Step 1:** Ignore local npm cache directories generated in this workspace.
+**Step 1:** Ignore local pnpm cache/store directories generated in this workspace.
 
-**Step 2:** Update README to state the current tool baseline explicitly: Expo single FE app, npm for now, pnpm tracked separately in Linear issue `GET-32`.
+**Step 2:** Update README to state the current tool baseline explicitly: Expo single FE app, pnpm as package manager.
 
-**Step 3:** Regenerate `package-lock.json` so it reflects the current Expo app instead of stale Next.js dependencies.
+**Step 3:** Regenerate `pnpm-lock.yaml` so it reflects the current Expo app instead of stale Next.js dependencies.
 
-**Step 4:** Run `npm run typecheck` after lockfile refresh and confirm it still passes.
+**Step 4:** Run `pnpm run typecheck` after lockfile refresh and confirm it still passes.

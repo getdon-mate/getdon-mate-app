@@ -1,18 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
 import { createAccountsBackendV1Adapter } from "@features/accounts/api"
-import {
-  defaultAccounts,
-  defaultUsers,
-} from "@features/accounts/model/mock-data"
-import type {
-  AppUser,
-  AutoTransfer,
-  GroupAccount,
-  OneTimeDues,
-  OneTimeDuesRecord,
-} from "@features/accounts/model/types"
-
-export type AppView = "login" | "account-list" | "account-detail"
+import { defaultAccounts, defaultUsers } from "@features/accounts/model/mock-data"
+import type { AppUser, AutoTransfer, GroupAccount, OneTimeDues, OneTimeDuesRecord } from "@features/accounts/model/types"
 
 interface CreateAccountInput {
   groupName: string
@@ -37,25 +26,13 @@ interface AppContextType {
   logout: () => void
   withdraw: () => void
   selectAccount: (id: string) => void
+  clearSelectedAccount: () => void
   createAccount: (data: CreateAccountInput) => Promise<void>
   deleteAccount: (id: string) => Promise<void>
   toggleDues: (memberId: string, month: string) => Promise<void>
   updateAutoTransfer: (accountId: string, autoTransfer: AutoTransfer) => Promise<void>
   createOneTimeDues: (accountId: string, data: CreateOneTimeDuesInput) => Promise<void>
   toggleOneTimeDuesRecord: (accountId: string, duesId: string, memberId: string) => Promise<void>
-  clearSelectedAccount: () => void
-  createAccount: (data: {
-    groupName: string
-    bankName: string
-    accountNumber: string
-    monthlyDuesAmount: number
-    dueDay: number
-  }) => void
-  deleteAccount: (id: string) => void
-  toggleDues: (memberId: string, month: string) => void
-  updateAutoTransfer: (accountId: string, autoTransfer: AutoTransfer) => void
-  createOneTimeDues: (accountId: string, data: { title: string; amount: number; dueDate: string }) => void
-  toggleOneTimeDuesRecord: (accountId: string, duesId: string, memberId: string) => void
   resetDemoData: () => void
 }
 
@@ -150,7 +127,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (remoteAuth.accounts) {
           setAccounts(cloneAccounts(remoteAuth.accounts))
         }
-        setCurrentView("account-list")
         return true
       }
 
@@ -170,7 +146,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (remoteAuth.accounts) {
           setAccounts(cloneAccounts(remoteAuth.accounts))
         }
-        setCurrentView("account-list")
         return true
       }
 
@@ -201,11 +176,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUsers((prev) => prev.filter((u) => u.id !== userId))
     setCurrentUser(null)
     setSelectedAccountId(null)
-    setCurrentView("login")
 
     void backendAdapter.deleteUser(userId)
   }, [backendAdapter, currentUser])
-  }, [currentUser])
 
   const selectAccount = useCallback((id: string) => {
     setSelectedAccountId(id)
@@ -234,17 +207,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const deleteAccount = useCallback(
     async (id: string) => {
       setAccounts((prev) => prev.filter((acc) => acc.id !== id))
-      setSelectedAccountId(null)
-      setCurrentView("account-list")
+      setSelectedAccountId((prev) => (prev === id ? null : prev))
 
       await backendAdapter.deleteAccount(id)
     },
     [backendAdapter]
   )
-  const deleteAccount = useCallback((id: string) => {
-    setAccounts((prev) => prev.filter((acc) => acc.id !== id))
-    setSelectedAccountId((prev) => (prev === id ? null : prev))
-  }, [])
 
   const toggleDues = useCallback(
     async (memberId: string, month: string) => {

@@ -4,9 +4,9 @@
 
 **Goal:** Make the Expo app exportable as a static web build and easy to deploy to Vercel for preview/demo sharing.
 
-**Architecture:** Keep the current Expo app as the single source of truth. Add minimal web export configuration so `npx expo export --platform web` produces a static `dist` directory, and add Vercel settings that serve that output without introducing production-only complexity.
+**Architecture:** Keep the current Expo app as the single source of truth. Add minimal web export configuration so `pnpm run export:web` produces a static `dist` directory, and add Vercel settings that serve that output without introducing production-only complexity.
 
-**Tech Stack:** Expo SDK 54, React Native Web, TypeScript, npm, Vercel static deployment
+**Tech Stack:** Expo SDK 54, React Native Web, TypeScript, pnpm, Vercel static deployment
 
 ---
 
@@ -53,8 +53,8 @@
 - Verify: `app.json`
 - Verify: `vercel.json`
 
-**Step 1:** Run `npx expo export --platform web`.
+**Step 1:** Run `pnpm run export:web`.
 
-**Step 2:** Run `npm run typecheck`.
+**Step 2:** Run `pnpm run typecheck`.
 
 **Step 3:** Confirm `dist/` exists and the config files align with the generated output.
