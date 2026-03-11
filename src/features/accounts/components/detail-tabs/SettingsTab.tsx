@@ -1,16 +1,11 @@
 import { useState } from "react"
-import {
-  Alert,
-  Pressable,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from "react-native"
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
+import { AlertModal, Button, ConfirmDialog, RadioButton, ToggleSwitch } from "@shared/ui"
 import { formatKRW, getMemberById } from "../../model/mock-data"
 import type { GroupAccount } from "../../model/types"
+
+type RecordFilter = "all" | "paid" | "unpaid"
 
 export function SettingsTab({ account }: { account: GroupAccount }) {
   const { currentUser, updateAutoTransfer, createOneTimeDues, toggleOneTimeDuesRecord, deleteAccount, logout, withdraw } = useApp()
@@ -24,17 +19,31 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
   const [duesAmount, setDuesAmount] = useState("")
   const [dueDate, setDueDate] = useState("")
 
+  const [recordFilter, setRecordFilter] = useState<RecordFilter>("all")
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false)
+  const [alertVisible, setAlertVisible] = useState(false)
+  const [alertTitle, setAlertTitle] = useState("")
+  const [alertMessage, setAlertMessage] = useState("")
+  const [alertTone, setAlertTone] = useState<"neutral" | "danger">("neutral")
+
+  function openAlert(titleText: string, messageText: string, tone: "neutral" | "danger" = "neutral") {
+    setAlertTitle(titleText)
+    setAlertMessage(messageText)
+    setAlertTone(tone)
+    setAlertVisible(true)
+  }
+
   async function handleSaveAutoTransfer() {
     const parsedDay = Number(day)
     const parsedAmount = Number(amount)
 
     if (enabled && (!Number.isFinite(parsedDay) || parsedDay < 1 || parsedDay > 28)) {
-      Alert.alert("입력 오류", "이체일은 1~28 범위로 입력해주세요.")
+      openAlert("입력 오류", "이체일은 1~28 범위로 입력해주세요.", "danger")
       return
     }
 
     if (enabled && (!Number.isFinite(parsedAmount) || parsedAmount <= 0)) {
-      Alert.alert("입력 오류", "금액을 올바르게 입력해주세요.")
+      openAlert("입력 오류", "금액을 올바르게 입력해주세요.", "danger")
       return
     }
 
@@ -45,13 +54,13 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
       fromAccount,
     })
 
-    Alert.alert("저장 완료", "자동이체 설정을 저장했습니다.")
+    openAlert("저장 완료", "자동이체 설정을 저장했습니다.")
   }
 
   async function handleCreateOneTimeDues() {
     const parsedAmount = Number(duesAmount)
     if (!title.trim() || !dueDate.trim() || !Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      Alert.alert("입력 오류", "1회성 회비 정보를 올바르게 입력해주세요.")
+      openAlert("입력 오류", "1회성 회비 정보를 올바르게 입력해주세요.", "danger")
       return
     }
 
@@ -64,23 +73,15 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
     setTitle("")
     setDuesAmount("")
     setDueDate("")
+    openAlert("생성 완료", "1회성 회비를 생성했습니다.")
   }
 
   function handleDeleteAccount() {
-    Alert.alert("모임통장 삭제", "정말 삭제하시겠습니까?", [
-      { text: "취소", style: "cancel" },
-      {
-        text: "삭제",
-        style: "destructive",
-        onPress: () => {
-          void deleteAccount(account.id)
-        },
-      },
-    ])
+    setDeleteDialogVisible(true)
   }
 
   function handleAlertPlaceholder(label: string) {
-    Alert.alert(label, "준비 중인 기능입니다.")
+    openAlert(label, "준비 중인 기능입니다.")
   }
 
   const profileName = currentUser?.name ?? account.members[0]?.name ?? "사용자"
@@ -117,7 +118,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
         <View style={styles.panelCard}>
           <View style={styles.rowBetween}>
             <Text style={styles.panelTitle}>자동이체 설정</Text>
-            <Switch value={enabled} onValueChange={setEnabled} />
+            <ToggleSwitch value={enabled} onPress={() => setEnabled((prev) => !prev)} />
           </View>
 
           {enabled && (
@@ -125,9 +126,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
               <TextInput value={day} onChangeText={setDay} placeholder="이체일 (1~28)" style={styles.input} keyboardType="numeric" />
               <TextInput value={amount} onChangeText={setAmount} placeholder="금액" style={styles.input} keyboardType="numeric" />
               <TextInput value={fromAccount} onChangeText={setFromAccount} placeholder="출금 계좌" style={styles.input} />
-              <Pressable style={styles.primaryButton} onPress={() => void handleSaveAutoTransfer()}>
-                <Text style={styles.primaryButtonText}>저장</Text>
-              </Pressable>
+              <Button label="저장" onPress={() => void handleSaveAutoTransfer()} />
             </View>
           )}
         </View>
@@ -135,56 +134,71 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
         <View style={styles.panelCard}>
           <Text style={styles.panelTitle}>1회성 회비 생성</Text>
           <View style={styles.formStack}>
-          <TextInput value={title} onChangeText={setTitle} placeholder="회비 명목" style={styles.input} />
-          <TextInput value={duesAmount} onChangeText={setDuesAmount} placeholder="금액" style={styles.input} keyboardType="numeric" />
-          <TextInput value={dueDate} onChangeText={setDueDate} placeholder="마감일 (YYYY-MM-DD)" style={styles.input} />
-          <Pressable style={styles.primaryButton} onPress={() => void handleCreateOneTimeDues()}>
-            <Text style={styles.primaryButtonText}>생성</Text>
-          </Pressable>
-        </View>
+            <TextInput value={title} onChangeText={setTitle} placeholder="회비 명목" style={styles.input} />
+            <TextInput value={duesAmount} onChangeText={setDuesAmount} placeholder="금액" style={styles.input} keyboardType="numeric" />
+            <TextInput value={dueDate} onChangeText={setDueDate} placeholder="마감일 (YYYY-MM-DD)" style={styles.input} />
+            <Button label="생성" onPress={() => void handleCreateOneTimeDues()} />
+          </View>
 
-        {account.oneTimeDues.length > 0 ? (
-          <View style={styles.duesList}>
-            {account.oneTimeDues.map((dues) => (
-              <View key={dues.id} style={styles.duesCard}>
-                <Text style={styles.duesTitle}>{dues.title} · {formatKRW(dues.amount)}</Text>
-                <Text style={styles.duesMeta}>마감 {dues.dueDate}</Text>
-                {dues.records.map((record) => {
-                  const member = getMemberById(account.members, record.memberId)
-                  if (!member) return null
-                  return (
-                    <View key={`${dues.id}-${record.memberId}`} style={styles.rowBetween}>
-                      <Text style={styles.recordName}>{member.name}</Text>
-                      <Pressable
-                        onPress={() => {
-                          void toggleOneTimeDuesRecord(account.id, dues.id, member.id)
-                        }}
-                        style={[
-                          styles.statusChip,
-                          record.status === "paid" ? styles.statusChipPaid : styles.statusChipUnpaid,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.statusChipText,
-                            record.status === "paid" ? styles.statusChipTextPaid : styles.statusChipTextUnpaid,
-                          ]}
-                        >
-                          {record.status === "paid" ? "완납" : "미납"}
-                        </Text>
-                      </Pressable>
-                    </View>
-                  )
-                })}
-              </View>
-            ))}
+          <View style={styles.filterRow}>
+            <FilterOption label="전체" checked={recordFilter === "all"} onPress={() => setRecordFilter("all")} />
+            <FilterOption label="완납" checked={recordFilter === "paid"} onPress={() => setRecordFilter("paid")} />
+            <FilterOption label="미납" checked={recordFilter === "unpaid"} onPress={() => setRecordFilter("unpaid")} />
           </View>
-        ) : (
-          <View style={styles.emptyBox}>
-            <Text style={styles.emptyTitle}>등록된 1회성 회비가 없습니다.</Text>
-            <Text style={styles.emptyDescription}>위 입력폼에서 회비를 생성하면 멤버별 납부 상태를 관리할 수 있어요.</Text>
-          </View>
-        )}
+
+          {account.oneTimeDues.length > 0 ? (
+            <View style={styles.duesList}>
+              {account.oneTimeDues.map((dues) => {
+                const filteredRecords = dues.records.filter((record) => {
+                  if (recordFilter === "all") return true
+                  return record.status === recordFilter
+                })
+
+                return (
+                  <View key={dues.id} style={styles.duesCard}>
+                    <Text style={styles.duesTitle}>{dues.title} · {formatKRW(dues.amount)}</Text>
+                    <Text style={styles.duesMeta}>마감 {dues.dueDate}</Text>
+                    {filteredRecords.length === 0 ? (
+                      <Text style={styles.emptyDescription}>선택한 상태의 멤버가 없습니다.</Text>
+                    ) : (
+                      filteredRecords.map((record) => {
+                        const member = getMemberById(account.members, record.memberId)
+                        if (!member) return null
+                        return (
+                          <View key={`${dues.id}-${record.memberId}`} style={styles.rowBetween}>
+                            <Text style={styles.recordName}>{member.name}</Text>
+                            <Pressable
+                              onPress={() => {
+                                void toggleOneTimeDuesRecord(account.id, dues.id, member.id)
+                              }}
+                              style={[
+                                styles.statusChip,
+                                record.status === "paid" ? styles.statusChipPaid : styles.statusChipUnpaid,
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.statusChipText,
+                                  record.status === "paid" ? styles.statusChipTextPaid : styles.statusChipTextUnpaid,
+                                ]}
+                              >
+                                {record.status === "paid" ? "완납" : "미납"}
+                              </Text>
+                            </Pressable>
+                          </View>
+                        )
+                      })
+                    )}
+                  </View>
+                )
+              })}
+            </View>
+          ) : (
+            <View style={styles.emptyBox}>
+              <Text style={styles.emptyTitle}>등록된 1회성 회비가 없습니다.</Text>
+              <Text style={styles.emptyDescription}>위 입력폼에서 회비를 생성하면 멤버별 납부 상태를 관리할 수 있어요.</Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -193,10 +207,46 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
         <SettingsRow label="회원 탈퇴" onPress={withdraw} tone="danger" />
       </View>
 
-      <Pressable style={styles.dangerButton} onPress={handleDeleteAccount}>
-        <Text style={styles.dangerButtonText}>이 모임통장 삭제</Text>
-      </Pressable>
+      <Button style={styles.dangerAction} variant="danger" label="이 모임통장 삭제" onPress={handleDeleteAccount} />
+
+      <AlertModal
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        tone={alertTone}
+        onClose={() => setAlertVisible(false)}
+      />
+
+      <ConfirmDialog
+        visible={deleteDialogVisible}
+        title="모임통장 삭제"
+        message="정말 삭제하시겠습니까?"
+        confirmLabel="삭제"
+        confirmTone="danger"
+        onCancel={() => setDeleteDialogVisible(false)}
+        onConfirm={() => {
+          setDeleteDialogVisible(false)
+          void deleteAccount(account.id)
+        }}
+      />
     </View>
+  )
+}
+
+function FilterOption({
+  label,
+  checked,
+  onPress,
+}: {
+  label: string
+  checked: boolean
+  onPress: () => void
+}) {
+  return (
+    <Pressable style={styles.filterOption} onPress={onPress}>
+      <RadioButton checked={checked} onPress={onPress} />
+      <Text style={[styles.filterLabel, checked && styles.filterLabelActive]}>{label}</Text>
+    </Pressable>
   )
 }
 
@@ -233,9 +283,6 @@ const styles = StyleSheet.create({
     color: "#111827",
     paddingHorizontal: 8,
     paddingVertical: 4,
-  },
-  content: {
-    paddingBottom: 24,
   },
   profileCard: {
     flexDirection: "row",
@@ -334,7 +381,6 @@ const styles = StyleSheet.create({
   },
   managementSection: {
     gap: 12,
-    paddingHorizontal: 0,
     paddingTop: 14,
   },
   sectionHeading: {
@@ -397,17 +443,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     backgroundColor: "#f9fafb",
   },
-  primaryButton: {
-    backgroundColor: "#2563eb",
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
+  filterRow: {
+    flexDirection: "row",
+    gap: 12,
+    flexWrap: "wrap",
   },
-  primaryButtonText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "700",
+  filterOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  filterLabel: {
+    fontSize: 13,
+    color: "#64748b",
+    fontWeight: "600",
+  },
+  filterLabelActive: {
+    color: "#1d4ed8",
   },
   duesList: {
     gap: 10,
@@ -476,20 +528,7 @@ const styles = StyleSheet.create({
   statusChipTextUnpaid: {
     color: "#dc2626",
   },
-  dangerButton: {
-    marginHorizontal: 0,
+  dangerAction: {
     marginTop: 14,
-    backgroundColor: "#ffffff",
-    borderColor: "#fecaca",
-    borderWidth: 1,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 14,
-  },
-  dangerButtonText: {
-    color: "#ef4444",
-    fontSize: 14,
-    fontWeight: "700",
   },
 })

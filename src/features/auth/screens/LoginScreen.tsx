@@ -5,6 +5,7 @@ import {
   StyleSheet,
 } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
+import { Toast } from "@shared/ui"
 import { AuthFormCard } from "../components/AuthFormCard"
 import { AuthHero } from "../components/AuthHero"
 
@@ -20,6 +21,9 @@ export function LoginScreen() {
   const [password, setPassword] = useState(TEST_PASSWORD)
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  const [toastVisible, setToastVisible] = useState(false)
+  const [toastTitle, setToastTitle] = useState("")
+  const [toastMessage, setToastMessage] = useState("")
 
   async function handleSubmit() {
     if (submitting) return
@@ -28,10 +32,16 @@ export function LoginScreen() {
     if (isSignup) {
       if (!name.trim() || !email.trim() || !password.trim()) {
         setError("모든 항목을 입력해주세요.")
+        setToastTitle("입력 오류")
+        setToastMessage("모든 항목을 입력해주세요.")
+        setToastVisible(true)
         return
       }
       if (password.length < 4) {
         setError("비밀번호는 4자 이상이어야 합니다.")
+        setToastTitle("입력 오류")
+        setToastMessage("비밀번호는 4자 이상이어야 합니다.")
+        setToastVisible(true)
         return
       }
       setSubmitting(true)
@@ -39,6 +49,9 @@ export function LoginScreen() {
       const ok = await signup(name.trim(), email.trim(), password)
       if (!ok) {
         setError("이미 사용 중인 이메일입니다.")
+        setToastTitle("회원가입 실패")
+        setToastMessage("이미 사용 중인 이메일입니다.")
+        setToastVisible(true)
       }
       setSubmitting(false)
       return
@@ -46,6 +59,9 @@ export function LoginScreen() {
 
     if (!email.trim() || !password.trim()) {
       setError("이메일과 비밀번호를 입력해주세요.")
+      setToastTitle("입력 오류")
+      setToastMessage("이메일과 비밀번호를 입력해주세요.")
+      setToastVisible(true)
       return
     }
 
@@ -54,6 +70,9 @@ export function LoginScreen() {
     const ok = await login(email.trim(), password)
     if (!ok) {
       setError("이메일 또는 비밀번호가 올바르지 않습니다.")
+      setToastTitle("로그인 실패")
+      setToastMessage("이메일 또는 비밀번호가 올바르지 않습니다.")
+      setToastVisible(true)
     }
     setSubmitting(false)
   }
@@ -85,6 +104,13 @@ export function LoginScreen() {
         onSubmit={handleSubmit}
         onToggleMode={() => resetForm(!isSignup)}
         submitting={submitting}
+      />
+      <Toast
+        visible={toastVisible}
+        tone="danger"
+        title={toastTitle}
+        message={toastMessage}
+        onClose={() => setToastVisible(false)}
       />
     </KeyboardAvoidingView>
   )
