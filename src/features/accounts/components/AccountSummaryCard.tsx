@@ -24,6 +24,7 @@ export function AccountSummaryCard({
       <Text style={styles.accountMeta}>
         {account.bankName} · {paid}/{account.members.length} 완납
       </Text>
+      <Text style={styles.accountChevron}>›</Text>
     </Pressable>
   )
 }
@@ -31,11 +32,12 @@ export function AccountSummaryCard({
 const styles = StyleSheet.create({
   accountCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    padding: 14,
-    gap: 6,
+    borderColor: "#e6e9ef",
+    padding: 18,
+    gap: 8,
+    position: "relative",
   },
   accountHeaderRow: {
     flexDirection: "row",
@@ -43,23 +45,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   accountTitle: {
-    color: "#0f172a",
-    fontSize: 15,
+    color: "#111827",
+    fontSize: 16,
     fontWeight: "700",
     flex: 1,
   },
   accountMembers: {
-    color: "#64748b",
+    color: "#6b7280",
     fontSize: 12,
     fontWeight: "600",
   },
   accountBalance: {
-    color: "#0f172a",
-    fontSize: 20,
+    color: "#111827",
+    fontSize: 24,
     fontWeight: "800",
   },
   accountMeta: {
-    color: "#475569",
-    fontSize: 12,
+    color: "#64748b",
+    fontSize: 13,
+  },
+  accountChevron: {
+    position: "absolute",
+    right: 16,
+    top: 18,
+    fontSize: 22,
+    color: "#c5cad3",
   },
 })

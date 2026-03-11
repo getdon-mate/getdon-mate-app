@@ -38,10 +38,11 @@ export function MemberRow({
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    borderRadius: 10,
-    padding: 10,
-    gap: 6,
+    borderColor: "#e6e9ef",
+    borderRadius: 14,
+    padding: 12,
+    gap: 8,
+    backgroundColor: "#fbfcfe",
   },
   rowBetween: {
     flexDirection: "row",
@@ -68,12 +69,12 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   memberName: {
-    color: "#0f172a",
+    color: "#111827",
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   memberMeta: {
-    color: "#64748b",
+    color: "#6b7280",
     fontSize: 12,
   },
 })

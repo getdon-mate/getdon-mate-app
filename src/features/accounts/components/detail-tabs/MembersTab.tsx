@@ -31,20 +31,20 @@ export function MembersTab({ account }: { account: GroupAccount }) {
 
 const styles = StyleSheet.create({
   stack: {
-    gap: 12,
+    gap: 14,
   },
   stackCompact: {
-    gap: 8,
-    marginTop: 8,
+    gap: 10,
+    marginTop: 10,
   },
   metricText: {
-    color: "#0f172a",
+    color: "#111827",
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "700",
-    color: "#0f172a",
+    color: "#111827",
   },
 })

@@ -54,27 +54,27 @@ export function TransactionsTab({ account }: { account: GroupAccount }) {
 
 const styles = StyleSheet.create({
   stack: {
-    gap: 12,
+    gap: 14,
   },
   stackCompact: {
-    gap: 8,
-    marginTop: 8,
+    gap: 10,
+    marginTop: 10,
   },
   metricText: {
-    color: "#0f172a",
+    color: "#111827",
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   filterRow: {
     flexDirection: "row",
     gap: 8,
   },
   filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "#cbd5e1",
+    borderColor: "#d7dce5",
     backgroundColor: "#ffffff",
   },
   filterChipActive: {
@@ -84,13 +84,13 @@ const styles = StyleSheet.create({
   filterChipText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#334155",
+    color: "#4b5563",
   },
   filterChipTextActive: {
     color: "#ffffff",
   },
   subtleText: {
-    color: "#64748b",
+    color: "#6b7280",
     fontSize: 12,
   },
 })

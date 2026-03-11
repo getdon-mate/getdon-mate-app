@@ -76,8 +76,8 @@ export function LoginScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    backgroundColor: "#f5f7fb",
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    backgroundColor: "#f4f5f7",
   },
 })

@@ -81,35 +81,37 @@ export function DashboardTab({
 
 const styles = StyleSheet.create({
   stack: {
-    gap: 12,
+    gap: 14,
   },
   stackCompact: {
-    gap: 8,
-    marginTop: 8,
+    gap: 10,
+    marginTop: 10,
   },
   subtleText: {
-    color: "#64748b",
+    color: "#6b7280",
     fontSize: 12,
   },
   balanceLabel: {
-    color: "#64748b",
+    color: "#6b7280",
     fontSize: 12,
-    marginTop: 2,
+    marginTop: 4,
   },
   balanceText: {
-    color: "#0f172a",
-    fontSize: 26,
+    color: "#111827",
+    fontSize: 30,
     fontWeight: "800",
   },
   smallOutlineButton: {
     borderWidth: 1,
-    borderColor: "#93c5fd",
+    borderColor: "#d7dce5",
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    alignSelf: "flex-start",
+    backgroundColor: "#f9fafb",
   },
   smallOutlineButtonText: {
-    color: "#1d4ed8",
+    color: "#374151",
     fontSize: 12,
     fontWeight: "600",
   },
@@ -120,9 +122,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "700",
-    color: "#0f172a",
+    color: "#111827",
   },
   linkText: {
     color: "#2563eb",
@@ -130,15 +132,16 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   metricText: {
-    color: "#0f172a",
+    color: "#111827",
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   progressTrack: {
-    height: 8,
+    height: 10,
     borderRadius: 999,
-    backgroundColor: "#e2e8f0",
+    backgroundColor: "#e5e7eb",
     overflow: "hidden",
+    marginTop: 2,
   },
   progressFill: {
     height: "100%",
@@ -146,9 +149,9 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   memberName: {
-    color: "#0f172a",
+    color: "#111827",
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   unpaidText: {
     color: "#dc2626",

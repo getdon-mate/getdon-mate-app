@@ -28,22 +28,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 8,
+    paddingVertical: 4,
   },
   stackTiny: {
     gap: 2,
     flexShrink: 1,
   },
   memberName: {
-    color: "#0f172a",
+    color: "#111827",
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   memberMeta: {
-    color: "#64748b",
+    color: "#6b7280",
     fontSize: 12,
   },
   transactionAmount: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "700",
   },
   incomeText: {
