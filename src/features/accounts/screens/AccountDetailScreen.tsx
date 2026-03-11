@@ -1,30 +1,20 @@
 import { useMemo, useState } from "react"
 import {
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
-  TextInput,
   View,
 } from "react-native"
 import { useApp } from "../../../core/providers/AppProvider"
 import {
   availableMonths,
-  formatDate,
-  formatKRW,
-  formatMonth,
-  getMemberById,
-  getMemberPaymentRate,
 } from "../model/mock-data"
 import type { GroupAccount } from "../model/types"
-import {
-  getPaymentSummary,
-} from "../model/selectors"
-import { SectionCard } from "../components/SectionCard"
-import { MemberRow } from "../components/MemberRow"
 import { DashboardTab } from "../components/detail-tabs/DashboardTab"
+import { DuesTab } from "../components/detail-tabs/DuesTab"
+import { MembersTab } from "../components/detail-tabs/MembersTab"
+import { SettingsTab } from "../components/detail-tabs/SettingsTab"
 import { TransactionsTab } from "../components/detail-tabs/TransactionsTab"
 
 type DetailTab = "dashboard" | "dues" | "transactions" | "members" | "settings"
@@ -104,246 +94,6 @@ export function AccountDetailScreen() {
   )
 }
 
-function DuesTab({
-  account,
-  selectedMonth,
-  onSelectMonth,
-}: {
-  account: GroupAccount
-  selectedMonth: string
-  onSelectMonth: (month: string) => void
-}) {
-  const { toggleDues } = useApp()
-
-  const monthIndex = availableMonths.indexOf(selectedMonth)
-  const { dues: currentDues, paid, unpaid, exempt, progress } = getPaymentSummary(account, selectedMonth)
-
-  return (
-    <View style={styles.stack}>
-      <SectionCard>
-        <View style={styles.rowBetween}>
-          <Pressable
-            disabled={monthIndex >= availableMonths.length - 1}
-            onPress={() => onSelectMonth(availableMonths[monthIndex + 1])}
-            style={styles.arrowButton}
-          >
-            <Text style={styles.arrowButtonText}>◀</Text>
-          </Pressable>
-          <Text style={styles.sectionTitle}>{formatMonth(selectedMonth)}</Text>
-          <Pressable
-            disabled={monthIndex <= 0}
-            onPress={() => onSelectMonth(availableMonths[monthIndex - 1])}
-            style={styles.arrowButton}
-          >
-            <Text style={styles.arrowButtonText}>▶</Text>
-          </Pressable>
-        </View>
-
-        <Text style={styles.metricText}>완납 {paid}명 · 미납 {unpaid}명 · 면제 {exempt}명</Text>
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${progress}%` }]} />
-        </View>
-      </SectionCard>
-
-      <SectionCard>
-        <Text style={styles.sectionTitle}>멤버별 납부 현황</Text>
-        <View style={styles.stackCompact}>
-          {currentDues.map((record) => {
-            const member = getMemberById(account.members, record.memberId)
-            if (!member) return null
-            return (
-              <View key={`${record.memberId}-${record.month}`} style={styles.memberRow}>
-                <View style={styles.memberIdentity}>
-                  <Text style={[styles.avatar, { backgroundColor: member.color }]}>{member.initials}</Text>
-                  <View>
-                    <Text style={styles.memberName}>{member.name}</Text>
-                    <Text style={styles.memberMeta}>
-                      {record.status === "paid" && record.paidDate ? `${formatDate(record.paidDate)} 납부` : record.status === "unpaid" ? "미납" : "면제"}
-                    </Text>
-                  </View>
-                </View>
-                {record.status !== "exempt" && (
-                  <Pressable
-                    style={styles.smallOutlineButton}
-                    onPress={() => toggleDues(record.memberId, selectedMonth)}
-                  >
-                    <Text style={styles.smallOutlineButtonText}>{record.status === "unpaid" ? "완납 처리" : "취소"}</Text>
-                  </Pressable>
-                )}
-              </View>
-            )
-          })}
-        </View>
-      </SectionCard>
-    </View>
-  )
-}
-
-function MembersTab({ account }: { account: GroupAccount }) {
-  const avgRate =
-    account.members.reduce((sum, member) => sum + getMemberPaymentRate(account.duesRecords, member.id), 0) /
-    Math.max(account.members.length, 1)
-
-  return (
-    <View style={styles.stack}>
-      <SectionCard>
-        <Text style={styles.metricText}>총 멤버 {account.members.length}명</Text>
-        <Text style={styles.metricText}>평균 납부율 {Math.round(avgRate)}%</Text>
-      </SectionCard>
-
-      <SectionCard>
-        <Text style={styles.sectionTitle}>멤버 목록</Text>
-        <View style={styles.stackCompact}>
-          {account.members.map((member) => {
-            const rate = getMemberPaymentRate(account.duesRecords, member.id)
-            return <MemberRow key={member.id} member={member} rate={rate} duesRecords={account.duesRecords} />
-          })}
-        </View>
-      </SectionCard>
-    </View>
-  )
-}
-
-function SettingsTab({ account }: { account: GroupAccount }) {
-  const { updateAutoTransfer, createOneTimeDues, toggleOneTimeDuesRecord, deleteAccount } = useApp()
-
-  const [enabled, setEnabled] = useState(account.autoTransfer.enabled)
-  const [day, setDay] = useState(String(account.autoTransfer.dayOfMonth))
-  const [amount, setAmount] = useState(String(account.autoTransfer.amount))
-  const [fromAccount, setFromAccount] = useState(account.autoTransfer.fromAccount)
-
-  const [title, setTitle] = useState("")
-  const [duesAmount, setDuesAmount] = useState("")
-  const [dueDate, setDueDate] = useState("")
-
-  function handleSaveAutoTransfer() {
-    const parsedDay = Number(day)
-    const parsedAmount = Number(amount)
-
-    if (enabled && (!Number.isFinite(parsedDay) || parsedDay < 1 || parsedDay > 28)) {
-      Alert.alert("입력 오류", "이체일은 1~28 범위로 입력해주세요.")
-      return
-    }
-
-    if (enabled && (!Number.isFinite(parsedAmount) || parsedAmount <= 0)) {
-      Alert.alert("입력 오류", "금액을 올바르게 입력해주세요.")
-      return
-    }
-
-    updateAutoTransfer(account.id, {
-      enabled,
-      dayOfMonth: Number.isFinite(parsedDay) ? parsedDay : account.autoTransfer.dayOfMonth,
-      amount: Number.isFinite(parsedAmount) ? parsedAmount : account.autoTransfer.amount,
-      fromAccount,
-    })
-
-    Alert.alert("저장 완료", "자동이체 설정을 저장했습니다.")
-  }
-
-  function handleCreateOneTimeDues() {
-    const parsedAmount = Number(duesAmount)
-    if (!title.trim() || !dueDate.trim() || !Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      Alert.alert("입력 오류", "1회성 회비 정보를 올바르게 입력해주세요.")
-      return
-    }
-
-    createOneTimeDues(account.id, {
-      title: title.trim(),
-      amount: parsedAmount,
-      dueDate: dueDate.trim(),
-    })
-
-    setTitle("")
-    setDuesAmount("")
-    setDueDate("")
-  }
-
-  function handleDeleteAccount() {
-    Alert.alert("모임통장 삭제", "정말 삭제하시겠습니까?", [
-      { text: "취소", style: "cancel" },
-      {
-        text: "삭제",
-        style: "destructive",
-        onPress: () => deleteAccount(account.id),
-      },
-    ])
-  }
-
-  return (
-    <View style={styles.stack}>
-      <SectionCard>
-        <Text style={styles.sectionTitle}>통장 정보</Text>
-        <Text style={styles.subtleText}>{account.bankName}</Text>
-        <Text style={styles.metricText}>{account.accountNumber}</Text>
-        <Text style={styles.subtleText}>월 회비 {formatKRW(account.monthlyDuesAmount)} · 납부일 {account.dueDay}일</Text>
-      </SectionCard>
-
-      <SectionCard>
-        <View style={styles.rowBetween}>
-          <Text style={styles.sectionTitle}>자동이체 설정</Text>
-          <Switch value={enabled} onValueChange={setEnabled} />
-        </View>
-
-        {enabled && (
-          <View style={styles.stackCompact}>
-            <TextInput value={day} onChangeText={setDay} placeholder="이체일 (1~28)" style={styles.input} keyboardType="numeric" />
-            <TextInput value={amount} onChangeText={setAmount} placeholder="금액" style={styles.input} keyboardType="numeric" />
-            <TextInput value={fromAccount} onChangeText={setFromAccount} placeholder="출금 계좌" style={styles.input} />
-            <Pressable style={styles.primaryButton} onPress={handleSaveAutoTransfer}>
-              <Text style={styles.primaryButtonText}>저장</Text>
-            </Pressable>
-          </View>
-        )}
-      </SectionCard>
-
-      <SectionCard>
-        <Text style={styles.sectionTitle}>1회성 회비 생성</Text>
-        <View style={styles.stackCompact}>
-          <TextInput value={title} onChangeText={setTitle} placeholder="회비 명목" style={styles.input} />
-          <TextInput value={duesAmount} onChangeText={setDuesAmount} placeholder="금액" style={styles.input} keyboardType="numeric" />
-          <TextInput value={dueDate} onChangeText={setDueDate} placeholder="마감일 (YYYY-MM-DD)" style={styles.input} />
-          <Pressable style={styles.primaryButton} onPress={handleCreateOneTimeDues}>
-            <Text style={styles.primaryButtonText}>생성</Text>
-          </Pressable>
-        </View>
-
-        {account.oneTimeDues.length > 0 && (
-          <View style={styles.stackCompact}>
-            {account.oneTimeDues.map((dues) => (
-              <View key={dues.id} style={styles.duesCard}>
-                <Text style={styles.memberName}>{dues.title} · {formatKRW(dues.amount)}</Text>
-                <Text style={styles.memberMeta}>마감 {dues.dueDate}</Text>
-                {dues.records.map((record) => {
-                  const member = getMemberById(account.members, record.memberId)
-                  if (!member) return null
-                  return (
-                    <View key={`${dues.id}-${record.memberId}`} style={styles.rowBetween}>
-                      <Text style={styles.memberMeta}>{member.name}</Text>
-                      <Pressable
-                        onPress={() => toggleOneTimeDuesRecord(account.id, dues.id, member.id)}
-                        style={styles.smallOutlineButton}
-                      >
-                        <Text style={styles.smallOutlineButtonText}>{record.status === "paid" ? "완납" : "미납"}</Text>
-                      </Pressable>
-                    </View>
-                  )
-                })}
-              </View>
-            ))}
-          </View>
-        )}
-      </SectionCard>
-
-      <SectionCard>
-        <Text style={styles.sectionTitle}>위험 작업</Text>
-        <Pressable style={styles.dangerButton} onPress={handleDeleteAccount}>
-          <Text style={styles.dangerButtonText}>이 모임통장 삭제</Text>
-        </Pressable>
-      </SectionCard>
-    </View>
-  )
-}
-
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -359,6 +109,19 @@ const styles = StyleSheet.create({
   emptyTitle: {
     color: "#0f172a",
     fontSize: 16,
+    fontWeight: "700",
+  },
+  primaryButton: {
+    backgroundColor: "#2563eb",
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  primaryButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
     fontWeight: "700",
   },
   topHeader: {
@@ -420,188 +183,5 @@ const styles = StyleSheet.create({
   },
   stack: {
     gap: 12,
-  },
-  stackCompact: {
-    gap: 8,
-    marginTop: 8,
-  },
-  stackTiny: {
-    gap: 2,
-    flexShrink: 1,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#0f172a",
-  },
-  balanceLabel: {
-    color: "#64748b",
-    fontSize: 12,
-    marginTop: 2,
-  },
-  balanceText: {
-    color: "#0f172a",
-    fontSize: 26,
-    fontWeight: "800",
-  },
-  subtleText: {
-    color: "#64748b",
-    fontSize: 12,
-  },
-  metricText: {
-    color: "#0f172a",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  rowBetween: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  linkText: {
-    color: "#2563eb",
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  progressTrack: {
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: "#e2e8f0",
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#3b82f6",
-    borderRadius: 999,
-  },
-  memberRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  memberIdentity: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    flex: 1,
-  },
-  avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    color: "#ffffff",
-    textAlign: "center",
-    textAlignVertical: "center",
-    fontSize: 11,
-    fontWeight: "700",
-    overflow: "hidden",
-    paddingTop: 8,
-  },
-  memberName: {
-    color: "#0f172a",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  memberMeta: {
-    color: "#64748b",
-    fontSize: 12,
-  },
-  unpaidText: {
-    color: "#dc2626",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  filterRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#cbd5e1",
-    backgroundColor: "#ffffff",
-  },
-  filterChipActive: {
-    backgroundColor: "#2563eb",
-    borderColor: "#2563eb",
-  },
-  filterChipText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#334155",
-  },
-  filterChipTextActive: {
-    color: "#ffffff",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#cbd5e1",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    backgroundColor: "#ffffff",
-  },
-  primaryButton: {
-    backgroundColor: "#2563eb",
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-  },
-  primaryButtonText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  smallOutlineButton: {
-    borderWidth: 1,
-    borderColor: "#93c5fd",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  smallOutlineButtonText: {
-    color: "#1d4ed8",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  arrowButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#f1f5f9",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  arrowButtonText: {
-    color: "#334155",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  duesCard: {
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    borderRadius: 10,
-    padding: 10,
-    gap: 6,
-  },
-  dangerButton: {
-    backgroundColor: "#fee2e2",
-    borderColor: "#fecaca",
-    borderWidth: 1,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-  },
-  dangerButtonText: {
-    color: "#b91c1c",
-    fontSize: 14,
-    fontWeight: "700",
   },
 })
