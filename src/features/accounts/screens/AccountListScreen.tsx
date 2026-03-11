@@ -15,7 +15,7 @@ import { EmptyStateCard } from "../components/EmptyStateCard"
 import { UserHeaderCard } from "../components/UserHeaderCard"
 
 export function AccountListScreen() {
-  const { currentUser, accounts, selectAccount, createAccount, logout, withdraw } = useApp()
+  const { currentUser, accounts, selectAccount, createAccount, logout, withdraw, resetDemoData } = useApp()
   const currentMonth = getCurrentMonthKey()
 
   const [showCreate, setShowCreate] = useState(false)
@@ -77,6 +77,13 @@ export function AccountListScreen() {
     ])
   }
 
+  function handleResetDemoData() {
+    Alert.alert("데모 데이터 초기화", "현재 변경 내용을 지우고 초기 mock 데이터로 되돌립니다.", [
+      { text: "취소", style: "cancel" },
+      { text: "초기화", style: "destructive", onPress: resetDemoData },
+    ])
+  }
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text style={styles.pageTitle}>모임통장</Text>
@@ -130,6 +137,10 @@ export function AccountListScreen() {
           onSubmit={handleCreate}
         />
       )}
+
+      <Pressable style={styles.resetCard} onPress={handleResetDemoData}>
+        <Text style={styles.resetCardText}>데모 데이터 초기화</Text>
+      </Pressable>
     </ScrollView>
   )
 }
@@ -171,5 +182,19 @@ const styles = StyleSheet.create({
     color: "#2563eb",
     fontWeight: "700",
     fontSize: 14,
+  },
+  resetCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 13,
+    backgroundColor: "#ffffff",
+  },
+  resetCardText: {
+    color: "#dc2626",
+    fontWeight: "700",
+    fontSize: 13,
   },
 })

@@ -36,6 +36,7 @@ interface AppContextType {
   updateAutoTransfer: (accountId: string, autoTransfer: AutoTransfer) => void
   createOneTimeDues: (accountId: string, data: { title: string; amount: number; dueDate: string }) => void
   toggleOneTimeDuesRecord: (accountId: string, duesId: string, memberId: string) => void
+  resetDemoData: () => void
 }
 
 const AppContext = createContext<AppContextType | null>(null)
@@ -49,10 +50,28 @@ export function useApp() {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [users, setUsers] = useState<AppUser[]>(defaultUsers)
+  function cloneUsers(source: AppUser[]): AppUser[] {
+    return source.map((user) => ({ ...user }))
+  }
+
+  function cloneAccounts(source: GroupAccount[]): GroupAccount[] {
+    return source.map((account) => ({
+      ...account,
+      members: account.members.map((member) => ({ ...member })),
+      duesRecords: account.duesRecords.map((record) => ({ ...record })),
+      transactions: account.transactions.map((tx) => ({ ...tx })),
+      autoTransfer: { ...account.autoTransfer },
+      oneTimeDues: account.oneTimeDues.map((dues) => ({
+        ...dues,
+        records: dues.records.map((record) => ({ ...record })),
+      })),
+    }))
+  }
+
+  const [users, setUsers] = useState<AppUser[]>(() => cloneUsers(defaultUsers))
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null)
   const [currentView, setCurrentView] = useState<AppView>("login")
-  const [accounts, setAccounts] = useState<GroupAccount[]>(defaultAccounts)
+  const [accounts, setAccounts] = useState<GroupAccount[]>(() => cloneAccounts(defaultAccounts))
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null)
 
   const login = useCallback(
@@ -230,6 +249,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     )
   }, [])
 
+  const resetDemoData = useCallback(() => {
+    setUsers(cloneUsers(defaultUsers))
+    setAccounts(cloneAccounts(defaultAccounts))
+    setCurrentUser(null)
+    setSelectedAccountId(null)
+    setCurrentView("login")
+  }, [])
+
   return (
     <AppContext.Provider
       value={{
@@ -249,6 +276,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateAutoTransfer,
         createOneTimeDues,
         toggleOneTimeDuesRecord,
+        resetDemoData,
       }}
     >
       {children}
