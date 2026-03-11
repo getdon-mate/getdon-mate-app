@@ -2,14 +2,14 @@ import { createContext, useCallback, useContext, useState, type ReactNode } from
 import {
   defaultAccounts,
   defaultUsers,
-} from "../../features/accounts/model/mock-data"
+} from "@features/accounts/model/mock-data"
 import type {
   AppUser,
   AutoTransfer,
   GroupAccount,
   OneTimeDues,
   OneTimeDuesRecord,
-} from "../../features/accounts/model/types"
+} from "@features/accounts/model/types"
 
 export type AppView = "login" | "account-list" | "account-detail"
 

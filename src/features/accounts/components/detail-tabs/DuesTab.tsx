@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native"
-import { useApp } from "../../../../core/providers/AppProvider"
+import { useApp } from "@core/providers/AppProvider"
 import { availableMonths, formatDate, formatMonth, getMemberById } from "../../model/mock-data"
 import { getPaymentSummary } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"

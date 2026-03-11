@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
-import { getCurrentMonthKey } from "../../../../shared/lib/date"
+import { getCurrentMonthKey } from "@shared/lib/date"
 import { getMemberById, formatKRW } from "../../model/mock-data"
 import { getPaymentSummary, getRecentTransactions } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"

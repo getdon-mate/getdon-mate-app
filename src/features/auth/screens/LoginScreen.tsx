@@ -4,7 +4,7 @@ import {
   Platform,
   StyleSheet,
 } from "react-native"
-import { useApp } from "../../../core/providers/AppProvider"
+import { useApp } from "@core/providers/AppProvider"
 import { AuthFormCard } from "../components/AuthFormCard"
 import { AuthHero } from "../components/AuthHero"
 

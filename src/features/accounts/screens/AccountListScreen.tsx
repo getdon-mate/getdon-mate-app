@@ -7,8 +7,8 @@ import {
   Text,
   View,
 } from "react-native"
-import { useApp } from "../../../core/providers/AppProvider"
-import { getCurrentMonthKey } from "../../../shared/lib/date"
+import { useApp } from "@core/providers/AppProvider"
+import { getCurrentMonthKey } from "@shared/lib/date"
 import { AccountCreatePanel } from "../components/AccountCreatePanel"
 import { AccountSummaryCard } from "../components/AccountSummaryCard"
 import { UserHeaderCard } from "../components/UserHeaderCard"

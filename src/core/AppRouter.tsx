@@ -1,9 +1,9 @@
 import { View, StyleSheet } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { AccountDetailScreen } from "@features/accounts/screens/AccountDetailScreen"
+import { AccountListScreen } from "@features/accounts/screens/AccountListScreen"
+import { LoginScreen } from "@features/auth/screens/LoginScreen"
 import { useApp } from "./providers/AppProvider"
-import { LoginScreen } from "../features/auth/screens/LoginScreen"
-import { AccountListScreen } from "../features/accounts/screens/AccountListScreen"
-import { AccountDetailScreen } from "../features/accounts/screens/AccountDetailScreen"
 
 export function AppRouter() {
   const { currentView } = useApp()

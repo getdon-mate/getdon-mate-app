@@ -8,7 +8,7 @@ import {
   TextInput,
   View,
 } from "react-native"
-import { useApp } from "../../../../core/providers/AppProvider"
+import { useApp } from "@core/providers/AppProvider"
 import { formatKRW, getMemberById } from "../../model/mock-data"
 import type { GroupAccount } from "../../model/types"
 import { SectionCard } from "../SectionCard"

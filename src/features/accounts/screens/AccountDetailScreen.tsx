@@ -6,7 +6,7 @@ import {
   Text,
   View,
 } from "react-native"
-import { useApp } from "../../../core/providers/AppProvider"
+import { useApp } from "@core/providers/AppProvider"
 import {
   availableMonths,
 } from "../model/mock-data"
