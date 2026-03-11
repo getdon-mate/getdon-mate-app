@@ -65,7 +65,7 @@ export function AccountListScreen() {
     setCreateSubmitting(true)
     await new Promise((resolve) => setTimeout(resolve, 300))
 
-    createAccount({
+    await createAccount({
       groupName: groupName.trim(),
       bankName: bankName.trim(),
       accountNumber: accountNumber.trim(),

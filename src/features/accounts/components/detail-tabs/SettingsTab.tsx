@@ -24,7 +24,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
   const [duesAmount, setDuesAmount] = useState("")
   const [dueDate, setDueDate] = useState("")
 
-  function handleSaveAutoTransfer() {
+  async function handleSaveAutoTransfer() {
     const parsedDay = Number(day)
     const parsedAmount = Number(amount)
 
@@ -38,7 +38,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
       return
     }
 
-    updateAutoTransfer(account.id, {
+    await updateAutoTransfer(account.id, {
       enabled,
       dayOfMonth: Number.isFinite(parsedDay) ? parsedDay : account.autoTransfer.dayOfMonth,
       amount: Number.isFinite(parsedAmount) ? parsedAmount : account.autoTransfer.amount,
@@ -48,14 +48,14 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
     Alert.alert("저장 완료", "자동이체 설정을 저장했습니다.")
   }
 
-  function handleCreateOneTimeDues() {
+  async function handleCreateOneTimeDues() {
     const parsedAmount = Number(duesAmount)
     if (!title.trim() || !dueDate.trim() || !Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       Alert.alert("입력 오류", "1회성 회비 정보를 올바르게 입력해주세요.")
       return
     }
 
-    createOneTimeDues(account.id, {
+    await createOneTimeDues(account.id, {
       title: title.trim(),
       amount: parsedAmount,
       dueDate: dueDate.trim(),
@@ -72,7 +72,9 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
       {
         text: "삭제",
         style: "destructive",
-        onPress: () => deleteAccount(account.id),
+        onPress: () => {
+          void deleteAccount(account.id)
+        },
       },
     ])
   }
@@ -123,7 +125,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
               <TextInput value={day} onChangeText={setDay} placeholder="이체일 (1~28)" style={styles.input} keyboardType="numeric" />
               <TextInput value={amount} onChangeText={setAmount} placeholder="금액" style={styles.input} keyboardType="numeric" />
               <TextInput value={fromAccount} onChangeText={setFromAccount} placeholder="출금 계좌" style={styles.input} />
-              <Pressable style={styles.primaryButton} onPress={handleSaveAutoTransfer}>
+              <Pressable style={styles.primaryButton} onPress={() => void handleSaveAutoTransfer()}>
                 <Text style={styles.primaryButtonText}>저장</Text>
               </Pressable>
             </View>
@@ -136,7 +138,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
           <TextInput value={title} onChangeText={setTitle} placeholder="회비 명목" style={styles.input} />
           <TextInput value={duesAmount} onChangeText={setDuesAmount} placeholder="금액" style={styles.input} keyboardType="numeric" />
           <TextInput value={dueDate} onChangeText={setDueDate} placeholder="마감일 (YYYY-MM-DD)" style={styles.input} />
-          <Pressable style={styles.primaryButton} onPress={handleCreateOneTimeDues}>
+          <Pressable style={styles.primaryButton} onPress={() => void handleCreateOneTimeDues()}>
             <Text style={styles.primaryButtonText}>생성</Text>
           </Pressable>
         </View>
@@ -154,7 +156,9 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
                     <View key={`${dues.id}-${record.memberId}`} style={styles.rowBetween}>
                       <Text style={styles.recordName}>{member.name}</Text>
                       <Pressable
-                        onPress={() => toggleOneTimeDuesRecord(account.id, dues.id, member.id)}
+                        onPress={() => {
+                          void toggleOneTimeDuesRecord(account.id, dues.id, member.id)
+                        }}
                         style={[
                           styles.statusChip,
                           record.status === "paid" ? styles.statusChipPaid : styles.statusChipUnpaid,
