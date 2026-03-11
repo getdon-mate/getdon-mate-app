@@ -16,8 +16,10 @@ export function LoginScreen() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [submitting, setSubmitting] = useState(false)
 
-  function handleSubmit() {
+  async function handleSubmit() {
+    if (submitting) return
     setError("")
 
     if (isSignup) {
@@ -29,8 +31,13 @@ export function LoginScreen() {
         setError("비밀번호는 4자 이상이어야 합니다.")
         return
       }
+      setSubmitting(true)
+      await new Promise((resolve) => setTimeout(resolve, 300))
       const ok = signup(name.trim(), email.trim(), password)
-      if (!ok) setError("이미 사용 중인 이메일입니다.")
+      if (!ok) {
+        setError("이미 사용 중인 이메일입니다.")
+      }
+      setSubmitting(false)
       return
     }
 
@@ -39,11 +46,17 @@ export function LoginScreen() {
       return
     }
 
+    setSubmitting(true)
+    await new Promise((resolve) => setTimeout(resolve, 300))
     const ok = login(email.trim(), password)
-    if (!ok) setError("이메일 또는 비밀번호가 올바르지 않습니다.")
+    if (!ok) {
+      setError("이메일 또는 비밀번호가 올바르지 않습니다.")
+    }
+    setSubmitting(false)
   }
 
   function resetForm(nextSignup: boolean) {
+    if (submitting) return
     setIsSignup(nextSignup)
     setError("")
     setName("")
@@ -68,6 +81,7 @@ export function LoginScreen() {
         onChangePassword={setPassword}
         onSubmit={handleSubmit}
         onToggleMode={() => resetForm(!isSignup)}
+        submitting={submitting}
       />
     </KeyboardAvoidingView>
   )

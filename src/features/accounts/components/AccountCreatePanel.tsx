@@ -14,6 +14,7 @@ interface AccountCreatePanelProps {
   onChangeDueDay: (value: string) => void
   onCancel: () => void
   onSubmit: () => void
+  submitting?: boolean
 }
 
 export function AccountCreatePanel({
@@ -30,19 +31,21 @@ export function AccountCreatePanel({
   onChangeDueDay,
   onCancel,
   onSubmit,
+  submitting = false,
 }: AccountCreatePanelProps) {
   return (
     <View style={styles.createPanel}>
       <Text style={styles.panelTitle}>새 모임통장 정보</Text>
-      <TextInput value={groupName} onChangeText={onChangeGroupName} placeholder="모임명" style={styles.input} />
-      <TextInput value={bankName} onChangeText={onChangeBankName} placeholder="은행명" style={styles.input} />
-      <TextInput value={accountNumber} onChangeText={onChangeAccountNumber} placeholder="계좌번호" style={styles.input} />
+      <TextInput value={groupName} onChangeText={onChangeGroupName} placeholder="모임명" style={styles.input} editable={!submitting} />
+      <TextInput value={bankName} onChangeText={onChangeBankName} placeholder="은행명" style={styles.input} editable={!submitting} />
+      <TextInput value={accountNumber} onChangeText={onChangeAccountNumber} placeholder="계좌번호" style={styles.input} editable={!submitting} />
       <TextInput
         value={monthlyDues}
         onChangeText={onChangeMonthlyDues}
         placeholder="월 회비"
         style={styles.input}
         keyboardType="numeric"
+        editable={!submitting}
       />
       <TextInput
         value={dueDay}
@@ -50,16 +53,17 @@ export function AccountCreatePanel({
         placeholder="납부일 (1~28)"
         style={styles.input}
         keyboardType="numeric"
+        editable={!submitting}
       />
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <View style={styles.panelButtons}>
-        <Pressable style={styles.outlineButton} onPress={onCancel}>
+        <Pressable style={[styles.outlineButton, submitting && styles.buttonDisabled]} onPress={onCancel} disabled={submitting}>
           <Text style={styles.outlineButtonText}>취소</Text>
         </Pressable>
-        <Pressable style={styles.primaryButton} onPress={onSubmit}>
-          <Text style={styles.primaryButtonText}>개설하기</Text>
+        <Pressable style={[styles.primaryButton, submitting && styles.buttonDisabled]} onPress={onSubmit} disabled={submitting}>
+          <Text style={styles.primaryButtonText}>{submitting ? "개설 중..." : "개설하기"}</Text>
         </Pressable>
       </View>
     </View>
@@ -119,6 +123,9 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: "#ffffff",
     fontWeight: "700",
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   error: {
     color: "#dc2626",

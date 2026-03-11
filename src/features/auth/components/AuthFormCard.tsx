@@ -11,6 +11,7 @@ interface AuthFormCardProps {
   onChangePassword: (value: string) => void
   onSubmit: () => void
   onToggleMode: () => void
+  submitting?: boolean
 }
 
 export function AuthFormCard({
@@ -24,6 +25,7 @@ export function AuthFormCard({
   onChangePassword,
   onSubmit,
   onToggleMode,
+  submitting = false,
 }: AuthFormCardProps) {
   return (
     <View style={styles.card}>
@@ -36,6 +38,7 @@ export function AuthFormCard({
           placeholder="이름"
           style={styles.input}
           autoCapitalize="none"
+          editable={!submitting}
         />
       )}
 
@@ -46,6 +49,7 @@ export function AuthFormCard({
         style={styles.input}
         autoCapitalize="none"
         keyboardType="email-address"
+        editable={!submitting}
       />
 
       <TextInput
@@ -54,15 +58,18 @@ export function AuthFormCard({
         placeholder="비밀번호"
         style={styles.input}
         secureTextEntry
+        editable={!submitting}
       />
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <Pressable style={styles.submitButton} onPress={onSubmit}>
-        <Text style={styles.submitButtonText}>{isSignup ? "가입하기" : "로그인"}</Text>
+      <Pressable style={[styles.submitButton, submitting && styles.submitButtonDisabled]} onPress={onSubmit} disabled={submitting}>
+        <Text style={styles.submitButtonText}>
+          {submitting ? "처리 중..." : isSignup ? "가입하기" : "로그인"}
+        </Text>
       </Pressable>
 
-      <Pressable onPress={onToggleMode}>
+      <Pressable onPress={onToggleMode} disabled={submitting}>
         <Text style={styles.switchText}>
           {isSignup ? "이미 계정이 있으신가요? 로그인" : "계정이 없으신가요? 회원가입"}
         </Text>
@@ -106,6 +113,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 14,
     marginTop: 4,
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
   },
   submitButtonText: {
     color: "#ffffff",

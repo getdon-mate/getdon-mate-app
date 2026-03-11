@@ -25,6 +25,7 @@ export function AccountListScreen() {
   const [monthlyDues, setMonthlyDues] = useState("")
   const [dueDay, setDueDay] = useState("")
   const [error, setError] = useState("")
+  const [createSubmitting, setCreateSubmitting] = useState(false)
 
   const initials = useMemo(() => currentUser?.name.slice(-2) ?? "??", [currentUser])
 
@@ -37,7 +38,8 @@ export function AccountListScreen() {
     setError("")
   }
 
-  function handleCreate() {
+  async function handleCreate() {
+    if (createSubmitting) return
     setError("")
 
     if (!groupName.trim() || !bankName.trim() || !accountNumber.trim()) {
@@ -58,6 +60,9 @@ export function AccountListScreen() {
       return
     }
 
+    setCreateSubmitting(true)
+    await new Promise((resolve) => setTimeout(resolve, 300))
+
     createAccount({
       groupName: groupName.trim(),
       bankName: bankName.trim(),
@@ -68,6 +73,7 @@ export function AccountListScreen() {
 
     setShowCreate(false)
     resetCreateForm()
+    setCreateSubmitting(false)
   }
 
   function handleWithdraw() {
@@ -109,6 +115,7 @@ export function AccountListScreen() {
 
       <Pressable
         style={styles.addCard}
+        disabled={createSubmitting}
         onPress={() => {
           setShowCreate((prev) => !prev)
           setError("")
@@ -130,6 +137,7 @@ export function AccountListScreen() {
           onChangeAccountNumber={setAccountNumber}
           onChangeMonthlyDues={setMonthlyDues}
           onChangeDueDay={setDueDay}
+          submitting={createSubmitting}
           onCancel={() => {
             setShowCreate(false)
             resetCreateForm()
@@ -138,7 +146,7 @@ export function AccountListScreen() {
         />
       )}
 
-      <Pressable style={styles.resetCard} onPress={handleResetDemoData}>
+      <Pressable style={styles.resetCard} onPress={handleResetDemoData} disabled={createSubmitting}>
         <Text style={styles.resetCardText}>데모 데이터 초기화</Text>
       </Pressable>
     </ScrollView>
