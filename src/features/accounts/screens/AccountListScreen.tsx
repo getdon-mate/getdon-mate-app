@@ -5,13 +5,12 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native"
 import { useApp } from "../../../core/providers/AppProvider"
 import { getCurrentMonthKey } from "../../../shared/lib/date"
-import { formatKRW } from "../model/mock-data"
-import { getPaymentSummary } from "../model/selectors"
+import { AccountCreatePanel } from "../components/AccountCreatePanel"
+import { AccountSummaryCard } from "../components/AccountSummaryCard"
 
 export function AccountListScreen() {
   const { currentUser, accounts, selectAccount, createAccount, logout, withdraw } = useApp()
@@ -98,22 +97,14 @@ export function AccountListScreen() {
 
       <Text style={styles.sectionTitle}>내 모임통장 ({accounts.length})</Text>
 
-      {accounts.map((account) => {
-        const { paid } = getPaymentSummary(account, currentMonth)
-
-        return (
-          <Pressable key={account.id} style={styles.accountCard} onPress={() => selectAccount(account.id)}>
-            <View style={styles.accountHeaderRow}>
-              <Text style={styles.accountTitle}>{account.groupName}</Text>
-              <Text style={styles.accountMembers}>{account.members.length}명</Text>
-            </View>
-            <Text style={styles.accountBalance}>{formatKRW(account.balance)}</Text>
-            <Text style={styles.accountMeta}>
-              {account.bankName} · {paid}/{account.members.length} 완납
-            </Text>
-          </Pressable>
-        )
-      })}
+      {accounts.map((account) => (
+        <AccountSummaryCard
+          key={account.id}
+          account={account}
+          currentMonth={currentMonth}
+          onPress={() => selectAccount(account.id)}
+        />
+      ))}
 
       <Pressable
         style={styles.addCard}
@@ -126,43 +117,24 @@ export function AccountListScreen() {
       </Pressable>
 
       {showCreate && (
-        <View style={styles.createPanel}>
-          <Text style={styles.panelTitle}>새 모임통장 정보</Text>
-          <TextInput value={groupName} onChangeText={setGroupName} placeholder="모임명" style={styles.input} />
-          <TextInput value={bankName} onChangeText={setBankName} placeholder="은행명" style={styles.input} />
-          <TextInput value={accountNumber} onChangeText={setAccountNumber} placeholder="계좌번호" style={styles.input} />
-          <TextInput
-            value={monthlyDues}
-            onChangeText={setMonthlyDues}
-            placeholder="월 회비"
-            style={styles.input}
-            keyboardType="numeric"
-          />
-          <TextInput
-            value={dueDay}
-            onChangeText={setDueDay}
-            placeholder="납부일 (1~28)"
-            style={styles.input}
-            keyboardType="numeric"
-          />
-
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-
-          <View style={styles.panelButtons}>
-            <Pressable
-              style={styles.outlineButton}
-              onPress={() => {
-                setShowCreate(false)
-                resetCreateForm()
-              }}
-            >
-              <Text style={styles.outlineButtonText}>취소</Text>
-            </Pressable>
-            <Pressable style={styles.primaryButton} onPress={handleCreate}>
-              <Text style={styles.primaryButtonText}>개설하기</Text>
-            </Pressable>
-          </View>
-        </View>
+        <AccountCreatePanel
+          groupName={groupName}
+          bankName={bankName}
+          accountNumber={accountNumber}
+          monthlyDues={monthlyDues}
+          dueDay={dueDay}
+          error={error}
+          onChangeGroupName={setGroupName}
+          onChangeBankName={setBankName}
+          onChangeAccountNumber={setAccountNumber}
+          onChangeMonthlyDues={setMonthlyDues}
+          onChangeDueDay={setDueDay}
+          onCancel={() => {
+            setShowCreate(false)
+            resetCreateForm()
+          }}
+          onSubmit={handleCreate}
+        />
       )}
     </ScrollView>
   )
@@ -240,39 +212,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
-  accountCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    padding: 14,
-    gap: 6,
-  },
-  accountHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  accountTitle: {
-    color: "#0f172a",
-    fontSize: 15,
-    fontWeight: "700",
-    flex: 1,
-  },
-  accountMembers: {
-    color: "#64748b",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  accountBalance: {
-    color: "#0f172a",
-    fontSize: 20,
-    fontWeight: "800",
-  },
-  accountMeta: {
-    color: "#475569",
-    fontSize: 12,
-  },
   addCard: {
     borderRadius: 14,
     borderWidth: 1,
@@ -287,64 +226,5 @@ const styles = StyleSheet.create({
     color: "#1d4ed8",
     fontWeight: "700",
     fontSize: 14,
-  },
-  createPanel: {
-    backgroundColor: "#ffffff",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    padding: 14,
-    gap: 8,
-  },
-  panelTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#0f172a",
-    marginBottom: 4,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#cbd5e1",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    backgroundColor: "#ffffff",
-  },
-  panelButtons: {
-    marginTop: 6,
-    flexDirection: "row",
-    gap: 8,
-  },
-  outlineButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#cbd5e1",
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-  },
-  outlineButtonText: {
-    color: "#334155",
-    fontWeight: "600",
-  },
-  primaryButton: {
-    flex: 1,
-    backgroundColor: "#2563eb",
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-  },
-  primaryButtonText: {
-    color: "#ffffff",
-    fontWeight: "700",
-  },
-  error: {
-    color: "#dc2626",
-    fontSize: 13,
-    fontWeight: "600",
-    marginTop: 2,
   },
 })
