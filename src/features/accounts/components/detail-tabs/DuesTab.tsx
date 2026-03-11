@@ -61,43 +61,50 @@ export function DuesTab({
 
       <SectionCard>
         <Text style={styles.sectionTitle}>멤버별 납부 현황</Text>
-        <View style={styles.stackCompact}>
-          {currentDues.map((record) => {
-            const member = getMemberById(account.members, record.memberId)
-            if (!member) return null
-            return (
-              <View key={`${record.memberId}-${record.month}`} style={styles.memberRow}>
-                <View style={styles.memberIdentity}>
-                  <Text style={[styles.avatar, { backgroundColor: member.color }]}>{member.initials}</Text>
-                  <View>
-                    <Text style={styles.memberName}>{member.name}</Text>
-                    <Text style={styles.memberMeta}>
-                      {record.status === "paid" && record.paidDate ? `${formatDate(record.paidDate)} 납부` : record.status === "unpaid" ? "미납" : "면제"}
-                    </Text>
+        {currentDues.length > 0 ? (
+          <View style={styles.stackCompact}>
+            {currentDues.map((record) => {
+              const member = getMemberById(account.members, record.memberId)
+              if (!member) return null
+              return (
+                <View key={`${record.memberId}-${record.month}`} style={styles.memberRow}>
+                  <View style={styles.memberIdentity}>
+                    <Text style={[styles.avatar, { backgroundColor: member.color }]}>{member.initials}</Text>
+                    <View>
+                      <Text style={styles.memberName}>{member.name}</Text>
+                      <Text style={styles.memberMeta}>
+                        {record.status === "paid" && record.paidDate ? `${formatDate(record.paidDate)} 납부` : record.status === "unpaid" ? "미납" : "면제"}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-                {record.status !== "exempt" && (
-                  <Pressable
-                    style={[
-                      styles.smallOutlineButton,
-                      record.status === "unpaid" ? styles.smallOutlineButtonPrimary : styles.smallOutlineButtonMuted,
-                    ]}
-                    onPress={() => toggleDues(record.memberId, selectedMonth)}
-                  >
-                    <Text
+                  {record.status !== "exempt" && (
+                    <Pressable
                       style={[
-                        styles.smallOutlineButtonText,
-                        record.status === "unpaid" ? styles.smallOutlineButtonTextPrimary : styles.smallOutlineButtonTextMuted,
+                        styles.smallOutlineButton,
+                        record.status === "unpaid" ? styles.smallOutlineButtonPrimary : styles.smallOutlineButtonMuted,
                       ]}
+                      onPress={() => toggleDues(record.memberId, selectedMonth)}
                     >
-                      {record.status === "unpaid" ? "완납 처리" : "취소"}
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
-            )
-          })}
-        </View>
+                      <Text
+                        style={[
+                          styles.smallOutlineButtonText,
+                          record.status === "unpaid" ? styles.smallOutlineButtonTextPrimary : styles.smallOutlineButtonTextMuted,
+                        ]}
+                      >
+                        {record.status === "unpaid" ? "완납 처리" : "취소"}
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
+              )
+            })}
+          </View>
+        ) : (
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyTitle}>이 달의 회비 기록이 없습니다.</Text>
+            <Text style={styles.emptyDescription}>월을 변경하거나 멤버 회비를 등록해 진행률을 확인해보세요.</Text>
+          </View>
+        )}
       </SectionCard>
     </View>
   )
@@ -233,5 +240,25 @@ const styles = StyleSheet.create({
   },
   smallOutlineButtonTextMuted: {
     color: "#4b5563",
+  },
+  emptyBox: {
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    backgroundColor: "#f8fafc",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    gap: 4,
+  },
+  emptyTitle: {
+    color: "#111827",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  emptyDescription: {
+    color: "#6b7280",
+    fontSize: 12,
+    lineHeight: 17,
   },
 })

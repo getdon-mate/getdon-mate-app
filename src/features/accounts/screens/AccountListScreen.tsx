@@ -11,6 +11,7 @@ import { useApp } from "@core/providers/AppProvider"
 import { getCurrentMonthKey } from "@shared/lib/date"
 import { AccountCreatePanel } from "../components/AccountCreatePanel"
 import { AccountSummaryCard } from "../components/AccountSummaryCard"
+import { EmptyStateCard } from "../components/EmptyStateCard"
 import { UserHeaderCard } from "../components/UserHeaderCard"
 
 export function AccountListScreen() {
@@ -83,14 +84,21 @@ export function AccountListScreen() {
 
       <Text style={styles.sectionTitle}>내 모임통장 {accounts.length}개</Text>
 
-      {accounts.map((account) => (
-        <AccountSummaryCard
-          key={account.id}
-          account={account}
-          currentMonth={currentMonth}
-          onPress={() => selectAccount(account.id)}
+      {accounts.length > 0 ? (
+        accounts.map((account) => (
+          <AccountSummaryCard
+            key={account.id}
+            account={account}
+            currentMonth={currentMonth}
+            onPress={() => selectAccount(account.id)}
+          />
+        ))
+      ) : (
+        <EmptyStateCard
+          title="아직 모임통장이 없습니다."
+          description="새 모임통장을 개설해 회비와 거래 관리를 시작해보세요."
         />
-      ))}
+      )}
 
       <Pressable
         style={styles.addCard}

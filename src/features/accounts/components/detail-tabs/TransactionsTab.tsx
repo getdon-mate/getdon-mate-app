@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native"
 import { formatFullDate, formatKRW } from "../../model/mock-data"
 import { getTransactionTotals, groupTransactionsByDate } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"
+import { EmptyStateCard } from "../EmptyStateCard"
 import { SectionCard } from "../SectionCard"
 import { TransactionRow } from "../TransactionRow"
 
@@ -44,16 +45,23 @@ export function TransactionsTab({ account }: { account: GroupAccount }) {
         })}
       </View>
 
-      {dates.map((date) => (
-        <SectionCard key={date}>
-          <Text style={styles.subtleText}>{formatFullDate(date)}</Text>
-          <View style={styles.stackCompact}>
-            {grouped[date].map((tx) => (
-              <TransactionRow key={tx.id} account={account} tx={tx} />
-            ))}
-          </View>
-        </SectionCard>
-      ))}
+      {dates.length > 0 ? (
+        dates.map((date) => (
+          <SectionCard key={date}>
+            <Text style={styles.subtleText}>{formatFullDate(date)}</Text>
+            <View style={styles.stackCompact}>
+              {grouped[date].map((tx) => (
+                <TransactionRow key={tx.id} account={account} tx={tx} />
+              ))}
+            </View>
+          </SectionCard>
+        ))
+      ) : (
+        <EmptyStateCard
+          title="표시할 거래내역이 없습니다."
+          description="필터를 바꾸거나 새 거래를 추가하면 이 영역에 거래가 표시됩니다."
+        />
+      )}
     </View>
   )
 }

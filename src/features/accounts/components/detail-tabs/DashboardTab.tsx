@@ -81,11 +81,20 @@ export function DashboardTab({
             <Text style={styles.linkText}>더보기</Text>
           </Pressable>
         </View>
-        <View style={styles.stackCompact}>
-          {recentTransactions.map((tx) => (
-            <TransactionRow key={tx.id} account={account} tx={tx} />
-          ))}
-        </View>
+        {recentTransactions.length > 0 ? (
+          <View style={styles.stackCompact}>
+            {recentTransactions.map((tx) => (
+              <TransactionRow key={tx.id} account={account} tx={tx} />
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyTitle}>최근 거래내역이 없습니다.</Text>
+            <Text style={styles.emptyDescription}>
+              입금 또는 출금이 발생하면 이 영역에서 바로 확인할 수 있어요.
+            </Text>
+          </View>
+        )}
       </SectionCard>
     </View>
   )
@@ -207,5 +216,25 @@ const styles = StyleSheet.create({
     color: "#dc2626",
     fontSize: 12,
     fontWeight: "600",
+  },
+  emptyBox: {
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    backgroundColor: "#f8fafc",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    gap: 4,
+  },
+  emptyTitle: {
+    color: "#111827",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  emptyDescription: {
+    color: "#6b7280",
+    fontSize: 12,
+    lineHeight: 17,
   },
 })

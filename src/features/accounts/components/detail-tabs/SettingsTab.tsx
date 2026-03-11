@@ -141,7 +141,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
           </Pressable>
         </View>
 
-        {account.oneTimeDues.length > 0 && (
+        {account.oneTimeDues.length > 0 ? (
           <View style={styles.duesList}>
             {account.oneTimeDues.map((dues) => (
               <View key={dues.id} style={styles.duesCard}>
@@ -174,6 +174,11 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
                 })}
               </View>
             ))}
+          </View>
+        ) : (
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyTitle}>등록된 1회성 회비가 없습니다.</Text>
+            <Text style={styles.emptyDescription}>위 입력폼에서 회비를 생성하면 멤버별 납부 상태를 관리할 수 있어요.</Text>
           </View>
         )}
         </View>
@@ -402,6 +407,25 @@ const styles = StyleSheet.create({
   },
   duesList: {
     gap: 10,
+  },
+  emptyBox: {
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 12,
+    backgroundColor: "#f8fafc",
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    gap: 4,
+  },
+  emptyTitle: {
+    color: "#111827",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  emptyDescription: {
+    color: "#6b7280",
+    fontSize: 12,
+    lineHeight: 17,
   },
   duesCard: {
     borderWidth: 1,

@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from "react-native"
 import { getMemberPaymentRate } from "../../model/mock-data"
 import type { GroupAccount } from "../../model/types"
+import { EmptyStateCard } from "../EmptyStateCard"
 import { MemberRow } from "../MemberRow"
 import { SectionCard } from "../SectionCard"
 
@@ -22,15 +23,22 @@ export function MembersTab({ account }: { account: GroupAccount }) {
         </SectionCard>
       </View>
 
-      <SectionCard>
-        <Text style={styles.sectionTitle}>멤버 목록</Text>
-        <View style={styles.stackCompact}>
-          {account.members.map((member) => {
-            const rate = getMemberPaymentRate(account.duesRecords, member.id)
-            return <MemberRow key={member.id} member={member} rate={rate} duesRecords={account.duesRecords} />
-          })}
-        </View>
-      </SectionCard>
+      {account.members.length > 0 ? (
+        <SectionCard>
+          <Text style={styles.sectionTitle}>멤버 목록</Text>
+          <View style={styles.stackCompact}>
+            {account.members.map((member) => {
+              const rate = getMemberPaymentRate(account.duesRecords, member.id)
+              return <MemberRow key={member.id} member={member} rate={rate} duesRecords={account.duesRecords} />
+            })}
+          </View>
+        </SectionCard>
+      ) : (
+        <EmptyStateCard
+          title="등록된 멤버가 없습니다."
+          description="멤버가 추가되면 역할과 납부율 정보를 이 화면에서 확인할 수 있습니다."
+        />
+      )}
     </View>
   )
 }
