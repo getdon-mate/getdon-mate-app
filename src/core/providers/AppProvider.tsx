@@ -11,19 +11,16 @@ import type {
   OneTimeDuesRecord,
 } from "@features/accounts/model/types"
 
-export type AppView = "login" | "account-list" | "account-detail"
-
 interface AppContextType {
   currentUser: AppUser | null
-  currentView: AppView
   accounts: GroupAccount[]
   selectedAccountId: string | null
   login: (email: string, password: string) => boolean
   signup: (name: string, email: string, password: string) => boolean
   logout: () => void
   withdraw: () => void
-  setCurrentView: (view: AppView) => void
   selectAccount: (id: string) => void
+  clearSelectedAccount: () => void
   createAccount: (data: {
     groupName: string
     bankName: string
@@ -70,7 +67,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [users, setUsers] = useState<AppUser[]>(() => cloneUsers(defaultUsers))
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null)
-  const [currentView, setCurrentView] = useState<AppView>("login")
   const [accounts, setAccounts] = useState<GroupAccount[]>(() => cloneAccounts(defaultAccounts))
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null)
 
@@ -79,7 +75,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const user = users.find((u) => u.email === email && u.password === password)
       if (!user) return false
       setCurrentUser(user)
-      setCurrentView("account-list")
       return true
     },
     [users]
@@ -96,7 +91,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       setUsers((prev) => [...prev, newUser])
       setCurrentUser(newUser)
-      setCurrentView("account-list")
       return true
     },
     [users]
@@ -105,7 +99,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     setCurrentUser(null)
     setSelectedAccountId(null)
-    setCurrentView("login")
   }, [])
 
   const withdraw = useCallback(() => {
@@ -113,12 +106,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUsers((prev) => prev.filter((u) => u.id !== currentUser.id))
     setCurrentUser(null)
     setSelectedAccountId(null)
-    setCurrentView("login")
   }, [currentUser])
 
   const selectAccount = useCallback((id: string) => {
     setSelectedAccountId(id)
-    setCurrentView("account-detail")
+  }, [])
+
+  const clearSelectedAccount = useCallback(() => {
+    setSelectedAccountId(null)
   }, [])
 
   const createAccount = useCallback(
@@ -155,8 +150,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteAccount = useCallback((id: string) => {
     setAccounts((prev) => prev.filter((acc) => acc.id !== id))
-    setSelectedAccountId(null)
-    setCurrentView("account-list")
+    setSelectedAccountId((prev) => (prev === id ? null : prev))
   }, [])
 
   const toggleDues = useCallback(
@@ -254,22 +248,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAccounts(cloneAccounts(defaultAccounts))
     setCurrentUser(null)
     setSelectedAccountId(null)
-    setCurrentView("login")
   }, [])
 
   return (
     <AppContext.Provider
       value={{
         currentUser,
-        currentView,
         accounts,
         selectedAccountId,
         login,
         signup,
         logout,
         withdraw,
-        setCurrentView,
         selectAccount,
+        clearSelectedAccount,
         createAccount,
         deleteAccount,
         toggleDues,
