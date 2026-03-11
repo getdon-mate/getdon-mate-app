@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react"
+import { useNavigation } from "@react-navigation/native"
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import {
   Alert,
   ScrollView,
   StyleSheet,
-  View
 } from "react-native"
+import type { RootStackParamList } from "@core/navigation/types"
 import { useApp } from "@core/providers/AppProvider"
 import { getCurrentMonthKey } from "@shared/lib/date"
 import { Button, PageHeader } from "@shared/ui"
@@ -14,6 +16,7 @@ import { EmptyStateCard } from "../components/EmptyStateCard"
 import { UserHeaderCard } from "../components/UserHeaderCard"
 
 export function AccountListScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const { currentUser, accounts, selectAccount, createAccount, logout, withdraw, resetDemoData } = useApp()
   const currentMonth = getCurrentMonthKey()
 
@@ -62,7 +65,7 @@ export function AccountListScreen() {
     setCreateSubmitting(true)
     await new Promise((resolve) => setTimeout(resolve, 300))
 
-    createAccount({
+    await createAccount({
       groupName: groupName.trim(),
       bankName: bankName.trim(),
       accountNumber: accountNumber.trim(),
@@ -101,7 +104,10 @@ export function AccountListScreen() {
             key={account.id}
             account={account}
             currentMonth={currentMonth}
-            onPress={() => selectAccount(account.id)}
+            onPress={() => {
+              selectAccount(account.id)
+              navigation.navigate("AccountDetail")
+            }}
           />
         ))
       ) : (
