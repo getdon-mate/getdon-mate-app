@@ -8,13 +8,16 @@ import { useApp } from "@core/providers/AppProvider"
 import { AuthFormCard } from "../components/AuthFormCard"
 import { AuthHero } from "../components/AuthHero"
 
+const TEST_EMAIL = "test@test.com"
+const TEST_PASSWORD = "password"
+
 export function LoginScreen() {
   const { login, signup } = useApp()
 
   const [isSignup, setIsSignup] = useState(false)
   const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [email, setEmail] = useState(TEST_EMAIL)
+  const [password, setPassword] = useState(TEST_PASSWORD)
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
@@ -60,8 +63,8 @@ export function LoginScreen() {
     setIsSignup(nextSignup)
     setError("")
     setName("")
-    setEmail("")
-    setPassword("")
+    setEmail(nextSignup ? "" : TEST_EMAIL)
+    setPassword(nextSignup ? "" : TEST_PASSWORD)
   }
 
   return (
