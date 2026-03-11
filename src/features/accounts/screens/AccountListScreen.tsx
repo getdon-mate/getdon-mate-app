@@ -1,14 +1,13 @@
 import { useMemo, useState } from "react"
 import {
   Alert,
-  Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  View,
+  View
 } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
 import { getCurrentMonthKey } from "@shared/lib/date"
+import { Button, PageHeader } from "@shared/ui"
 import { AccountCreatePanel } from "../components/AccountCreatePanel"
 import { AccountSummaryCard } from "../components/AccountSummaryCard"
 import { EmptyStateCard } from "../components/EmptyStateCard"
@@ -94,7 +93,7 @@ export function AccountListScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <UserHeaderCard user={currentUser} initials={initials} onWithdraw={handleWithdraw} onLogout={logout} />
 
-      <Text style={styles.sectionTitle}>내 모임통장 {accounts.length}개</Text>
+      <PageHeader title="모임통장" subtitle={`내 모임통장 ${accounts.length}개`} />
 
       {accounts.length > 0 ? (
         accounts.map((account) => (
@@ -112,16 +111,16 @@ export function AccountListScreen() {
         />
       )}
 
-      <Pressable
+      <Button
         style={styles.addCard}
+        variant="secondary"
+        label={showCreate ? "입력 닫기" : "+ 새 모임통장 개설"}
         disabled={createSubmitting}
         onPress={() => {
           setShowCreate((prev) => !prev)
           setError("")
         }}
-      >
-        <Text style={styles.addCardText}>{showCreate ? "입력 닫기" : "+ 새 모임통장 개설"}</Text>
-      </Pressable>
+      />
 
       {showCreate && (
         <AccountCreatePanel
@@ -145,9 +144,13 @@ export function AccountListScreen() {
         />
       )}
 
-      <Pressable style={styles.resetCard} onPress={handleResetDemoData} disabled={createSubmitting}>
-        <Text style={styles.resetCardText}>데모 데이터 초기화</Text>
-      </Pressable>
+      <Button
+        style={styles.resetCard}
+        variant="danger"
+        label="데모 데이터 초기화"
+        onPress={handleResetDemoData}
+        disabled={createSubmitting}
+      />
     </ScrollView>
   )
 }
@@ -163,41 +166,10 @@ const styles = StyleSheet.create({
     gap: 16,
     paddingBottom: 30,
   },
-  sectionTitle: {
-    marginTop: 2,
-    color: "#6b7280",
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 0.35,
-    paddingHorizontal: 2,
-  },
   addCard: {
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#dbe3ef",
     borderStyle: "dashed",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 19,
-    backgroundColor: "#eff6ff",
-  },
-  addCardText: {
-    color: "#2563eb",
-    fontWeight: "700",
-    fontSize: 15,
   },
   resetCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#fecaca",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 13,
-    backgroundColor: "#ffffff",
-  },
-  resetCardText: {
-    color: "#dc2626",
-    fontWeight: "700",
-    fontSize: 13,
+    marginTop: -2,
   },
 })
