@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native"
+import { Pressable, StyleSheet, Text, View } from "react-native"
+import { Button } from "@shared/ui"
 import { formatMonth } from "../model/mock-data"
 import type { DuesRecord, Member } from "../model/types"
 
@@ -6,10 +7,14 @@ export function MemberRow({
   member,
   rate,
   duesRecords,
+  onEdit,
+  onDelete,
 }: {
   member: Member
   rate: number
   duesRecords: DuesRecord[]
+  onEdit?: () => void
+  onDelete?: () => void
 }) {
   const history = duesRecords
     .filter((record) => record.memberId === member.id)
@@ -25,6 +30,12 @@ export function MemberRow({
             <Text style={styles.memberMeta}>{member.role} · 납부율 {rate}%</Text>
           </View>
         </View>
+        {onEdit || onDelete ? (
+          <View style={styles.actions}>
+            {onEdit ? <Button label="수정" variant="ghost" onPress={onEdit} style={styles.actionButton} /> : null}
+            {onDelete ? <Button label="삭제" variant="danger" onPress={onDelete} style={styles.actionButton} /> : null}
+          </View>
+        ) : null}
       </View>
       {history.map((record) => (
         <Text key={`${member.id}-${record.month}`} style={styles.memberMeta}>
@@ -55,6 +66,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     flex: 1,
+  },
+  actions: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  actionButton: {
+    minWidth: 64,
+    paddingVertical: 8,
   },
   avatar: {
     width: 32,

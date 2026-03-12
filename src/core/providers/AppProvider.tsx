@@ -1,7 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
 import { createAccountsBackendV1Adapter } from "@features/accounts/api"
 import { defaultAccounts, defaultUsers } from "@features/accounts/model/mock-data"
-import type { AppUser, AutoTransfer, GroupAccount, OneTimeDues, OneTimeDuesRecord } from "@features/accounts/model/types"
+import type {
+  AppUser,
+  AutoTransfer,
+  GroupAccount,
+  Member,
+  MemberRole,
+  OneTimeDues,
+  OneTimeDuesRecord,
+} from "@features/accounts/model/types"
 
 interface CreateAccountInput {
   groupName: string
@@ -15,6 +23,20 @@ interface CreateOneTimeDuesInput {
   title: string
   amount: number
   dueDate: string
+}
+
+interface UpdateAccountInput {
+  groupName: string
+  bankName: string
+  accountNumber: string
+  monthlyDuesAmount: number
+  dueDay: number
+}
+
+interface UpsertMemberInput {
+  name: string
+  phone: string
+  role: MemberRole
 }
 
 interface AppContextType {
@@ -32,8 +54,12 @@ interface AppContextType {
   deleteAccount: (id: string) => Promise<void>
   toggleDues: (memberId: string, month: string) => Promise<void>
   updateAutoTransfer: (accountId: string, autoTransfer: AutoTransfer) => Promise<void>
+  updateAccount: (accountId: string, data: UpdateAccountInput) => Promise<void>
   createOneTimeDues: (accountId: string, data: CreateOneTimeDuesInput) => Promise<void>
   toggleOneTimeDuesRecord: (accountId: string, duesId: string, memberId: string) => Promise<void>
+  createMember: (accountId: string, data: UpsertMemberInput) => Promise<void>
+  updateMember: (accountId: string, memberId: string, data: UpsertMemberInput) => Promise<void>
+  deleteMember: (accountId: string, memberId: string) => Promise<void>
   resetDemoData: () => void
 }
 
@@ -91,6 +117,27 @@ function createLocalAccount(data: CreateAccountInput, currentUser: AppUser): Gro
     transactions: [],
     autoTransfer: { enabled: false, dayOfMonth: data.dueDay, amount: data.monthlyDuesAmount, fromAccount: "" },
     oneTimeDues: [],
+  }
+}
+
+function buildMemberInitials(name: string) {
+  return name.trim().slice(-2) || "멤버"
+}
+
+function pickMemberColor(index: number) {
+  const palette = ["#3b82f6", "#22c55e", "#a855f7", "#f59e0b", "#ef4444", "#14b8a6"]
+  return palette[index % palette.length]
+}
+
+function createLocalMember(data: UpsertMemberInput, memberCount: number): Member {
+  return {
+    id: `mem${Date.now()}`,
+    name: data.name,
+    role: data.role,
+    initials: buildMemberInitials(data.name),
+    phone: data.phone,
+    joinDate: new Date().toISOString().split("T")[0],
+    color: pickMemberColor(memberCount),
   }
 }
 
@@ -276,6 +323,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [backendAdapter]
   )
 
+  const updateAccount = useCallback(
+    async (accountId: string, data: UpdateAccountInput) => {
+      setAccounts((prev) =>
+        prev.map((acc) =>
+          acc.id === accountId
+            ? {
+                ...acc,
+                groupName: data.groupName,
+                bankName: data.bankName,
+                accountNumber: data.accountNumber,
+                monthlyDuesAmount: data.monthlyDuesAmount,
+                dueDay: data.dueDay,
+                autoTransfer: {
+                  ...acc.autoTransfer,
+                  dayOfMonth: data.dueDay,
+                  amount: acc.autoTransfer.enabled ? acc.autoTransfer.amount : data.monthlyDuesAmount,
+                },
+              }
+            : acc
+        )
+      )
+
+      await backendAdapter.updateAccount(accountId, data)
+    },
+    [backendAdapter]
+  )
+
   const createOneTimeDues = useCallback(
     async (accountId: string, data: CreateOneTimeDuesInput) => {
       setAccounts((prev) =>
@@ -335,6 +409,88 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [backendAdapter]
   )
 
+  const createMember = useCallback(
+    async (accountId: string, data: UpsertMemberInput) => {
+      const remoteMember = await backendAdapter.createMember(accountId, data)
+
+      setAccounts((prev) =>
+        prev.map((acc) => {
+          if (acc.id !== accountId) return acc
+          const nextMember = remoteMember ?? createLocalMember(data, acc.members.length)
+          const nextDues = acc.oneTimeDues.map((dues) => ({
+            ...dues,
+            records: [...dues.records, { memberId: nextMember.id, status: "unpaid" as const }],
+          }))
+
+          return {
+            ...acc,
+            members: [...acc.members, nextMember],
+            duesRecords: [
+              ...acc.duesRecords,
+              {
+                memberId: nextMember.id,
+                month: new Date().toISOString().slice(0, 7),
+                status: "unpaid" as const,
+                amount: acc.monthlyDuesAmount,
+              },
+            ],
+            oneTimeDues: nextDues,
+          }
+        })
+      )
+    },
+    [backendAdapter]
+  )
+
+  const updateMember = useCallback(
+    async (accountId: string, memberId: string, data: UpsertMemberInput) => {
+      setAccounts((prev) =>
+        prev.map((acc) => {
+          if (acc.id !== accountId) return acc
+          return {
+            ...acc,
+            members: acc.members.map((member) =>
+              member.id === memberId
+                ? {
+                    ...member,
+                    name: data.name,
+                    phone: data.phone,
+                    role: data.role,
+                    initials: buildMemberInitials(data.name),
+                  }
+                : member
+            ),
+          }
+        })
+      )
+
+      await backendAdapter.updateMember(accountId, memberId, data)
+    },
+    [backendAdapter]
+  )
+
+  const deleteMember = useCallback(
+    async (accountId: string, memberId: string) => {
+      setAccounts((prev) =>
+        prev.map((acc) => {
+          if (acc.id !== accountId) return acc
+          return {
+            ...acc,
+            members: acc.members.filter((member) => member.id !== memberId),
+            duesRecords: acc.duesRecords.filter((record) => record.memberId !== memberId),
+            oneTimeDues: acc.oneTimeDues.map((dues) => ({
+              ...dues,
+              records: dues.records.filter((record) => record.memberId !== memberId),
+            })),
+          }
+        })
+      )
+
+      await backendAdapter.deleteMember(accountId, memberId)
+    },
+    [backendAdapter]
+  )
+
   const resetDemoData = useCallback(() => {
     setUsers(cloneUsers(defaultUsers))
     setAccounts(cloneAccounts(defaultAccounts))
@@ -359,8 +515,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         deleteAccount,
         toggleDues,
         updateAutoTransfer,
+        updateAccount,
         createOneTimeDues,
         toggleOneTimeDuesRecord,
+        createMember,
+        updateMember,
+        deleteMember,
         resetDemoData,
       }}
     >
