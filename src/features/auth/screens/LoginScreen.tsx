@@ -8,7 +8,7 @@ import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
 import { requireText, validateEmail, validatePassword } from "@shared/lib/validation"
-import { Card, SkeletonBlock, uiSpacing } from "@shared/ui"
+import { Card, SkeletonBlock, StatusBanner, uiSpacing } from "@shared/ui"
 import { AuthFormCard } from "../components/AuthFormCard"
 import { AuthHero } from "../components/AuthHero"
 
@@ -16,7 +16,7 @@ const TEST_EMAIL = "test@test.com"
 const TEST_PASSWORD = "password"
 
 export function LoginScreen() {
-  const { isBootstrapping, login, signup } = useApp()
+  const { isBootstrapping, dataSource, prefersRealApi, login, signup } = useApp()
   const { showError } = useFeedback()
 
   const [isSignup, setIsSignup] = useState(false)
@@ -101,6 +101,15 @@ export function LoginScreen() {
       ) : (
         <>
           <AuthHero />
+          <StatusBanner
+            title={dataSource === "remote" ? "실 API 연결 모드" : prefersRealApi ? "데모 데이터로 대체됨" : "데모 모드"}
+            message={
+              dataSource === "remote"
+                ? "백엔드 응답을 기준으로 세션과 계좌 정보를 복원합니다."
+                : "실 API를 사용하지 못해 로컬 데모 데이터로 앱이 동작합니다."
+            }
+            tone={dataSource === "remote" ? "info" : "warning"}
+          />
           <AuthFormCard
             isSignup={isSignup}
             name={name}
