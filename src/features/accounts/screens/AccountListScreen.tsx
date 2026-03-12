@@ -7,9 +7,10 @@ import {
 } from "react-native"
 import type { RootStackParamList } from "@core/navigation/types"
 import { useApp } from "@core/providers/AppProvider"
+import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validateDayOfMonth, validatePositiveNumber } from "@shared/lib/validation"
 import { getCurrentMonthKey } from "@shared/lib/date"
-import { Button, ConfirmDialog, PageHeader, Toast } from "@shared/ui"
+import { Button, PageHeader } from "@shared/ui"
 import { AccountCreatePanel } from "../components/AccountCreatePanel"
 import { LoadingStateCard } from "../components/LoadingStateCard"
 import { AccountSummaryCard } from "../components/AccountSummaryCard"
@@ -19,6 +20,7 @@ import { UserHeaderCard } from "../components/UserHeaderCard"
 export function AccountListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const { isBootstrapping, currentUser, accounts, selectAccount, createAccount, logout, withdraw, resetDemoData } = useApp()
+  const { confirm, showToast } = useFeedback()
   const currentMonth = getCurrentMonthKey()
 
   const [showCreate, setShowCreate] = useState(false)
@@ -29,13 +31,6 @@ export function AccountListScreen() {
   const [dueDay, setDueDay] = useState("")
   const [error, setError] = useState("")
   const [createSubmitting, setCreateSubmitting] = useState(false)
-  const [withdrawConfirmVisible, setWithdrawConfirmVisible] = useState(false)
-  const [resetConfirmVisible, setResetConfirmVisible] = useState(false)
-  const [toastVisible, setToastVisible] = useState(false)
-  const [toastTitle, setToastTitle] = useState("")
-  const [toastMessage, setToastMessage] = useState("")
-  const [toastTone, setToastTone] = useState<"info" | "success" | "warning" | "danger">("info")
-
   const initials = useMemo(() => currentUser?.name.slice(-2) ?? "??", [currentUser])
 
   function resetCreateForm() {
@@ -81,24 +76,44 @@ export function AccountListScreen() {
     setCreateSubmitting(false)
   }
 
-  function handleWithdraw() {
-    setWithdrawConfirmVisible(true)
+  async function handleWithdraw() {
+    const confirmed = await confirm({
+      title: "회원 탈퇴",
+      message: "회원과 데모 계정 정보가 제거됩니다. 정말 탈퇴하시겠습니까?",
+      confirmLabel: "탈퇴",
+      confirmTone: "danger",
+    })
+    if (!confirmed) return
+    withdraw()
+    showToast({ tone: "success", title: "탈퇴 완료", message: "계정이 정리되었습니다." })
   }
 
-  function handleResetDemoData() {
-    setResetConfirmVisible(true)
+  async function handleResetDemoData() {
+    const confirmed = await confirm({
+      title: "데모 데이터 초기화",
+      message: "현재 변경 내용을 지우고 초기 mock 데이터로 되돌립니다.",
+      confirmLabel: "초기화",
+      confirmTone: "danger",
+    })
+    if (!confirmed) return
+    resetDemoData()
+    showToast({ tone: "success", title: "초기화 완료", message: "데모 데이터를 초기 상태로 되돌렸습니다." })
   }
 
-  function openToast(tone: "info" | "success" | "warning" | "danger", title: string, message: string) {
-    setToastTone(tone)
-    setToastTitle(title)
-    setToastMessage(message)
-    setToastVisible(true)
+  async function handleLogout() {
+    const confirmed = await confirm({
+      title: "로그아웃",
+      message: "현재 세션을 종료하고 로그인 화면으로 이동합니다.",
+      confirmLabel: "로그아웃",
+    })
+    if (!confirmed) return
+    logout()
+    showToast({ tone: "success", title: "로그아웃 완료", message: "로그인 화면으로 이동합니다." })
   }
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <UserHeaderCard user={currentUser} initials={initials} onWithdraw={handleWithdraw} onLogout={logout} />
+      <UserHeaderCard user={currentUser} initials={initials} onWithdraw={() => void handleWithdraw()} onLogout={() => void handleLogout()} />
 
       <PageHeader title="모임통장" subtitle={`내 모임통장 ${accounts.length}개`} />
 
@@ -171,40 +186,6 @@ export function AccountListScreen() {
         />
       ) : null}
 
-      <ConfirmDialog
-        visible={withdrawConfirmVisible}
-        title="회원 탈퇴"
-        message="정말 탈퇴하시겠습니까?"
-        confirmLabel="탈퇴"
-        confirmTone="danger"
-        onCancel={() => setWithdrawConfirmVisible(false)}
-        onConfirm={() => {
-          setWithdrawConfirmVisible(false)
-          withdraw()
-        }}
-      />
-
-      <ConfirmDialog
-        visible={resetConfirmVisible}
-        title="데모 데이터 초기화"
-        message="현재 변경 내용을 지우고 초기 mock 데이터로 되돌립니다."
-        confirmLabel="초기화"
-        confirmTone="danger"
-        onCancel={() => setResetConfirmVisible(false)}
-        onConfirm={() => {
-          setResetConfirmVisible(false)
-          resetDemoData()
-          openToast("success", "초기화 완료", "데모 데이터를 초기 상태로 되돌렸습니다.")
-        }}
-      />
-
-      <Toast
-        visible={toastVisible}
-        tone={toastTone}
-        title={toastTitle}
-        message={toastMessage}
-        onClose={() => setToastVisible(false)}
-      />
     </ScrollView>
   )
 }

@@ -1,8 +1,9 @@
 import { useState } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
+import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validateDayOfMonth, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
-import { AlertModal, Button, ConfirmDialog, InputField, NumericInputField, RadioButton, ToggleSwitch } from "@shared/ui"
+import { Button, InputField, NumericInputField, RadioButton, ToggleSwitch } from "@shared/ui"
 import { formatKRW, getMemberById } from "../../model/mock-data"
 import type { GroupAccount } from "../../model/types"
 
@@ -10,6 +11,7 @@ type RecordFilter = "all" | "paid" | "unpaid"
 
 export function SettingsTab({ account }: { account: GroupAccount }) {
   const { currentUser, updateAutoTransfer, createOneTimeDues, toggleOneTimeDuesRecord, deleteAccount, logout, withdraw } = useApp()
+  const { showAlert, showToast, confirm } = useFeedback()
 
   const [enabled, setEnabled] = useState(account.autoTransfer.enabled)
   const [day, setDay] = useState(String(account.autoTransfer.dayOfMonth))
@@ -21,18 +23,6 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
   const [dueDate, setDueDate] = useState("")
 
   const [recordFilter, setRecordFilter] = useState<RecordFilter>("all")
-  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false)
-  const [alertVisible, setAlertVisible] = useState(false)
-  const [alertTitle, setAlertTitle] = useState("")
-  const [alertMessage, setAlertMessage] = useState("")
-  const [alertTone, setAlertTone] = useState<"neutral" | "danger">("neutral")
-
-  function openAlert(titleText: string, messageText: string, tone: "neutral" | "danger" = "neutral") {
-    setAlertTitle(titleText)
-    setAlertMessage(messageText)
-    setAlertTone(tone)
-    setAlertVisible(true)
-  }
 
   async function handleSaveAutoTransfer() {
     const parsedDay = Number(day)
@@ -40,13 +30,13 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
 
     const dayError = validateDayOfMonth(day)
     if (enabled && dayError) {
-      openAlert("입력 오류", dayError, "danger")
+      showAlert({ title: "입력 오류", message: dayError, tone: "danger" })
       return
     }
 
     const amountError = validatePositiveNumber(amount, "금액을 올바르게 입력해주세요.")
     if (enabled && amountError) {
-      openAlert("입력 오류", amountError, "danger")
+      showAlert({ title: "입력 오류", message: amountError, tone: "danger" })
       return
     }
 
@@ -57,7 +47,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
       fromAccount,
     })
 
-    openAlert("저장 완료", "자동이체 설정을 저장했습니다.")
+    showToast({ tone: "success", title: "저장 완료", message: "자동이체 설정을 저장했습니다." })
   }
 
   async function handleCreateOneTimeDues() {
@@ -67,7 +57,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
       validatePositiveNumber(duesAmount, "금액을 올바르게 입력해주세요.") ??
       validateIsoDate(dueDate)
     if (validationError) {
-      openAlert("입력 오류", validationError, "danger")
+      showAlert({ title: "입력 오류", message: validationError, tone: "danger" })
       return
     }
 
@@ -80,15 +70,46 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
     setTitle("")
     setDuesAmount("")
     setDueDate("")
-    openAlert("생성 완료", "1회성 회비를 생성했습니다.")
+    showToast({ tone: "success", title: "생성 완료", message: "1회성 회비를 생성했습니다." })
   }
 
-  function handleDeleteAccount() {
-    setDeleteDialogVisible(true)
+  async function handleDeleteAccount() {
+    const confirmed = await confirm({
+      title: "모임통장 삭제",
+      message: "이 모임통장과 관련된 데모 데이터가 제거됩니다.",
+      confirmLabel: "삭제",
+      confirmTone: "danger",
+    })
+    if (!confirmed) return
+    await deleteAccount(account.id)
+    showToast({ tone: "success", title: "삭제 완료", message: "모임통장을 목록에서 제거했습니다." })
   }
 
   function handleAlertPlaceholder(label: string) {
-    openAlert(label, "준비 중인 기능입니다.")
+    showAlert({ title: label, message: "준비 중인 기능입니다." })
+  }
+
+  async function handleLogout() {
+    const confirmed = await confirm({
+      title: "로그아웃",
+      message: "현재 세션을 종료하고 로그인 화면으로 이동합니다.",
+      confirmLabel: "로그아웃",
+    })
+    if (!confirmed) return
+    logout()
+    showToast({ tone: "success", title: "로그아웃 완료", message: "로그인 화면으로 이동합니다." })
+  }
+
+  async function handleWithdraw() {
+    const confirmed = await confirm({
+      title: "회원 탈퇴",
+      message: "계정과 데모 데이터가 제거됩니다. 계속하시겠습니까?",
+      confirmLabel: "탈퇴",
+      confirmTone: "danger",
+    })
+    if (!confirmed) return
+    withdraw()
+    showToast({ tone: "success", title: "탈퇴 완료", message: "계정이 정리되었습니다." })
   }
 
   const profileName = currentUser?.name ?? account.members[0]?.name ?? "사용자"
@@ -210,32 +231,11 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
       </View>
 
       <View style={styles.menuGroup}>
-        <SettingsRow label="로그아웃" onPress={logout} />
-        <SettingsRow label="회원 탈퇴" onPress={withdraw} tone="danger" />
+        <SettingsRow label="로그아웃" onPress={() => void handleLogout()} />
+        <SettingsRow label="회원 탈퇴" onPress={() => void handleWithdraw()} tone="danger" />
       </View>
 
-      <Button style={styles.dangerAction} variant="danger" label="이 모임통장 삭제" onPress={handleDeleteAccount} />
-
-      <AlertModal
-        visible={alertVisible}
-        title={alertTitle}
-        message={alertMessage}
-        tone={alertTone}
-        onClose={() => setAlertVisible(false)}
-      />
-
-      <ConfirmDialog
-        visible={deleteDialogVisible}
-        title="모임통장 삭제"
-        message="정말 삭제하시겠습니까?"
-        confirmLabel="삭제"
-        confirmTone="danger"
-        onCancel={() => setDeleteDialogVisible(false)}
-        onConfirm={() => {
-          setDeleteDialogVisible(false)
-          void deleteAccount(account.id)
-        }}
-      />
+      <Button style={styles.dangerAction} variant="danger" label="이 모임통장 삭제" onPress={() => void handleDeleteAccount()} />
     </View>
   )
 }
