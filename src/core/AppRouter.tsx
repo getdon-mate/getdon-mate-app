@@ -12,7 +12,7 @@ import { NotificationSettingsScreen } from "@features/auth/screens/NotificationS
 import { uiColors } from "@shared/ui"
 import { ROUTES } from "./navigation/routes"
 import type { RootStackParamList } from "./navigation/types"
-import { useApp } from "./providers/AppProvider"
+import { useAppAccounts, useAppAuth } from "./providers/AppProvider"
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
 
@@ -32,7 +32,8 @@ const linking: LinkingOptions<RootStackParamList> = {
 
 export function AppRouter() {
   const navigationRef = useNavigationContainerRef<RootStackParamList>()
-  const { currentUser, accounts, selectedAccountId, selectAccount } = useApp()
+  const { currentUser } = useAppAuth()
+  const { accounts, selectedAccountId, selectAccount } = useAppAccounts()
   const hasSelectedAccount = useMemo(
     () => Boolean(selectedAccountId && accounts.some((account) => account.id === selectedAccountId)),
     [accounts, selectedAccountId]

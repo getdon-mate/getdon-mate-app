@@ -4,7 +4,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native"
 import { ROUTES } from "@core/navigation/routes"
 import type { RootStackParamList } from "@core/navigation/types"
-import { useApp } from "@core/providers/AppProvider"
+import { useAppAccounts, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { uiColors } from "@shared/ui"
 import { availableMonths } from "../model/fixtures"
@@ -24,7 +24,8 @@ const detailTabMemory = new Map<string, DetailTab>()
 export function AccountDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const route = useRoute()
-  const { isBootstrapping, isRefreshingAccounts, prefersRealApi, lastSyncError, accounts, selectedAccountId, clearSelectedAccount, selectAccount, refreshAccounts } = useApp()
+  const { isBootstrapping, isRefreshingAccounts, prefersRealApi, lastSyncError, refreshAccounts } = useAppRuntime()
+  const { accounts, selectedAccountId, clearSelectedAccount, selectAccount } = useAppAccounts()
   const { showToast } = useFeedback()
   const { width } = useWindowDimensions()
   const isWide = width >= 1024

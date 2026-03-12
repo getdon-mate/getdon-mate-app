@@ -10,7 +10,7 @@ import {
 import { apiConfig } from "@core/api"
 import { ROUTES } from "@core/navigation/routes"
 import type { RootStackParamList } from "@core/navigation/types"
-import { useApp } from "@core/providers/AppProvider"
+import { useAppAccounts, useAppAuth, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { appEnv } from "@shared/config/app-env"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
@@ -23,20 +23,16 @@ import { UserHeaderCard } from "../components/UserHeaderCard"
 
 export function AccountListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
+  const { currentUser, logout, withdraw } = useAppAuth()
+  const { accounts, selectAccount, resetDemoData } = useAppAccounts()
   const {
     isBootstrapping,
     dataSource,
     prefersRealApi,
     lastSyncError,
-    currentUser,
-    accounts,
     isRefreshingAccounts,
-    selectAccount,
     refreshAccounts,
-    logout,
-    withdraw,
-    resetDemoData,
-  } = useApp()
+  } = useAppRuntime()
   const { confirm, confirmDanger, showToast } = useFeedback()
   const currentMonth = getCurrentMonthKey()
   const { width } = useWindowDimensions()

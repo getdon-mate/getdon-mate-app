@@ -70,21 +70,29 @@ interface UpsertTransactionInput {
   category: string
 }
 
-interface AppContextType {
+interface AppRuntimeContextType {
   isBootstrapping: boolean
   isRefreshingAccounts: boolean
   lastSyncError: string | null
   dataSource: DataSource
   prefersRealApi: boolean
-  currentUser: AppUser | null
-  accounts: GroupAccount[]
-  selectedAccountId: string | null
+  refreshAccounts: () => Promise<DataSource>
   notificationPreferences: NotificationPreferences
+  updateNotificationPreferences: (next: NotificationPreferences) => Promise<void>
+}
+
+interface AppAuthContextType {
+  currentUser: AppUser | null
   login: (email: string, password: string) => Promise<boolean>
   signup: (name: string, email: string, password: string) => Promise<boolean>
   updateProfile: (data: UpdateProfileInput) => Promise<void>
   logout: () => void
   withdraw: () => void
+}
+
+interface AppAccountsContextType {
+  accounts: GroupAccount[]
+  selectedAccountId: string | null
   selectAccount: (id: string) => void
   clearSelectedAccount: () => void
   createAccount: (data: CreateAccountInput) => Promise<void>
@@ -97,25 +105,50 @@ interface AppContextType {
   closeOneTimeDues: (accountId: string, duesId: string, closed: boolean) => Promise<void>
   deleteOneTimeDues: (accountId: string, duesId: string) => Promise<void>
   toggleOneTimeDuesRecord: (accountId: string, duesId: string, memberId: string) => Promise<void>
-  updateNotificationPreferences: (next: NotificationPreferences) => Promise<void>
   createMember: (accountId: string, data: UpsertMemberInput) => Promise<void>
   updateMember: (accountId: string, memberId: string, data: UpsertMemberInput) => Promise<void>
   deleteMember: (accountId: string, memberId: string) => Promise<void>
   createTransaction: (accountId: string, data: UpsertTransactionInput) => Promise<void>
   updateTransaction: (accountId: string, transactionId: string, data: UpsertTransactionInput) => Promise<void>
   deleteTransaction: (accountId: string, transactionId: string) => Promise<void>
-  refreshAccounts: () => Promise<DataSource>
   resetDemoData: () => void
 }
 
-const AppContext = createContext<AppContextType | null>(null)
+interface AppContextType extends AppRuntimeContextType, AppAuthContextType, AppAccountsContextType {}
 
-export function useApp() {
-  const ctx = useContext(AppContext)
+const AppRuntimeContext = createContext<AppRuntimeContextType | null>(null)
+const AppAuthContext = createContext<AppAuthContextType | null>(null)
+const AppAccountsContext = createContext<AppAccountsContextType | null>(null)
+
+export function useAppRuntime() {
+  const ctx = useContext(AppRuntimeContext)
   if (!ctx) {
-    throw new Error("useApp must be used within AppProvider")
+    throw new Error("useAppRuntime must be used within AppProvider")
   }
   return ctx
+}
+
+export function useAppAuth() {
+  const ctx = useContext(AppAuthContext)
+  if (!ctx) {
+    throw new Error("useAppAuth must be used within AppProvider")
+  }
+  return ctx
+}
+
+export function useAppAccounts() {
+  const ctx = useContext(AppAccountsContext)
+  if (!ctx) {
+    throw new Error("useAppAccounts must be used within AppProvider")
+  }
+  return ctx
+}
+
+export function useApp(): AppContextType {
+  const runtime = useAppRuntime()
+  const auth = useAppAuth()
+  const accounts = useAppAccounts()
+  return useMemo(() => ({ ...runtime, ...auth, ...accounts }), [runtime, auth, accounts])
 }
 
 function cloneUsers(source: AppUser[]): AppUser[] {
@@ -821,47 +854,95 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setLastSyncError(null)
   }, [])
 
+  const runtimeContextValue = useMemo<AppRuntimeContextType>(
+    () => ({
+      isBootstrapping,
+      isRefreshingAccounts,
+      lastSyncError,
+      dataSource,
+      prefersRealApi,
+      refreshAccounts,
+      notificationPreferences,
+      updateNotificationPreferences,
+    }),
+    [
+      dataSource,
+      isBootstrapping,
+      isRefreshingAccounts,
+      lastSyncError,
+      notificationPreferences,
+      prefersRealApi,
+      refreshAccounts,
+      updateNotificationPreferences,
+    ]
+  )
+
+  const authContextValue = useMemo<AppAuthContextType>(
+    () => ({
+      currentUser,
+      login,
+      signup,
+      updateProfile,
+      logout,
+      withdraw,
+    }),
+    [currentUser, login, logout, signup, updateProfile, withdraw]
+  )
+
+  const accountsContextValue = useMemo<AppAccountsContextType>(
+    () => ({
+      accounts,
+      selectedAccountId,
+      selectAccount,
+      clearSelectedAccount,
+      createAccount,
+      deleteAccount,
+      toggleDues,
+      updateAutoTransfer,
+      updateAccount,
+      createOneTimeDues,
+      updateOneTimeDues,
+      closeOneTimeDues,
+      deleteOneTimeDues,
+      toggleOneTimeDuesRecord,
+      createMember,
+      updateMember,
+      deleteMember,
+      createTransaction,
+      updateTransaction,
+      deleteTransaction,
+      resetDemoData,
+    }),
+    [
+      accounts,
+      clearSelectedAccount,
+      closeOneTimeDues,
+      createAccount,
+      createMember,
+      createOneTimeDues,
+      createTransaction,
+      deleteAccount,
+      deleteMember,
+      deleteOneTimeDues,
+      deleteTransaction,
+      resetDemoData,
+      selectAccount,
+      selectedAccountId,
+      toggleDues,
+      toggleOneTimeDuesRecord,
+      updateAccount,
+      updateAutoTransfer,
+      updateMember,
+      updateOneTimeDues,
+      updateTransaction,
+    ]
+  )
+
   return (
-    <AppContext.Provider
-      value={{
-        dataSource,
-        prefersRealApi,
-        currentUser,
-        isBootstrapping,
-        isRefreshingAccounts,
-        lastSyncError,
-        accounts,
-        selectedAccountId,
-        notificationPreferences,
-        login,
-        signup,
-        updateProfile,
-        logout,
-        withdraw,
-        selectAccount,
-        clearSelectedAccount,
-        createAccount,
-        deleteAccount,
-        toggleDues,
-        updateAutoTransfer,
-        updateAccount,
-        createOneTimeDues,
-        updateOneTimeDues,
-        closeOneTimeDues,
-        deleteOneTimeDues,
-        toggleOneTimeDuesRecord,
-        updateNotificationPreferences,
-        createMember,
-        updateMember,
-        deleteMember,
-        createTransaction,
-        updateTransaction,
-        deleteTransaction,
-        refreshAccounts,
-        resetDemoData,
-      }}
-    >
-      {children}
-    </AppContext.Provider>
+    <AppRuntimeContext.Provider value={runtimeContextValue}>
+      <AppAuthContext.Provider value={authContextValue}>
+        <AppAccountsContext.Provider value={accountsContextValue}>{children}</AppAccountsContext.Provider>
+      </AppAuthContext.Provider>
+    </AppRuntimeContext.Provider>
   )
 }

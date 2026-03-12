@@ -4,14 +4,14 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native"
 import { ROUTES } from "@core/navigation/routes"
 import type { RootStackParamList } from "@core/navigation/types"
-import { useApp } from "@core/providers/AppProvider"
+import { useAppAuth } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validateEmail } from "@shared/lib/validation"
 import { Button, Card, Icon, InputField, PageHeader, uiColors } from "@shared/ui"
 
 export function MyPageScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
-  const { currentUser, updateProfile } = useApp()
+  const { currentUser, updateProfile } = useAppAuth()
   const { showError, showToast } = useFeedback()
 
   const [name, setName] = useState(currentUser?.name ?? "")

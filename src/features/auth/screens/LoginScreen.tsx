@@ -5,7 +5,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native"
-import { useApp } from "@core/providers/AppProvider"
+import { useAppAuth, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { appEnv } from "@shared/config/app-env"
 import { Button, Card, SkeletonBlock, StatusBanner, uiSpacing } from "@shared/ui"
@@ -14,7 +14,8 @@ import { AuthHero } from "../components/AuthHero"
 import { useAuthForm } from "../hooks/useAuthForm"
 
 export function LoginScreen() {
-  const { isBootstrapping, isRefreshingAccounts, dataSource, prefersRealApi, lastSyncError, refreshAccounts, login, signup } = useApp()
+  const { isBootstrapping, isRefreshingAccounts, dataSource, prefersRealApi, lastSyncError, refreshAccounts } = useAppRuntime()
+  const { login, signup } = useAppAuth()
   const { showError, showToast } = useFeedback()
   const { width } = useWindowDimensions()
   const isWide = width >= 900

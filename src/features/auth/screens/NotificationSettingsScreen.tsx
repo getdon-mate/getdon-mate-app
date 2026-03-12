@@ -3,7 +3,7 @@ import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { ScrollView, StyleSheet, Text, View } from "react-native"
 import type { RootStackParamList } from "@core/navigation/types"
-import { useApp } from "@core/providers/AppProvider"
+import { useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { COPY } from "@shared/constants/copy"
 import { Button, Card, PageHeader, ToggleSwitch, uiColors, uiSpacing } from "@shared/ui"
@@ -29,7 +29,7 @@ function NotificationToggleRow({
 
 export function NotificationSettingsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
-  const { notificationPreferences, updateNotificationPreferences } = useApp()
+  const { notificationPreferences, updateNotificationPreferences } = useAppRuntime()
   const { showToast } = useFeedback()
 
   const [draft, setDraft] = useState(notificationPreferences)
