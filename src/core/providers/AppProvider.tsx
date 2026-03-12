@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
-import { apiConfig, shouldUseRealApi } from "@core/api"
-import { createAccountsBackendV1Adapter } from "@features/accounts/api"
-import { defaultAccounts, defaultUsers } from "@features/accounts/model/mock-data"
+import { apiConfig, mapApiFailureToUserMessage, shouldUseRealApi } from "@core/api"
+import { createAccountsBackendV1Adapter, getLastBackendFailure } from "@features/accounts/api"
+import { defaultAccounts, defaultUsers } from "@features/accounts/model/fixtures"
 import type {
   AppUser,
   AutoTransfer,
@@ -13,6 +13,12 @@ import type {
   Transaction,
   TransactionType,
 } from "@features/accounts/model/types"
+import { logger } from "@shared/lib/logger"
+import {
+  readNotificationPreferences,
+  writeNotificationPreferences,
+  type NotificationPreferences,
+} from "@shared/lib/preferences-storage"
 import { clearPersistedSession, readPersistedSession, writePersistedSession } from "@shared/lib/session-storage"
 
 type DataSource = "demo" | "remote"
@@ -26,6 +32,12 @@ interface CreateAccountInput {
 }
 
 interface CreateOneTimeDuesInput {
+  title: string
+  amount: number
+  dueDate: string
+}
+
+interface UpdateOneTimeDuesInput {
   title: string
   amount: number
   dueDate: string
@@ -58,18 +70,29 @@ interface UpsertTransactionInput {
   category: string
 }
 
-interface AppContextType {
+interface AppRuntimeContextType {
   isBootstrapping: boolean
+  isRefreshingAccounts: boolean
+  lastSyncError: string | null
   dataSource: DataSource
   prefersRealApi: boolean
+  refreshAccounts: () => Promise<DataSource>
+  notificationPreferences: NotificationPreferences
+  updateNotificationPreferences: (next: NotificationPreferences) => Promise<void>
+}
+
+interface AppAuthContextType {
   currentUser: AppUser | null
-  accounts: GroupAccount[]
-  selectedAccountId: string | null
   login: (email: string, password: string) => Promise<boolean>
   signup: (name: string, email: string, password: string) => Promise<boolean>
   updateProfile: (data: UpdateProfileInput) => Promise<void>
   logout: () => void
   withdraw: () => void
+}
+
+interface AppAccountsContextType {
+  accounts: GroupAccount[]
+  selectedAccountId: string | null
   selectAccount: (id: string) => void
   clearSelectedAccount: () => void
   createAccount: (data: CreateAccountInput) => Promise<void>
@@ -78,6 +101,9 @@ interface AppContextType {
   updateAutoTransfer: (accountId: string, autoTransfer: AutoTransfer) => Promise<void>
   updateAccount: (accountId: string, data: UpdateAccountInput) => Promise<void>
   createOneTimeDues: (accountId: string, data: CreateOneTimeDuesInput) => Promise<void>
+  updateOneTimeDues: (accountId: string, duesId: string, data: UpdateOneTimeDuesInput) => Promise<void>
+  closeOneTimeDues: (accountId: string, duesId: string, closed: boolean) => Promise<void>
+  deleteOneTimeDues: (accountId: string, duesId: string) => Promise<void>
   toggleOneTimeDuesRecord: (accountId: string, duesId: string, memberId: string) => Promise<void>
   createMember: (accountId: string, data: UpsertMemberInput) => Promise<void>
   updateMember: (accountId: string, memberId: string, data: UpsertMemberInput) => Promise<void>
@@ -88,14 +114,41 @@ interface AppContextType {
   resetDemoData: () => void
 }
 
-const AppContext = createContext<AppContextType | null>(null)
+interface AppContextType extends AppRuntimeContextType, AppAuthContextType, AppAccountsContextType {}
 
-export function useApp() {
-  const ctx = useContext(AppContext)
+const AppRuntimeContext = createContext<AppRuntimeContextType | null>(null)
+const AppAuthContext = createContext<AppAuthContextType | null>(null)
+const AppAccountsContext = createContext<AppAccountsContextType | null>(null)
+
+export function useAppRuntime() {
+  const ctx = useContext(AppRuntimeContext)
   if (!ctx) {
-    throw new Error("useApp must be used within AppProvider")
+    throw new Error("useAppRuntime must be used within AppProvider")
   }
   return ctx
+}
+
+export function useAppAuth() {
+  const ctx = useContext(AppAuthContext)
+  if (!ctx) {
+    throw new Error("useAppAuth must be used within AppProvider")
+  }
+  return ctx
+}
+
+export function useAppAccounts() {
+  const ctx = useContext(AppAccountsContext)
+  if (!ctx) {
+    throw new Error("useAppAccounts must be used within AppProvider")
+  }
+  return ctx
+}
+
+export function useApp(): AppContextType {
+  const runtime = useAppRuntime()
+  const auth = useAppAuth()
+  const accounts = useAppAccounts()
+  return useMemo(() => ({ ...runtime, ...auth, ...accounts }), [runtime, auth, accounts])
 }
 
 function cloneUsers(source: AppUser[]): AppUser[] {
@@ -111,6 +164,7 @@ function cloneAccounts(source: GroupAccount[]): GroupAccount[] {
     autoTransfer: { ...account.autoTransfer },
     oneTimeDues: account.oneTimeDues.map((dues) => ({
       ...dues,
+      status: dues.status ?? "active",
       records: dues.records.map((record) => ({ ...record })),
     })),
   }))
@@ -189,6 +243,12 @@ function createLocalTransaction(data: UpsertTransactionInput): Transaction {
   }
 }
 
+const defaultNotificationPreferences: NotificationPreferences = {
+  duesReminder: true,
+  transactionAlert: true,
+  noticeAlert: true,
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const backendAdapter = useMemo(() => createAccountsBackendV1Adapter(), [])
   const prefersRealApi = useMemo(() => shouldUseRealApi(apiConfig), [])
@@ -196,10 +256,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [users, setUsers] = useState<AppUser[]>(() => cloneUsers(defaultUsers))
   const [isBootstrapping, setIsBootstrapping] = useState(true)
+  const [isRefreshingAccounts, setIsRefreshingAccounts] = useState(false)
+  const [lastSyncError, setLastSyncError] = useState<string | null>(null)
   const [dataSource, setDataSource] = useState<DataSource>(prefersRealApi ? "remote" : "demo")
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null)
   const [accounts, setAccounts] = useState<GroupAccount[]>(() => cloneAccounts(defaultAccounts))
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(initialSession?.selectedAccountId ?? null)
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences>(
+    () => readNotificationPreferences() ?? defaultNotificationPreferences
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -208,6 +273,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const bootstrap = await backendAdapter.loadBootstrap()
       if (!bootstrap || cancelled) {
         setDataSource("demo")
+        setLastSyncError(prefersRealApi ? mapApiFailureToUserMessage(getLastBackendFailure()) : null)
         setIsBootstrapping(false)
         return
       }
@@ -215,6 +281,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setUsers(cloneUsers(bootstrap.users))
       setAccounts(cloneAccounts(bootstrap.accounts))
       setDataSource("remote")
+      setLastSyncError(null)
       setIsBootstrapping(false)
     }
 
@@ -223,7 +290,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [backendAdapter])
+  }, [backendAdapter, prefersRealApi])
 
   useEffect(() => {
     if (isBootstrapping) return
@@ -242,6 +309,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [accounts, isBootstrapping, users])
 
   useEffect(() => {
+    if (!selectedAccountId) return
+    if (accounts.some((account) => account.id === selectedAccountId)) return
+    setSelectedAccountId(null)
+  }, [accounts, selectedAccountId])
+
+  useEffect(() => {
     if (isBootstrapping) return
 
     if (!currentUser && !selectedAccountId) {
@@ -254,6 +327,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       selectedAccountId,
     })
   }, [currentUser, isBootstrapping, selectedAccountId])
+
+  useEffect(() => {
+    writeNotificationPreferences(notificationPreferences)
+  }, [notificationPreferences])
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout> | undefined
@@ -280,6 +357,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
         return true
       }
+      if (prefersRealApi) {
+        logger.warn({
+          scope: "auth.login",
+          message: "Falling back to demo authentication after remote login failure.",
+        })
+      }
 
       const user = users.find((u) => u.email === email && u.password === password)
       if (!user) return false
@@ -287,7 +370,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setCurrentUser(user)
       return true
     },
-    [backendAdapter, users]
+    [backendAdapter, prefersRealApi, users]
   )
 
   const signup = useCallback(
@@ -300,6 +383,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setAccounts(cloneAccounts(remoteAuth.accounts))
         }
         return true
+      }
+      if (prefersRealApi) {
+        logger.warn({
+          scope: "auth.signup",
+          message: "Falling back to demo signup after remote signup failure.",
+        })
       }
 
       if (users.some((u) => u.email === email)) return false
@@ -314,7 +403,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setCurrentUser(newUser)
       return true
     },
-    [backendAdapter, users]
+    [backendAdapter, prefersRealApi, users]
   )
 
   const updateProfile = useCallback(
@@ -335,6 +424,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setCurrentUser(null)
     setSelectedAccountId(null)
   }, [])
+
+  const refreshAccounts = useCallback(async () => {
+    setIsRefreshingAccounts(true)
+    try {
+      const bootstrap = await backendAdapter.loadBootstrap()
+      if (!bootstrap) {
+        setDataSource("demo")
+        setLastSyncError(prefersRealApi ? mapApiFailureToUserMessage(getLastBackendFailure()) : null)
+        return "demo" as const
+      }
+
+      setUsers(cloneUsers(bootstrap.users))
+      setAccounts(cloneAccounts(bootstrap.accounts))
+      setCurrentUser((prev) => {
+        if (!prev) return prev
+        return bootstrap.users.find((user) => user.id === prev.id) ?? null
+      })
+      setDataSource("remote")
+      setLastSyncError(null)
+      return "remote" as const
+    } finally {
+      setIsRefreshingAccounts(false)
+    }
+  }, [backendAdapter, prefersRealApi])
 
   const withdraw = useCallback(() => {
     if (!currentUser) return
@@ -465,6 +578,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             title: data.title,
             amount: data.amount,
             dueDate: data.dueDate,
+            status: "active",
             records,
           }
           return { ...acc, oneTimeDues: [...acc.oneTimeDues, newDues] }
@@ -476,6 +590,65 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [backendAdapter]
   )
 
+  const updateOneTimeDues = useCallback(
+    async (accountId: string, duesId: string, data: UpdateOneTimeDuesInput) => {
+      setAccounts((prev) =>
+        prev.map((acc) => {
+          if (acc.id !== accountId) return acc
+          return {
+            ...acc,
+            oneTimeDues: acc.oneTimeDues.map((dues) =>
+              dues.id === duesId
+                ? {
+                    ...dues,
+                    title: data.title,
+                    amount: data.amount,
+                    dueDate: data.dueDate,
+                  }
+                : dues
+            ),
+          }
+        })
+      )
+    },
+    []
+  )
+
+  const closeOneTimeDues = useCallback(
+    async (accountId: string, duesId: string, closed: boolean) => {
+      setAccounts((prev) =>
+        prev.map((acc) => {
+          if (acc.id !== accountId) return acc
+          return {
+            ...acc,
+            oneTimeDues: acc.oneTimeDues.map((dues) =>
+              dues.id === duesId
+                ? {
+                    ...dues,
+                    status: closed ? "closed" : "active",
+                  }
+                : dues
+            ),
+          }
+        })
+      )
+    },
+    []
+  )
+
+  const deleteOneTimeDues = useCallback(async (accountId: string, duesId: string) => {
+    setAccounts((prev) =>
+      prev.map((acc) =>
+        acc.id === accountId
+          ? {
+              ...acc,
+              oneTimeDues: acc.oneTimeDues.filter((dues) => dues.id !== duesId),
+            }
+          : acc
+      )
+    )
+  }, [])
+
   const toggleOneTimeDuesRecord = useCallback(
     async (accountId: string, duesId: string, memberId: string) => {
       setAccounts((prev) =>
@@ -485,6 +658,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             ...acc,
             oneTimeDues: acc.oneTimeDues.map((dues) => {
               if (dues.id !== duesId) return dues
+              if (dues.status === "closed") return dues
               return {
                 ...dues,
                 records: dues.records.map((record) => {
@@ -666,46 +840,109 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [backendAdapter]
   )
 
+  const updateNotificationPreferences = useCallback(async (next: NotificationPreferences) => {
+    setNotificationPreferences(next)
+  }, [])
+
   const resetDemoData = useCallback(() => {
     setUsers(cloneUsers(defaultUsers))
     setAccounts(cloneAccounts(defaultAccounts))
     setCurrentUser(null)
     setSelectedAccountId(null)
+    setNotificationPreferences(defaultNotificationPreferences)
+    setDataSource("demo")
+    setLastSyncError(null)
   }, [])
 
+  const runtimeContextValue = useMemo<AppRuntimeContextType>(
+    () => ({
+      isBootstrapping,
+      isRefreshingAccounts,
+      lastSyncError,
+      dataSource,
+      prefersRealApi,
+      refreshAccounts,
+      notificationPreferences,
+      updateNotificationPreferences,
+    }),
+    [
+      dataSource,
+      isBootstrapping,
+      isRefreshingAccounts,
+      lastSyncError,
+      notificationPreferences,
+      prefersRealApi,
+      refreshAccounts,
+      updateNotificationPreferences,
+    ]
+  )
+
+  const authContextValue = useMemo<AppAuthContextType>(
+    () => ({
+      currentUser,
+      login,
+      signup,
+      updateProfile,
+      logout,
+      withdraw,
+    }),
+    [currentUser, login, logout, signup, updateProfile, withdraw]
+  )
+
+  const accountsContextValue = useMemo<AppAccountsContextType>(
+    () => ({
+      accounts,
+      selectedAccountId,
+      selectAccount,
+      clearSelectedAccount,
+      createAccount,
+      deleteAccount,
+      toggleDues,
+      updateAutoTransfer,
+      updateAccount,
+      createOneTimeDues,
+      updateOneTimeDues,
+      closeOneTimeDues,
+      deleteOneTimeDues,
+      toggleOneTimeDuesRecord,
+      createMember,
+      updateMember,
+      deleteMember,
+      createTransaction,
+      updateTransaction,
+      deleteTransaction,
+      resetDemoData,
+    }),
+    [
+      accounts,
+      clearSelectedAccount,
+      closeOneTimeDues,
+      createAccount,
+      createMember,
+      createOneTimeDues,
+      createTransaction,
+      deleteAccount,
+      deleteMember,
+      deleteOneTimeDues,
+      deleteTransaction,
+      resetDemoData,
+      selectAccount,
+      selectedAccountId,
+      toggleDues,
+      toggleOneTimeDuesRecord,
+      updateAccount,
+      updateAutoTransfer,
+      updateMember,
+      updateOneTimeDues,
+      updateTransaction,
+    ]
+  )
+
   return (
-    <AppContext.Provider
-      value={{
-        dataSource,
-        prefersRealApi,
-        currentUser,
-        isBootstrapping,
-        accounts,
-        selectedAccountId,
-        login,
-        signup,
-        updateProfile,
-        logout,
-        withdraw,
-        selectAccount,
-        clearSelectedAccount,
-        createAccount,
-        deleteAccount,
-        toggleDues,
-        updateAutoTransfer,
-        updateAccount,
-        createOneTimeDues,
-        toggleOneTimeDuesRecord,
-        createMember,
-        updateMember,
-        deleteMember,
-        createTransaction,
-        updateTransaction,
-        deleteTransaction,
-        resetDemoData,
-      }}
-    >
-      {children}
-    </AppContext.Provider>
+    <AppRuntimeContext.Provider value={runtimeContextValue}>
+      <AppAuthContext.Provider value={authContextValue}>
+        <AppAccountsContext.Provider value={accountsContextValue}>{children}</AppAccountsContext.Provider>
+      </AppAuthContext.Provider>
+    </AppRuntimeContext.Provider>
   )
 }

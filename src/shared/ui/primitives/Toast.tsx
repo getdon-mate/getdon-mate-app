@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { StyleSheet, Text, View, type ViewStyle } from "react-native"
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native"
 import { uiColors, uiRadius } from "../tokens"
 import { Icon } from "./Icon"
 
@@ -20,6 +20,7 @@ export function Toast({
   autoHideMs = 2400,
   onClose,
   style,
+  containerStyle,
 }: {
   visible: boolean
   title: string
@@ -27,7 +28,8 @@ export function Toast({
   tone?: ToastTone
   autoHideMs?: number
   onClose?: () => void
-  style?: ViewStyle | ViewStyle[]
+  style?: StyleProp<ViewStyle>
+  containerStyle?: StyleProp<ViewStyle>
 }) {
   useEffect(() => {
     if (!visible || !onClose || autoHideMs <= 0) return
@@ -40,9 +42,18 @@ export function Toast({
   if (!visible) return null
 
   return (
-    <View style={[styles.wrap, tone === "success" && styles.success, tone === "warning" && styles.warning, tone === "danger" && styles.danger, style]}>
+    <View
+      style={[
+        styles.wrap,
+        tone === "success" && styles.success,
+        tone === "warning" && styles.warning,
+        tone === "danger" && styles.danger,
+        style,
+        containerStyle,
+      ]}
+    >
       <View style={styles.iconWrap}>
-        <Icon name={toneIcon[tone]} size={14} color="#ffffff" />
+        <Icon name={toneIcon[tone]} size={14} color={uiColors.surface} />
       </View>
       <View style={styles.textWrap}>
         <Text style={styles.title}>{title}</Text>
@@ -62,24 +73,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     alignItems: "center",
-    backgroundColor: "#1e293b",
+    backgroundColor: uiColors.textStrong,
     borderRadius: uiRadius.lg,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: uiColors.textMuted,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   success: {
     backgroundColor: uiColors.success,
-    borderColor: "#15803d",
+    borderColor: uiColors.successBorder,
   },
   warning: {
     backgroundColor: "#b45309",
-    borderColor: "#92400e",
+    borderColor: "#f59e0b",
   },
   danger: {
     backgroundColor: uiColors.danger,
-    borderColor: "#b91c1c",
+    borderColor: uiColors.dangerBorder,
   },
   iconWrap: {
     width: 20,
@@ -94,12 +105,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   title: {
-    color: "#ffffff",
+    color: uiColors.surface,
     fontSize: 13,
     fontWeight: "700",
   },
   message: {
-    color: "#e2e8f0",
+    color: uiColors.surface,
     fontSize: 12,
     fontWeight: "500",
   },

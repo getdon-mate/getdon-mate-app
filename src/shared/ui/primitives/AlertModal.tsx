@@ -1,4 +1,4 @@
-import { Modal, StyleSheet, Text, View } from "react-native"
+import { Modal, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native"
 import { uiColors, uiRadius } from "../tokens"
 import { Button } from "./Button"
 
@@ -8,6 +8,7 @@ export function AlertModal({
   message,
   confirmLabel = "확인",
   tone = "neutral",
+  containerStyle,
   onClose,
 }: {
   visible: boolean
@@ -15,12 +16,13 @@ export function AlertModal({
   message?: string
   confirmLabel?: string
   tone?: "neutral" | "danger"
+  containerStyle?: StyleProp<ViewStyle>
   onClose: () => void
 }) {
   return (
     <Modal transparent animationType="fade" visible={visible} onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <View style={styles.dialog}>
+        <View style={[styles.dialog, containerStyle]}>
           <Text style={[styles.title, tone === "danger" && styles.titleDanger]}>{title}</Text>
           {message ? <Text style={styles.message}>{message}</Text> : null}
           <Button
@@ -38,7 +40,7 @@ export function AlertModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(15,23,42,0.45)",
+    backgroundColor: uiColors.overlayStrong,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,

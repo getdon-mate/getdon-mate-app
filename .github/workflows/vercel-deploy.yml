@@ -34,6 +34,7 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 10.7.0
+          run_install: false
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -50,14 +51,19 @@ jobs:
       - name: Verify web build prerequisites
         run: pnpm run ci:web
 
-      - name: Ensure Vercel credentials exist
+      - name: Check Vercel credentials
+        id: vercel-creds
         run: |
-          test -n "$VERCEL_ORG_ID"
-          test -n "$VERCEL_PROJECT_ID"
-          test -n "$VERCEL_TOKEN"
+          if [[ -n "$VERCEL_ORG_ID" && -n "$VERCEL_PROJECT_ID" && -n "$VERCEL_TOKEN" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "available=false" >> "$GITHUB_OUTPUT"
+          echo "::warning::VERCEL_* secrets are not configured. Preview deploy step will be skipped."
 
       - name: Deploy preview to Vercel
-        run: npm run deploy:vercel:preview
+        if: steps.vercel-creds.outputs.available == 'true'
+        run: pnpm run deploy:vercel:preview
 
   deploy-production:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -74,6 +80,7 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 10.7.0
+          run_install: false
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -90,11 +97,16 @@ jobs:
       - name: Verify web build prerequisites
         run: pnpm run ci:web
 
-      - name: Ensure Vercel credentials exist
+      - name: Check Vercel credentials
+        id: vercel-creds
         run: |
-          test -n "$VERCEL_ORG_ID"
-          test -n "$VERCEL_PROJECT_ID"
-          test -n "$VERCEL_TOKEN"
+          if [[ -n "$VERCEL_ORG_ID" && -n "$VERCEL_PROJECT_ID" && -n "$VERCEL_TOKEN" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "available=false" >> "$GITHUB_OUTPUT"
+          echo "::warning::VERCEL_* secrets are not configured. Production deploy step will be skipped."
 
       - name: Deploy production to Vercel
-        run: npm run deploy:vercel:production
+        if: steps.vercel-creds.outputs.available == 'true'
+        run: pnpm run deploy:vercel:production

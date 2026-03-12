@@ -50,6 +50,7 @@ export interface OneTimeDues {
   title: string
   amount: number
   dueDate: string
+  status: "active" | "closed"
   records: OneTimeDuesRecord[]
 }
 
@@ -74,4 +75,3 @@ export interface AppUser {
   email: string
   password: string
 }
-

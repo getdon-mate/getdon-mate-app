@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native"
+import { Pressable, StyleSheet, Text } from "react-native"
+import { COPY } from "@shared/constants/copy"
 import { Button, Card, InputField, uiColors } from "@shared/ui"
 
 interface AuthFormCardProps {
@@ -13,6 +14,7 @@ interface AuthFormCardProps {
   onSubmit: () => void
   onToggleMode: () => void
   submitting?: boolean
+  showTestAccountHint?: boolean
 }
 
 export function AuthFormCard({
@@ -27,6 +29,7 @@ export function AuthFormCard({
   onSubmit,
   onToggleMode,
   submitting = false,
+  showTestAccountHint = false,
 }: AuthFormCardProps) {
   return (
     <Card style={styles.card}>
@@ -77,9 +80,7 @@ export function AuthFormCard({
         </Text>
       </Pressable>
 
-      {!isSignup && (
-        <Text style={styles.helper}>테스트 계정: test@test.com / password</Text>
-      )}
+      {!isSignup && showTestAccountHint ? <Text style={styles.helper}>{COPY.auth.testAccountLabel}</Text> : null}
     </Card>
   )
 }

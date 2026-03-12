@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   neutral: {
-    backgroundColor: "#f3f4f6",
+    backgroundColor: uiColors.surfaceMuted,
     borderColor: uiColors.border,
   },
   primary: {
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   neutralText: {
-    color: "#334155",
+    color: uiColors.text,
   },
   primaryText: {
     color: uiColors.primary,

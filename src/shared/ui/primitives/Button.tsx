@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, type PressableProps, type ViewStyle } from "react-native"
+import { Pressable, StyleSheet, Text, type PressableProps, type StyleProp, type TextStyle, type ViewStyle } from "react-native"
 import { uiColors, uiRadius } from "../tokens"
 
 type ButtonVariant = "primary" | "secondary" | "danger" | "ghost"
@@ -9,17 +9,23 @@ export function Button({
   variant = "primary",
   size = "md",
   style,
+  containerStyle,
+  textStyle,
   disabled,
   ...props
 }: PressableProps & {
   label: string
   variant?: ButtonVariant
   size?: ButtonSize
-  style?: ViewStyle | ViewStyle[]
+  style?: StyleProp<ViewStyle>
+  containerStyle?: StyleProp<ViewStyle>
+  textStyle?: StyleProp<TextStyle>
 }) {
   return (
     <Pressable
       {...props}
+      accessibilityRole="button"
+      accessibilityLabel={props.accessibilityLabel ?? label}
       disabled={disabled}
       style={[
         styles.base,
@@ -30,6 +36,7 @@ export function Button({
         size === "lg" && styles.lg,
         disabled && styles.disabled,
         style,
+        containerStyle,
       ]}
     >
       <Text
@@ -39,6 +46,7 @@ export function Button({
           variant === "secondary" && styles.secondaryText,
           variant === "danger" && styles.dangerText,
           variant === "ghost" && styles.ghostText,
+          textStyle,
         ]}
       >
         {label}
@@ -68,11 +76,11 @@ const styles = StyleSheet.create({
   },
   secondary: {
     backgroundColor: uiColors.primarySoft,
-    borderColor: "#dbeafe",
+    borderColor: uiColors.primaryBorder,
   },
   danger: {
     backgroundColor: uiColors.dangerSoft,
-    borderColor: "#fecaca",
+    borderColor: uiColors.dangerBorder,
   },
   ghost: {
     backgroundColor: uiColors.surface,
@@ -83,7 +91,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   primaryText: {
-    color: "#ffffff",
+    color: uiColors.surface,
   },
   secondaryText: {
     color: uiColors.primary,
@@ -92,6 +100,6 @@ const styles = StyleSheet.create({
     color: uiColors.danger,
   },
   ghostText: {
-    color: "#334155",
+    color: uiColors.text,
   },
 })

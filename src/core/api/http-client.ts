@@ -1,5 +1,6 @@
 import { apiConfig, type ApiConfig } from "./config"
 import { ApiError } from "./errors"
+import { logger } from "@shared/lib/logger"
 
 interface ApiEnvelope<T> {
   data: T
@@ -76,6 +77,7 @@ export class ApiClient {
 
     const controller = new AbortController()
     const timeoutMs = options.timeoutMs ?? this.config.timeoutMs
+    const method = options.method ?? "GET"
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
     try {
@@ -100,6 +102,11 @@ export class ApiClient {
 
       const payload = await parsePayload(response)
       if (!response.ok) {
+        logger.warn({
+          scope: "api.http-client",
+          message: `HTTP ${response.status} ${method} ${path}`,
+          details: payload,
+        })
         throw new ApiError(readMessage(payload, `Request failed with ${response.status}`), {
           status: response.status,
           code: readCode(payload),
@@ -117,8 +124,17 @@ export class ApiClient {
         throw error
       }
       if (error instanceof DOMException && error.name === "AbortError") {
+        logger.warn({
+          scope: "api.http-client",
+          message: `Request timeout ${method} ${path}`,
+        })
         throw new ApiError(`Request timeout (${timeoutMs}ms)`, { code: "API_TIMEOUT", cause: error })
       }
+      logger.error({
+        scope: "api.http-client",
+        message: `Network request failed ${method} ${path}`,
+        details: error,
+      })
       throw new ApiError("Network request failed.", { code: "API_NETWORK_ERROR", cause: error })
     } finally {
       clearTimeout(timeoutId)

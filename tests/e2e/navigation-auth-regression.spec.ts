@@ -1,0 +1,82 @@
+import { expect, type Page, test } from "@playwright/test"
+
+async function loginAsTestUser(page: Page) {
+  await page.goto("/")
+  await page.getByRole("button", { name: "로그인" }).click()
+  await expect(page.getByText("모임통장")).toBeVisible()
+}
+
+async function openFirstAccountDetail(page: Page) {
+  await page.getByText("개발자 스터디 모임").first().click()
+  await expect(page.getByText("모임통장 상세")).toBeVisible()
+}
+
+test("1) 로그인 후 목록 진입", async ({ page }) => {
+  await loginAsTestUser(page)
+  await expect(page.getByText("내 모임통장")).toBeVisible()
+})
+
+test("2) 목록에서 상세 진입", async ({ page }) => {
+  await loginAsTestUser(page)
+  await openFirstAccountDetail(page)
+})
+
+test("3) 상세 탭 전환(회비/거래/멤버/관리)", async ({ page }) => {
+  await loginAsTestUser(page)
+  await openFirstAccountDetail(page)
+
+  await page.getByText("회비", { exact: true }).last().click()
+  await expect(page.getByText("멤버별 납부 현황")).toBeVisible()
+
+  await page.getByText("거래", { exact: true }).last().click()
+  await expect(page.getByText("새 거래 등록")).toBeVisible()
+
+  await page.getByText("멤버", { exact: true }).last().click()
+  await expect(page.getByText("멤버 검색/정렬")).toBeVisible()
+
+  await page.getByText("관리", { exact: true }).last().click()
+  await expect(page.getByText("모임통장 관리")).toBeVisible()
+})
+
+test("4) 설정에서 알림 설정 화면 진입", async ({ page }) => {
+  await loginAsTestUser(page)
+  await openFirstAccountDetail(page)
+  await page.getByText("관리", { exact: true }).last().click()
+  await page.getByText("알림 설정", { exact: true }).first().click()
+  await expect(page.getByText("회비 마감 알림", { exact: true })).toBeVisible()
+  await expect(page.getByText("입출금 알림", { exact: true })).toBeVisible()
+  await expect(page.getByText("공지 알림", { exact: true })).toBeVisible()
+})
+
+test("5) 설정에서 프로필 관리 화면 진입", async ({ page }) => {
+  await loginAsTestUser(page)
+  await openFirstAccountDetail(page)
+  await page.getByText("관리", { exact: true }).last().click()
+  await page.getByText("프로필 관리", { exact: true }).click()
+  await expect(page.getByText("마이페이지")).toBeVisible()
+})
+
+test("6) Hero CTA(채우기/보내기)로 거래 탭 진입", async ({ page }) => {
+  await loginAsTestUser(page)
+  await openFirstAccountDetail(page)
+
+  await page.getByText("채우기").click()
+  await expect(page.getByText("새 거래 등록")).toBeVisible()
+
+  await page.getByText("홈", { exact: true }).last().click()
+  await page.getByText("보내기").click()
+  await expect(page.getByText("새 거래 등록")).toBeVisible()
+})
+
+test("7) 목록에서 새 모임통장 개설 화면 진입", async ({ page }) => {
+  await loginAsTestUser(page)
+  await page.getByRole("button", { name: "+ 새 모임통장 개설" }).click()
+  await expect(page.getByText("목록 화면과 분리된 입력 화면에서 정보를 입력합니다.")).toBeVisible()
+})
+
+test("8) 목록에서 로그아웃 후 로그인 화면 복귀", async ({ page }) => {
+  await loginAsTestUser(page)
+  await page.getByText("로그아웃", { exact: true }).first().click()
+  await page.getByRole("button", { name: "로그아웃" }).last().click()
+  await expect(page.getByText("계정이 없으신가요? 회원가입")).toBeVisible()
+})

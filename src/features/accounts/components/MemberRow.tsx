@@ -1,9 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from "react-native"
+import { memo } from "react"
+import { StyleSheet, Text, View } from "react-native"
 import { Button } from "@shared/ui"
-import { formatMonth } from "../model/mock-data"
+import { formatMonth } from "@shared/lib/format"
 import type { DuesRecord, Member } from "../model/types"
 
-export function MemberRow({
+export const MemberRow = memo(function MemberRow({
   member,
   rate,
   duesRecords,
@@ -44,7 +45,7 @@ export function MemberRow({
       ))}
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   card: {

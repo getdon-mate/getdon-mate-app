@@ -21,6 +21,7 @@ export const uiColors = {
   successSoft: "#f0fdf4",
   successBorder: "#bbf7d0",
   overlay: "rgba(15, 23, 42, 0.06)",
+  overlayStrong: "rgba(15, 23, 42, 0.45)",
 } as const
 
 export const uiRadius = {
