@@ -1,7 +1,8 @@
 import { useState } from "react"
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native"
+import { Pressable, StyleSheet, Text, View } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
-import { AlertModal, Button, ConfirmDialog, RadioButton, ToggleSwitch } from "@shared/ui"
+import { requireText, validateDayOfMonth, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
+import { AlertModal, Button, ConfirmDialog, InputField, NumericInputField, RadioButton, ToggleSwitch } from "@shared/ui"
 import { formatKRW, getMemberById } from "../../model/mock-data"
 import type { GroupAccount } from "../../model/types"
 
@@ -37,13 +38,15 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
     const parsedDay = Number(day)
     const parsedAmount = Number(amount)
 
-    if (enabled && (!Number.isFinite(parsedDay) || parsedDay < 1 || parsedDay > 28)) {
-      openAlert("입력 오류", "이체일은 1~28 범위로 입력해주세요.", "danger")
+    const dayError = validateDayOfMonth(day)
+    if (enabled && dayError) {
+      openAlert("입력 오류", dayError, "danger")
       return
     }
 
-    if (enabled && (!Number.isFinite(parsedAmount) || parsedAmount <= 0)) {
-      openAlert("입력 오류", "금액을 올바르게 입력해주세요.", "danger")
+    const amountError = validatePositiveNumber(amount, "금액을 올바르게 입력해주세요.")
+    if (enabled && amountError) {
+      openAlert("입력 오류", amountError, "danger")
       return
     }
 
@@ -59,8 +62,12 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
 
   async function handleCreateOneTimeDues() {
     const parsedAmount = Number(duesAmount)
-    if (!title.trim() || !dueDate.trim() || !Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      openAlert("입력 오류", "1회성 회비 정보를 올바르게 입력해주세요.", "danger")
+    const validationError =
+      requireText(title, "회비 명목을 입력해주세요.") ??
+      validatePositiveNumber(duesAmount, "금액을 올바르게 입력해주세요.") ??
+      validateIsoDate(dueDate)
+    if (validationError) {
+      openAlert("입력 오류", validationError, "danger")
       return
     }
 
@@ -123,9 +130,9 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
 
           {enabled && (
             <View style={styles.formStack}>
-              <TextInput value={day} onChangeText={setDay} placeholder="이체일 (1~28)" style={styles.input} keyboardType="numeric" />
-              <TextInput value={amount} onChangeText={setAmount} placeholder="금액" style={styles.input} keyboardType="numeric" />
-              <TextInput value={fromAccount} onChangeText={setFromAccount} placeholder="출금 계좌" style={styles.input} />
+              <NumericInputField value={day} onChangeText={setDay} label="이체일" placeholder="1~28" />
+              <NumericInputField value={amount} onChangeText={setAmount} label="금액" placeholder="금액" />
+              <InputField value={fromAccount} onChangeText={setFromAccount} label="출금 계좌" placeholder="출금 계좌" />
               <Button label="저장" onPress={() => void handleSaveAutoTransfer()} />
             </View>
           )}
@@ -134,9 +141,9 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
         <View style={styles.panelCard}>
           <Text style={styles.panelTitle}>1회성 회비 생성</Text>
           <View style={styles.formStack}>
-            <TextInput value={title} onChangeText={setTitle} placeholder="회비 명목" style={styles.input} />
-            <TextInput value={duesAmount} onChangeText={setDuesAmount} placeholder="금액" style={styles.input} keyboardType="numeric" />
-            <TextInput value={dueDate} onChangeText={setDueDate} placeholder="마감일 (YYYY-MM-DD)" style={styles.input} />
+            <InputField value={title} onChangeText={setTitle} label="회비 명목" placeholder="회비 명목" />
+            <NumericInputField value={duesAmount} onChangeText={setDuesAmount} label="금액" placeholder="금액" />
+            <InputField value={dueDate} onChangeText={setDueDate} label="마감일" placeholder="YYYY-MM-DD" />
             <Button label="생성" onPress={() => void handleCreateOneTimeDues()} />
           </View>
 
@@ -433,15 +440,6 @@ const styles = StyleSheet.create({
   },
   formStack: {
     gap: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#d7dce5",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    fontSize: 14,
-    backgroundColor: "#f9fafb",
   },
   filterRow: {
     flexDirection: "row",

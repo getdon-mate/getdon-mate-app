@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native"
-import { Button, Card, InputField } from "@shared/ui"
+import { Button, Card, InputField, NumericInputField, uiColors } from "@shared/ui"
 
 interface AccountCreatePanelProps {
   groupName: string
@@ -37,22 +37,22 @@ export function AccountCreatePanel({
   return (
     <Card style={styles.createPanel}>
       <Text style={styles.panelTitle}>새 모임통장 정보</Text>
-      <InputField value={groupName} onChangeText={onChangeGroupName} placeholder="모임명" editable={!submitting} />
-      <InputField value={bankName} onChangeText={onChangeBankName} placeholder="은행명" editable={!submitting} />
-      <InputField value={accountNumber} onChangeText={onChangeAccountNumber} placeholder="계좌번호" editable={!submitting} />
-      <InputField
+      <InputField value={groupName} onChangeText={onChangeGroupName} placeholder="모임명" editable={!submitting} label="모임명" />
+      <InputField value={bankName} onChangeText={onChangeBankName} placeholder="은행명" editable={!submitting} label="은행명" />
+      <InputField value={accountNumber} onChangeText={onChangeAccountNumber} placeholder="계좌번호" editable={!submitting} label="계좌번호" />
+      <NumericInputField
         value={monthlyDues}
         onChangeText={onChangeMonthlyDues}
         placeholder="월 회비"
-        keyboardType="numeric"
         editable={!submitting}
+        label="월 회비"
       />
-      <InputField
+      <NumericInputField
         value={dueDay}
         onChangeText={onChangeDueDay}
         placeholder="납부일 (1~28)"
-        keyboardType="numeric"
         editable={!submitting}
+        label="납부일"
       />
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   panelTitle: {
     fontSize: 17,
     fontWeight: "700",
-    color: "#111827",
+    color: uiColors.text,
     marginBottom: 6,
   },
   panelButtons: {
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   error: {
-    color: "#dc2626",
+    color: uiColors.danger,
     fontSize: 13,
     fontWeight: "600",
     marginTop: 2,

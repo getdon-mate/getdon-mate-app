@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native"
-import { Button, Card, InputField } from "@shared/ui"
+import { Button, Card, InputField, uiColors } from "@shared/ui"
 
 interface AuthFormCardProps {
   isSignup: boolean
@@ -104,11 +104,11 @@ const styles = StyleSheet.create({
   helper: {
     textAlign: "center",
     marginTop: 4,
-    color: "#64748b",
+    color: uiColors.textMuted,
     fontSize: 12,
   },
   error: {
-    color: "#dc2626",
+    color: uiColors.danger,
     fontSize: 13,
     fontWeight: "600",
   },

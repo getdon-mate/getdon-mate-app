@@ -7,6 +7,7 @@ import {
 } from "react-native"
 import type { RootStackParamList } from "@core/navigation/types"
 import { useApp } from "@core/providers/AppProvider"
+import { requireText, validateDayOfMonth, validatePositiveNumber } from "@shared/lib/validation"
 import { getCurrentMonthKey } from "@shared/lib/date"
 import { Button, ConfirmDialog, PageHeader, Toast } from "@shared/ui"
 import { AccountCreatePanel } from "../components/AccountCreatePanel"
@@ -50,23 +51,19 @@ export function AccountListScreen() {
     if (createSubmitting) return
     setError("")
 
-    if (!groupName.trim() || !bankName.trim() || !accountNumber.trim()) {
-      setError("모임명, 은행명, 계좌번호를 모두 입력해주세요.")
+    const validationError =
+      requireText(groupName, "모임명을 입력해주세요.") ??
+      requireText(bankName, "은행명을 입력해주세요.") ??
+      requireText(accountNumber, "계좌번호를 입력해주세요.") ??
+      validatePositiveNumber(monthlyDues, "월 회비를 올바르게 입력해주세요.") ??
+      validateDayOfMonth(dueDay)
+    if (validationError) {
+      setError(validationError)
       return
     }
 
     const amount = Number(monthlyDues)
     const day = Number(dueDay)
-
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setError("월 회비를 올바르게 입력해주세요.")
-      return
-    }
-
-    if (!Number.isFinite(day) || day < 1 || day > 28) {
-      setError("납부일은 1~28 범위로 입력해주세요.")
-      return
-    }
 
     setCreateSubmitting(true)
     await new Promise((resolve) => setTimeout(resolve, 300))

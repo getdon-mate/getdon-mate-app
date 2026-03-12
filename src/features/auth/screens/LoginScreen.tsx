@@ -5,6 +5,7 @@ import {
   StyleSheet,
 } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
+import { requireText, validateEmail, validatePassword } from "@shared/lib/validation"
 import { Card, SkeletonBlock, Toast, uiSpacing } from "@shared/ui"
 import { AuthFormCard } from "../components/AuthFormCard"
 import { AuthHero } from "../components/AuthHero"
@@ -25,23 +26,24 @@ export function LoginScreen() {
   const [toastTitle, setToastTitle] = useState("")
   const [toastMessage, setToastMessage] = useState("")
 
+  function openToast(title: string, message: string) {
+    setToastTitle(title)
+    setToastMessage(message)
+    setToastVisible(true)
+  }
+
   async function handleSubmit() {
     if (submitting) return
     setError("")
 
     if (isSignup) {
-      if (!name.trim() || !email.trim() || !password.trim()) {
-        setError("모든 항목을 입력해주세요.")
-        setToastTitle("입력 오류")
-        setToastMessage("모든 항목을 입력해주세요.")
-        setToastVisible(true)
-        return
-      }
-      if (password.length < 4) {
-        setError("비밀번호는 4자 이상이어야 합니다.")
-        setToastTitle("입력 오류")
-        setToastMessage("비밀번호는 4자 이상이어야 합니다.")
-        setToastVisible(true)
+      const validationError =
+        requireText(name, "이름을 입력해주세요.") ??
+        validateEmail(email) ??
+        validatePassword(password)
+      if (validationError) {
+        setError(validationError)
+        openToast("입력 오류", validationError)
         return
       }
       setSubmitting(true)
@@ -49,19 +51,18 @@ export function LoginScreen() {
       const ok = await signup(name.trim(), email.trim(), password)
       if (!ok) {
         setError("이미 사용 중인 이메일입니다.")
-        setToastTitle("회원가입 실패")
-        setToastMessage("이미 사용 중인 이메일입니다.")
-        setToastVisible(true)
+        openToast("회원가입 실패", "이미 사용 중인 이메일입니다.")
       }
       setSubmitting(false)
       return
     }
 
-    if (!email.trim() || !password.trim()) {
-      setError("이메일과 비밀번호를 입력해주세요.")
-      setToastTitle("입력 오류")
-      setToastMessage("이메일과 비밀번호를 입력해주세요.")
-      setToastVisible(true)
+    const validationError =
+      validateEmail(email) ??
+      requireText(password, "비밀번호를 입력해주세요.")
+    if (validationError) {
+      setError(validationError)
+      openToast("입력 오류", validationError)
       return
     }
 
@@ -70,9 +71,7 @@ export function LoginScreen() {
     const ok = await login(email.trim(), password)
     if (!ok) {
       setError("이메일 또는 비밀번호가 올바르지 않습니다.")
-      setToastTitle("로그인 실패")
-      setToastMessage("이메일 또는 비밀번호가 올바르지 않습니다.")
-      setToastVisible(true)
+      openToast("로그인 실패", "이메일 또는 비밀번호가 올바르지 않습니다.")
     }
     setSubmitting(false)
   }
