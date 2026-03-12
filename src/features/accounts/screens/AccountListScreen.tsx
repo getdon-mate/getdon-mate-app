@@ -10,7 +10,8 @@ import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
 import { getCurrentMonthKey } from "@shared/lib/date"
-import { Button, PageHeader } from "@shared/ui"
+import { Button, PageHeader, StatusBanner } from "@shared/ui"
+import { AccountCreatePanel } from "../components/AccountCreatePanel"
 import { LoadingStateCard } from "../components/LoadingStateCard"
 import { AccountSummaryCard } from "../components/AccountSummaryCard"
 import { EmptyStateCard } from "../components/EmptyStateCard"
@@ -18,7 +19,18 @@ import { UserHeaderCard } from "../components/UserHeaderCard"
 
 export function AccountListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
-  const { isBootstrapping, currentUser, accounts, selectAccount, logout, withdraw, resetDemoData } = useApp()
+  const {
+    isBootstrapping,
+    dataSource,
+    prefersRealApi,
+    currentUser,
+    accounts,
+    selectAccount,
+    createAccount,
+    logout,
+    withdraw,
+    resetDemoData,
+  } = useApp()
   const { confirm, confirmDanger, showToast } = useFeedback()
   const currentMonth = getCurrentMonthKey()
 
@@ -65,6 +77,15 @@ export function AccountListScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <UserHeaderCard user={currentUser} initials={initials} onWithdraw={() => void handleWithdraw()} onLogout={() => void handleLogout()} />
+      <StatusBanner
+        title={dataSource === "remote" ? "백엔드 연결 완료" : prefersRealApi ? "데모 데이터 fallback" : "데모 데이터 사용 중"}
+        message={
+          dataSource === "remote"
+            ? "세션과 계좌 목록을 서버 기준으로 불러왔습니다."
+            : "현재 화면은 로컬 mock 데이터를 기준으로 동작합니다."
+        }
+        tone={dataSource === "remote" ? "info" : "warning"}
+      />
 
       <PageHeader title="모임통장" subtitle={`내 모임통장 ${accounts.length}개`} />
 

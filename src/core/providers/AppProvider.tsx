@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
+import { apiConfig, shouldUseRealApi } from "@core/api"
 import { createAccountsBackendV1Adapter } from "@features/accounts/api"
 import { defaultAccounts, defaultUsers } from "@features/accounts/model/mock-data"
 import type {
@@ -12,6 +13,9 @@ import type {
   Transaction,
   TransactionType,
 } from "@features/accounts/model/types"
+import { clearPersistedSession, readPersistedSession, writePersistedSession } from "@shared/lib/session-storage"
+
+type DataSource = "demo" | "remote"
 
 interface CreateAccountInput {
   groupName: string
@@ -56,6 +60,8 @@ interface UpsertTransactionInput {
 
 interface AppContextType {
   isBootstrapping: boolean
+  dataSource: DataSource
+  prefersRealApi: boolean
   currentUser: AppUser | null
   accounts: GroupAccount[]
   selectedAccountId: string | null
@@ -185,22 +191,30 @@ function createLocalTransaction(data: UpsertTransactionInput): Transaction {
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const backendAdapter = useMemo(() => createAccountsBackendV1Adapter(), [])
+  const prefersRealApi = useMemo(() => shouldUseRealApi(apiConfig), [])
+  const initialSession = useMemo(() => readPersistedSession(), [])
 
   const [users, setUsers] = useState<AppUser[]>(() => cloneUsers(defaultUsers))
   const [isBootstrapping, setIsBootstrapping] = useState(true)
+  const [dataSource, setDataSource] = useState<DataSource>(prefersRealApi ? "remote" : "demo")
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null)
   const [accounts, setAccounts] = useState<GroupAccount[]>(() => cloneAccounts(defaultAccounts))
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null)
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(initialSession?.selectedAccountId ?? null)
 
   useEffect(() => {
     let cancelled = false
 
     async function loadBootstrap() {
       const bootstrap = await backendAdapter.loadBootstrap()
-      if (!bootstrap || cancelled) return
+      if (!bootstrap || cancelled) {
+        setDataSource("demo")
+        setIsBootstrapping(false)
+        return
+      }
 
       setUsers(cloneUsers(bootstrap.users))
       setAccounts(cloneAccounts(bootstrap.accounts))
+      setDataSource("remote")
       setIsBootstrapping(false)
     }
 
@@ -210,6 +224,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
       cancelled = true
     }
   }, [backendAdapter])
+
+  useEffect(() => {
+    if (isBootstrapping) return
+
+    const persisted = readPersistedSession()
+    if (!persisted) return
+
+    if (persisted.userId) {
+      const restoredUser = users.find((user) => user.id === persisted.userId) ?? null
+      setCurrentUser(restoredUser)
+    }
+
+    if (persisted.selectedAccountId && accounts.some((account) => account.id === persisted.selectedAccountId)) {
+      setSelectedAccountId(persisted.selectedAccountId)
+    }
+  }, [accounts, isBootstrapping, users])
+
+  useEffect(() => {
+    if (isBootstrapping) return
+
+    if (!currentUser && !selectedAccountId) {
+      clearPersistedSession()
+      return
+    }
+
+    writePersistedSession({
+      userId: currentUser?.id ?? null,
+      selectedAccountId,
+    })
+  }, [currentUser, isBootstrapping, selectedAccountId])
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout> | undefined
@@ -230,6 +274,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const remoteAuth = await backendAdapter.login({ email, password })
       if (remoteAuth?.user) {
         setCurrentUser(remoteAuth.user)
+        setDataSource("remote")
         if (remoteAuth.accounts) {
           setAccounts(cloneAccounts(remoteAuth.accounts))
         }
@@ -238,6 +283,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       const user = users.find((u) => u.email === email && u.password === password)
       if (!user) return false
+      setDataSource("demo")
       setCurrentUser(user)
       return true
     },
@@ -249,6 +295,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const remoteAuth = await backendAdapter.signup({ name, email, password })
       if (remoteAuth?.user) {
         setCurrentUser(remoteAuth.user)
+        setDataSource("remote")
         if (remoteAuth.accounts) {
           setAccounts(cloneAccounts(remoteAuth.accounts))
         }
@@ -263,6 +310,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         password,
       }
       setUsers((prev) => [...prev, newUser])
+      setDataSource("demo")
       setCurrentUser(newUser)
       return true
     },
@@ -628,6 +676,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AppContext.Provider
       value={{
+        dataSource,
+        prefersRealApi,
         currentUser,
         isBootstrapping,
         accounts,
