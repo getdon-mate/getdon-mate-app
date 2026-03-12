@@ -8,6 +8,7 @@ import {
 import type { RootStackParamList } from "@core/navigation/types"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
+import { feedbackPresets } from "@shared/lib/feedback-presets"
 import { requireText, validateDayOfMonth, validatePositiveNumber } from "@shared/lib/validation"
 import { getCurrentMonthKey } from "@shared/lib/date"
 import { Button, PageHeader } from "@shared/ui"
@@ -20,7 +21,7 @@ import { UserHeaderCard } from "../components/UserHeaderCard"
 export function AccountListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const { isBootstrapping, currentUser, accounts, selectAccount, createAccount, logout, withdraw, resetDemoData } = useApp()
-  const { confirm, showToast } = useFeedback()
+  const { confirm, confirmDanger, showToast } = useFeedback()
   const currentMonth = getCurrentMonthKey()
 
   const [showCreate, setShowCreate] = useState(false)
@@ -77,38 +78,40 @@ export function AccountListScreen() {
   }
 
   async function handleWithdraw() {
-    const confirmed = await confirm({
-      title: "회원 탈퇴",
-      message: "회원과 데모 계정 정보가 제거됩니다. 정말 탈퇴하시겠습니까?",
-      confirmLabel: "탈퇴",
-      confirmTone: "danger",
+    const confirmed = await confirmDanger({
+      title: feedbackPresets.withdraw.title,
+      message: feedbackPresets.withdraw.message,
+      confirmLabel: feedbackPresets.withdraw.confirmLabel,
     })
     if (!confirmed) return
     withdraw()
-    showToast({ tone: "success", title: "탈퇴 완료", message: "계정이 정리되었습니다." })
+    showToast({ tone: "success", title: feedbackPresets.withdraw.successTitle, message: feedbackPresets.withdraw.successMessage })
   }
 
   async function handleResetDemoData() {
-    const confirmed = await confirm({
-      title: "데모 데이터 초기화",
-      message: "현재 변경 내용을 지우고 초기 mock 데이터로 되돌립니다.",
-      confirmLabel: "초기화",
-      confirmTone: "danger",
+    const confirmed = await confirmDanger({
+      title: feedbackPresets.resetDemoData.title,
+      message: feedbackPresets.resetDemoData.message,
+      confirmLabel: feedbackPresets.resetDemoData.confirmLabel,
     })
     if (!confirmed) return
     resetDemoData()
-    showToast({ tone: "success", title: "초기화 완료", message: "데모 데이터를 초기 상태로 되돌렸습니다." })
+    showToast({
+      tone: "success",
+      title: feedbackPresets.resetDemoData.successTitle,
+      message: feedbackPresets.resetDemoData.successMessage,
+    })
   }
 
   async function handleLogout() {
     const confirmed = await confirm({
-      title: "로그아웃",
-      message: "현재 세션을 종료하고 로그인 화면으로 이동합니다.",
-      confirmLabel: "로그아웃",
+      title: feedbackPresets.logout.title,
+      message: feedbackPresets.logout.message,
+      confirmLabel: feedbackPresets.logout.confirmLabel,
     })
     if (!confirmed) return
     logout()
-    showToast({ tone: "success", title: "로그아웃 완료", message: "로그인 화면으로 이동합니다." })
+    showToast({ tone: "success", title: feedbackPresets.logout.successTitle, message: feedbackPresets.logout.successMessage })
   }
 
   return (
