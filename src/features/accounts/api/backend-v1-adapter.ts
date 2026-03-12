@@ -1,5 +1,5 @@
 import { apiClient, isApiError, shouldUseRealApi } from "@core/api"
-import type { AppUser, AutoTransfer, GroupAccount, Transaction, TransactionType } from "../model/types"
+import type { AppUser, AutoTransfer, GroupAccount, Member, MemberRole, Transaction, TransactionType } from "../model/types"
 
 const API_V1_PREFIX = "/api/v1"
 
@@ -24,6 +24,20 @@ interface CreateOneTimeDuesPayload {
   title: string
   amount: number
   dueDate: string
+}
+
+interface UpdateAccountPayload {
+  groupName: string
+  bankName: string
+  accountNumber: string
+  monthlyDuesAmount: number
+  dueDay: number
+}
+
+interface UpsertMemberPayload {
+  name: string
+  phone: string
+  role: MemberRole
 }
 
 interface UpsertTransactionPayload {
@@ -52,8 +66,12 @@ export interface AccountsBackendAdapter {
   deleteAccount: (accountId: string) => Promise<void>
   toggleDues: (accountId: string, memberId: string, month: string) => Promise<void>
   updateAutoTransfer: (accountId: string, autoTransfer: AutoTransfer) => Promise<void>
+  updateAccount: (accountId: string, payload: UpdateAccountPayload) => Promise<void>
   createOneTimeDues: (accountId: string, payload: CreateOneTimeDuesPayload) => Promise<void>
   toggleOneTimeDuesRecord: (accountId: string, duesId: string, memberId: string) => Promise<void>
+  createMember: (accountId: string, payload: UpsertMemberPayload) => Promise<Member | null>
+  updateMember: (accountId: string, memberId: string, payload: UpsertMemberPayload) => Promise<void>
+  deleteMember: (accountId: string, memberId: string) => Promise<void>
   createTransaction: (accountId: string, payload: UpsertTransactionPayload) => Promise<Transaction | null>
   updateTransaction: (accountId: string, transactionId: string, payload: UpsertTransactionPayload) => Promise<void>
   deleteTransaction: (accountId: string, transactionId: string) => Promise<void>
@@ -144,6 +162,12 @@ export function createAccountsBackendV1Adapter(): AccountsBackendAdapter {
       )
     },
 
+    async updateAccount(accountId, payload) {
+      await tryBackend("accounts.update", () =>
+        apiClient.patch(`${API_V1_PREFIX}/accounts/${accountId}`, payload)
+      )
+    },
+
     async createOneTimeDues(accountId, payload) {
       await tryBackend("accounts.oneTimeDues.create", () =>
         apiClient.post(`${API_V1_PREFIX}/accounts/${accountId}/one-time-dues`, payload)
@@ -153,6 +177,24 @@ export function createAccountsBackendV1Adapter(): AccountsBackendAdapter {
     async toggleOneTimeDuesRecord(accountId, duesId, memberId) {
       await tryBackend("accounts.oneTimeDues.record.toggle", () =>
         apiClient.patch(`${API_V1_PREFIX}/accounts/${accountId}/one-time-dues/${duesId}/records/${memberId}`)
+      )
+    },
+
+    async createMember(accountId, payload) {
+      return tryBackend("accounts.members.create", () =>
+        apiClient.post<Member>(`${API_V1_PREFIX}/accounts/${accountId}/members`, payload)
+      )
+    },
+
+    async updateMember(accountId, memberId, payload) {
+      await tryBackend("accounts.members.update", () =>
+        apiClient.patch(`${API_V1_PREFIX}/accounts/${accountId}/members/${memberId}`, payload)
+      )
+    },
+
+    async deleteMember(accountId, memberId) {
+      await tryBackend("accounts.members.delete", () =>
+        apiClient.delete(`${API_V1_PREFIX}/accounts/${accountId}/members/${memberId}`)
       )
     },
 

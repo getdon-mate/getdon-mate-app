@@ -11,8 +11,22 @@ import type { GroupAccount } from "../../model/types"
 type RecordFilter = "all" | "paid" | "unpaid"
 
 export function SettingsTab({ account }: { account: GroupAccount }) {
-  const { currentUser, updateAutoTransfer, createOneTimeDues, toggleOneTimeDuesRecord, deleteAccount, logout, withdraw } = useApp()
+  const {
+    currentUser,
+    updateAutoTransfer,
+    updateAccount,
+    createOneTimeDues,
+    toggleOneTimeDuesRecord,
+    deleteAccount,
+    logout,
+    withdraw,
+  } = useApp()
   const { showAlert, showToast, showError, showPendingFeature, confirm, confirmDanger } = useFeedback()
+  const [groupName, setGroupName] = useState(account.groupName)
+  const [bankName, setBankName] = useState(account.bankName)
+  const [accountNumber, setAccountNumber] = useState(account.accountNumber)
+  const [monthlyDues, setMonthlyDues] = useState(String(account.monthlyDuesAmount))
+  const [accountDueDay, setAccountDueDay] = useState(String(account.dueDay))
 
   const [enabled, setEnabled] = useState(account.autoTransfer.enabled)
   const [day, setDay] = useState(String(account.autoTransfer.dayOfMonth))
@@ -49,6 +63,29 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
     })
 
     showToast({ tone: "success", title: "저장 완료", message: "자동이체 설정을 저장했습니다." })
+  }
+
+  async function handleSaveAccountInfo() {
+    const validationError =
+      requireText(groupName, "모임명을 입력해주세요.") ??
+      requireText(bankName, "은행명을 입력해주세요.") ??
+      requireText(accountNumber, "계좌번호를 입력해주세요.") ??
+      validatePositiveNumber(monthlyDues, "월 회비를 올바르게 입력해주세요.") ??
+      validateDayOfMonth(accountDueDay)
+    if (validationError) {
+      showAlert({ title: "입력 오류", message: validationError, tone: "danger" })
+      return
+    }
+
+    await updateAccount(account.id, {
+      groupName: groupName.trim(),
+      bankName: bankName.trim(),
+      accountNumber: accountNumber.trim(),
+      monthlyDuesAmount: Number(monthlyDues),
+      dueDay: Number(accountDueDay),
+    })
+
+    showToast({ tone: "success", title: "저장 완료", message: "모임통장 기본정보를 수정했습니다." })
   }
 
   async function handleCreateOneTimeDues() {
@@ -140,6 +177,18 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
           <Text style={styles.infoLabel}>계좌 정보</Text>
           <Text style={styles.infoTitle}>{account.bankName} {account.accountNumber}</Text>
           <Text style={styles.infoMeta}>월 회비 {formatKRW(account.monthlyDuesAmount)} · 납부일 {account.dueDay}일</Text>
+        </View>
+
+        <View style={styles.panelCard}>
+          <Text style={styles.panelTitle}>기본정보 수정</Text>
+          <View style={styles.formStack}>
+            <InputField value={groupName} onChangeText={setGroupName} label="모임명" placeholder="모임명" />
+            <InputField value={bankName} onChangeText={setBankName} label="은행명" placeholder="은행명" />
+            <InputField value={accountNumber} onChangeText={setAccountNumber} label="계좌번호" placeholder="계좌번호" />
+            <NumericInputField value={monthlyDues} onChangeText={setMonthlyDues} label="월 회비" placeholder="금액" />
+            <NumericInputField value={accountDueDay} onChangeText={setAccountDueDay} label="납부일" placeholder="1~28" />
+            <Button label="기본정보 저장" onPress={() => void handleSaveAccountInfo()} />
+          </View>
         </View>
 
         <View style={styles.panelCard}>
