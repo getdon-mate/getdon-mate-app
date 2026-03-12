@@ -9,7 +9,6 @@ import type { RootStackParamList } from "@core/navigation/types"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
-import { requireText, validateDayOfMonth, validatePositiveNumber } from "@shared/lib/validation"
 import { getCurrentMonthKey } from "@shared/lib/date"
 import { Button, PageHeader, StatusBanner } from "@shared/ui"
 import { AccountCreatePanel } from "../components/AccountCreatePanel"
@@ -35,58 +34,8 @@ export function AccountListScreen() {
   const { confirm, confirmDanger, showToast } = useFeedback()
   const currentMonth = getCurrentMonthKey()
 
-  const [showCreate, setShowCreate] = useState(false)
-  const [groupName, setGroupName] = useState("")
-  const [bankName, setBankName] = useState("")
-  const [accountNumber, setAccountNumber] = useState("")
-  const [monthlyDues, setMonthlyDues] = useState("")
-  const [dueDay, setDueDay] = useState("")
-  const [error, setError] = useState("")
   const [createSubmitting, setCreateSubmitting] = useState(false)
   const initials = useMemo(() => currentUser?.name.slice(-2) ?? "??", [currentUser])
-
-  function resetCreateForm() {
-    setGroupName("")
-    setBankName("")
-    setAccountNumber("")
-    setMonthlyDues("")
-    setDueDay("")
-    setError("")
-  }
-
-  async function handleCreate() {
-    if (createSubmitting) return
-    setError("")
-
-    const validationError =
-      requireText(groupName, "모임명을 입력해주세요.") ??
-      requireText(bankName, "은행명을 입력해주세요.") ??
-      requireText(accountNumber, "계좌번호를 입력해주세요.") ??
-      validatePositiveNumber(monthlyDues, "월 회비를 올바르게 입력해주세요.") ??
-      validateDayOfMonth(dueDay)
-    if (validationError) {
-      setError(validationError)
-      return
-    }
-
-    const amount = Number(monthlyDues)
-    const day = Number(dueDay)
-
-    setCreateSubmitting(true)
-    await new Promise((resolve) => setTimeout(resolve, 300))
-
-    await createAccount({
-      groupName: groupName.trim(),
-      bankName: bankName.trim(),
-      accountNumber: accountNumber.trim(),
-      monthlyDuesAmount: amount,
-      dueDay: day,
-    })
-
-    setShowCreate(false)
-    resetCreateForm()
-    setCreateSubmitting(false)
-  }
 
   async function handleWithdraw() {
     const confirmed = await confirmDanger({
@@ -168,36 +117,11 @@ export function AccountListScreen() {
         <Button
           style={styles.addCard}
           variant="secondary"
-          label={showCreate ? "입력 닫기" : "+ 새 모임통장 개설"}
+          label="+ 새 모임통장 개설"
           disabled={createSubmitting}
-          onPress={() => {
-            setShowCreate((prev) => !prev)
-            setError("")
-          }}
+          onPress={() => navigation.navigate("AccountCreate")}
         />
       ) : null}
-
-      {showCreate && (
-        <AccountCreatePanel
-          groupName={groupName}
-          bankName={bankName}
-          accountNumber={accountNumber}
-          monthlyDues={monthlyDues}
-          dueDay={dueDay}
-          error={error}
-          onChangeGroupName={setGroupName}
-          onChangeBankName={setBankName}
-          onChangeAccountNumber={setAccountNumber}
-          onChangeMonthlyDues={setMonthlyDues}
-          onChangeDueDay={setDueDay}
-          submitting={createSubmitting}
-          onCancel={() => {
-            setShowCreate(false)
-            resetCreateForm()
-          }}
-          onSubmit={handleCreate}
-        />
-      )}
 
       {!isBootstrapping ? (
         <Button

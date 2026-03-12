@@ -31,6 +31,11 @@ interface CreateOneTimeDuesInput {
   dueDate: string
 }
 
+interface UpdateProfileInput {
+  name: string
+  email: string
+}
+
 interface UpdateAccountInput {
   groupName: string
   bankName: string
@@ -62,6 +67,7 @@ interface AppContextType {
   selectedAccountId: string | null
   login: (email: string, password: string) => Promise<boolean>
   signup: (name: string, email: string, password: string) => Promise<boolean>
+  updateProfile: (data: UpdateProfileInput) => Promise<void>
   logout: () => void
   withdraw: () => void
   selectAccount: (id: string) => void
@@ -309,6 +315,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return true
     },
     [backendAdapter, users]
+  )
+
+  const updateProfile = useCallback(
+    async (data: UpdateProfileInput) => {
+      setUsers((prev) =>
+        prev.map((user) =>
+          currentUser && user.id === currentUser.id
+            ? { ...user, name: data.name, email: data.email }
+            : user
+        )
+      )
+      setCurrentUser((prev) => (prev ? { ...prev, name: data.name, email: data.email } : prev))
+    },
+    [currentUser]
   )
 
   const logout = useCallback(() => {
@@ -664,6 +684,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         selectedAccountId,
         login,
         signup,
+        updateProfile,
         logout,
         withdraw,
         selectAccount,
