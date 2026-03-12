@@ -10,9 +10,11 @@ import {
 } from "react-native"
 import type { RootStackParamList } from "@core/navigation/types"
 import { useApp } from "@core/providers/AppProvider"
+import { uiColors } from "@shared/ui"
 import {
   availableMonths,
 } from "../model/mock-data"
+import { LoadingStateCard } from "../components/LoadingStateCard"
 import { DashboardTab } from "../components/detail-tabs/DashboardTab"
 import { DuesTab } from "../components/detail-tabs/DuesTab"
 import { MembersTab } from "../components/detail-tabs/MembersTab"
@@ -31,7 +33,7 @@ const tabs: { key: DetailTab; label: string }[] = [
 
 export function AccountDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
-  const { accounts, selectedAccountId, clearSelectedAccount } = useApp()
+  const { isBootstrapping, accounts, selectedAccountId, clearSelectedAccount } = useApp()
 
   const [tab, setTab] = useState<DetailTab>("dashboard")
   const [selectedMonth, setSelectedMonth] = useState(availableMonths[0])
@@ -101,7 +103,12 @@ export function AccountDetailScreen() {
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-        {tab === "dashboard" && (
+        {isBootstrapping ? (
+          <>
+            <LoadingStateCard />
+            <LoadingStateCard />
+          </>
+        ) : tab === "dashboard" && (
           <DashboardTab
             account={account}
             onOpenDues={() => setTab("dues")}
@@ -133,7 +140,7 @@ export function AccountDetailScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: uiColors.background,
   },
   emptyWrap: {
     flex: 1,
@@ -304,7 +311,7 @@ const styles = StyleSheet.create({
     color: "#64748b",
   },
   navLabelActive: {
-    color: "#2563eb",
+    color: uiColors.primary,
   },
   stack: {
     gap: 12,
