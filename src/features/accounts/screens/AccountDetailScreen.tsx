@@ -20,6 +20,7 @@ import { DuesTab } from "../components/detail-tabs/DuesTab"
 import { MembersTab } from "../components/detail-tabs/MembersTab"
 import { SettingsTab } from "../components/detail-tabs/SettingsTab"
 import { TransactionsTab } from "../components/detail-tabs/TransactionsTab"
+import type { TransactionType } from "../model/types"
 
 type DetailTab = "dashboard" | "dues" | "transactions" | "members" | "settings"
 
@@ -37,6 +38,8 @@ export function AccountDetailScreen() {
 
   const [tab, setTab] = useState<DetailTab>("dashboard")
   const [selectedMonth, setSelectedMonth] = useState(availableMonths[0])
+  const [transactionComposerType, setTransactionComposerType] = useState<TransactionType>("income")
+  const [transactionComposerSignal, setTransactionComposerSignal] = useState(0)
 
   const account = useMemo(
     () => accounts.find((candidate) => candidate.id === selectedAccountId),
@@ -51,6 +54,12 @@ export function AccountDetailScreen() {
       return
     }
     navigation.navigate("AccountList")
+  }
+
+  function openTransactionComposer(type: TransactionType) {
+    setTransactionComposerType(type)
+    setTransactionComposerSignal((prev) => prev + 1)
+    setTab("transactions")
   }
 
   if (!account) {
@@ -93,10 +102,10 @@ export function AccountDetailScreen() {
         <Text style={styles.heroBalanceLabel}>총 잔액</Text>
         <Text style={styles.heroBalanceText}>₩ {account.balance.toLocaleString("ko-KR")}</Text>
         <View style={styles.heroActionRow}>
-          <Pressable style={styles.heroGhostButton}>
+          <Pressable style={styles.heroGhostButton} onPress={() => openTransactionComposer("income")}>
             <Text style={styles.heroGhostButtonText}>채우기</Text>
           </Pressable>
-          <Pressable style={styles.heroPrimaryButton}>
+          <Pressable style={styles.heroPrimaryButton} onPress={() => openTransactionComposer("expense")}>
             <Text style={styles.heroPrimaryButtonText}>보내기</Text>
           </Pressable>
         </View>
@@ -118,7 +127,13 @@ export function AccountDetailScreen() {
         {tab === "dues" && (
           <DuesTab account={account} selectedMonth={selectedMonth} onSelectMonth={setSelectedMonth} />
         )}
-        {tab === "transactions" && <TransactionsTab account={account} />}
+        {tab === "transactions" && (
+          <TransactionsTab
+            account={account}
+            initialType={transactionComposerType}
+            composerSignal={transactionComposerSignal}
+          />
+        )}
         {tab === "members" && <MembersTab account={account} />}
         {tab === "settings" && <SettingsTab account={account} />}
       </ScrollView>
