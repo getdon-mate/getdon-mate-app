@@ -14,6 +14,8 @@
     "ci:web": "pnpm run typecheck && pnpm run export:web",
     "deploy:vercel:preview": "pnpm exec bash scripts/vercel-deploy.sh preview",
     "deploy:vercel:production": "pnpm exec bash scripts/vercel-deploy.sh production",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed"
   },
@@ -31,9 +33,13 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2",
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^13.3.3",
     "@types/react": "~19.1.10",
     "babel-plugin-module-resolver": "^5.0.2",
     "babel-preset-expo": "^54.0.10",
+    "jest-expo": "~54.0.17",
+    "react-test-renderer": "^19.1.0",
     "typescript": "~5.9.2"
   }
 }

@@ -1,0 +1,130 @@
+import { act, render, waitFor } from '@testing-library/react-native'
+import { AppProvider, useApp } from '@core/providers/AppProvider'
+
+const mockAdapter = {
+  loadBootstrap: jest.fn(async () => null),
+  login: jest.fn(async () => null),
+  signup: jest.fn(async () => null),
+  createAccount: jest.fn(async () => null),
+  deleteAccount: jest.fn(async () => undefined),
+  toggleDues: jest.fn(async () => undefined),
+  updateAutoTransfer: jest.fn(async () => undefined),
+  updateAccount: jest.fn(async () => undefined),
+  createOneTimeDues: jest.fn(async () => undefined),
+  toggleOneTimeDuesRecord: jest.fn(async () => undefined),
+  createMember: jest.fn(async () => null),
+  updateMember: jest.fn(async () => undefined),
+  deleteMember: jest.fn(async () => undefined),
+  createTransaction: jest.fn(async () => null),
+  updateTransaction: jest.fn(async () => undefined),
+  deleteTransaction: jest.fn(async () => undefined),
+  deleteUser: jest.fn(async () => undefined),
+}
+
+jest.mock('@features/accounts/api', () => ({
+  createAccountsBackendV1Adapter: () => mockAdapter,
+}))
+
+type AppCtx = ReturnType<typeof useApp>
+let latestCtx: AppCtx | null = null
+
+function Harness() {
+  latestCtx = useApp()
+  return null
+}
+
+function getCtx(): AppCtx {
+  if (!latestCtx) {
+    throw new Error('App context is not initialized')
+  }
+  return latestCtx
+}
+
+describe('AppProvider state transitions', () => {
+  beforeEach(() => {
+    latestCtx = null
+    Object.values(mockAdapter).forEach((fn) => {
+      if (typeof fn === 'function' && 'mockClear' in fn) {
+        ;(fn as jest.Mock).mockClear()
+      }
+    })
+  })
+
+  test('login fallback works with local fixture user', async () => {
+    render(
+      <AppProvider>
+        <Harness />
+      </AppProvider>
+    )
+
+    await waitFor(() => expect(getCtx().isBootstrapping).toBe(false))
+
+    await act(async () => {
+      const ok = await getCtx().login('test@test.com', 'password')
+      expect(ok).toBe(true)
+    })
+
+    expect(getCtx().currentUser?.email).toBe('test@test.com')
+    expect(getCtx().dataSource).toBe('demo')
+  })
+
+  test('selected account is cleared when account is deleted', async () => {
+    render(
+      <AppProvider>
+        <Harness />
+      </AppProvider>
+    )
+
+    await waitFor(() => expect(getCtx().isBootstrapping).toBe(false))
+
+    await act(async () => {
+      await getCtx().login('test@test.com', 'password')
+    })
+
+    act(() => {
+      getCtx().selectAccount('acc1')
+    })
+    expect(getCtx().selectedAccountId).toBe('acc1')
+
+    await act(async () => {
+      await getCtx().deleteAccount('acc1')
+    })
+
+    await waitFor(() => expect(getCtx().selectedAccountId).toBeNull())
+  })
+
+  test('toggleDues flips paid/unpaid for selected account and month', async () => {
+    render(
+      <AppProvider>
+        <Harness />
+      </AppProvider>
+    )
+
+    await waitFor(() => expect(getCtx().isBootstrapping).toBe(false))
+
+    await act(async () => {
+      await getCtx().login('test@test.com', 'password')
+    })
+
+    act(() => {
+      getCtx().selectAccount('acc1')
+    })
+
+    const statusFor = () =>
+      getCtx().accounts
+        .find((account) => account.id === 'acc1')
+        ?.duesRecords.find((record) => record.memberId === 'm1' && record.month === '2026-03')?.status
+
+    expect(statusFor()).toBe('paid')
+
+    await act(async () => {
+      await getCtx().toggleDues('m1', '2026-03')
+    })
+    expect(statusFor()).toBe('unpaid')
+
+    await act(async () => {
+      await getCtx().toggleDues('m1', '2026-03')
+    })
+    expect(statusFor()).toBe('paid')
+  })
+})
