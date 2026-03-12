@@ -1,9 +1,10 @@
+import { memo } from "react"
 import { StyleSheet, Text, View } from "react-native"
 import { formatDate, formatKRW } from "@shared/lib/format"
 import { getMemberById } from "../model/member-utils"
 import type { GroupAccount, Transaction } from "../model/types"
 
-export function TransactionRow({ account, tx }: { account: GroupAccount; tx: Transaction }) {
+export const TransactionRow = memo(function TransactionRow({ account, tx }: { account: GroupAccount; tx: Transaction }) {
   const member = tx.memberId ? getMemberById(account.members, tx.memberId) : undefined
 
   return (
@@ -21,7 +22,7 @@ export function TransactionRow({ account, tx }: { account: GroupAccount; tx: Tra
       </Text>
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   rowBetween: {

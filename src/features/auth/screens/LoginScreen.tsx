@@ -8,18 +8,30 @@ import {
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { appEnv } from "@shared/config/app-env"
-import { Card, SkeletonBlock, StatusBanner, uiSpacing } from "@shared/ui"
+import { Button, Card, SkeletonBlock, StatusBanner, uiSpacing } from "@shared/ui"
 import { AuthFormCard } from "../components/AuthFormCard"
 import { AuthHero } from "../components/AuthHero"
 import { useAuthForm } from "../hooks/useAuthForm"
 
 export function LoginScreen() {
-  const { isBootstrapping, dataSource, prefersRealApi, login, signup } = useApp()
-  const { showError } = useFeedback()
+  const { isBootstrapping, isRefreshingAccounts, dataSource, prefersRealApi, lastSyncError, refreshAccounts, login, signup } = useApp()
+  const { showError, showToast } = useFeedback()
   const { width } = useWindowDimensions()
   const isWide = width >= 900
   const { isSignup, name, email, password, error, submitting, setName, setEmail, setPassword, handleSubmit, resetForm } =
     useAuthForm({ login, signup, showError })
+
+  async function handleRetryConnection() {
+    const source = await refreshAccounts()
+    showToast({
+      tone: source === "remote" ? "success" : "warning",
+      title: source === "remote" ? "연결 재시도 성공" : "연결 재시도 실패",
+      message:
+        source === "remote"
+          ? "백엔드 연결이 복구되었습니다."
+          : lastSyncError ?? "네트워크 상태를 확인한 뒤 다시 시도해주세요.",
+    })
+  }
 
   return (
     <KeyboardAvoidingView
@@ -50,10 +62,21 @@ export function LoginScreen() {
               message={
                 dataSource === "remote"
                   ? "백엔드 응답을 기준으로 세션과 계좌 정보를 복원합니다."
-                  : "실 API를 사용하지 못해 로컬 데모 데이터로 앱이 동작합니다."
+                  : prefersRealApi
+                    ? (lastSyncError ?? "실 API를 사용하지 못해 로컬 데모 데이터로 앱이 동작합니다.")
+                    : "실 API를 사용하지 못해 로컬 데모 데이터로 앱이 동작합니다."
               }
               tone={dataSource === "remote" ? "info" : "warning"}
+              showMessage
             />
+            {prefersRealApi && dataSource !== "remote" ? (
+              <Button
+                label={isRefreshingAccounts ? "재시도 중..." : "연결 재시도"}
+                variant="ghost"
+                onPress={() => void handleRetryConnection()}
+                disabled={isRefreshingAccounts}
+              />
+            ) : null}
             <AuthFormCard
               isSignup={isSignup}
               name={name}

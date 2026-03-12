@@ -19,10 +19,12 @@ import { AccountDetailHero } from "../components/detail/AccountDetailHero"
 import { DetailTabBar, type DetailTab } from "../components/detail/DetailTabBar"
 import type { TransactionType } from "../model/types"
 
+const detailTabMemory = new Map<string, DetailTab>()
+
 export function AccountDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const route = useRoute()
-  const { isBootstrapping, isRefreshingAccounts, accounts, selectedAccountId, clearSelectedAccount, selectAccount, refreshAccounts } = useApp()
+  const { isBootstrapping, isRefreshingAccounts, prefersRealApi, lastSyncError, accounts, selectedAccountId, clearSelectedAccount, selectAccount, refreshAccounts } = useApp()
   const { showToast } = useFeedback()
   const { width } = useWindowDimensions()
   const isWide = width >= 1024
@@ -53,8 +55,17 @@ export function AccountDetailScreen() {
     return undefined
   }, [accounts, routeAccountId, selectedAccountId])
 
+  useEffect(() => {
+    if (!account) return
+    setTab(detailTabMemory.get(account.id) ?? "dashboard")
+  }, [account?.id])
+
+  useEffect(() => {
+    if (!account) return
+    detailTabMemory.set(account.id, tab)
+  }, [account, tab])
+
   function goToList() {
-    setTab("dashboard")
     clearSelectedAccount()
     if (navigation.canGoBack()) {
       navigation.goBack()
@@ -73,11 +84,13 @@ export function AccountDetailScreen() {
     const source = await refreshAccounts()
     showToast({
       tone: source === "remote" ? "success" : "warning",
-      title: source === "remote" ? "상세 데이터 갱신 완료" : "데모 데이터 유지",
+      title: source === "remote" ? "상세 데이터 갱신 완료" : prefersRealApi ? "재시도 필요" : "데모 데이터 유지",
       message:
         source === "remote"
           ? "계좌 상세 데이터를 다시 동기화했습니다."
-          : "실서버 연결 실패로 현재 데이터를 유지합니다.",
+          : prefersRealApi
+            ? (lastSyncError ?? "실서버 연결에 실패했습니다. 다시 시도해주세요.")
+            : "현재는 데모 모드로 동작 중입니다.",
     })
   }
 
@@ -97,6 +110,7 @@ export function AccountDetailScreen() {
         onBack={goToList}
         onRefresh={() => void handleRefresh()}
         refreshPending={isRefreshingAccounts}
+        refreshLabel={prefersRealApi && lastSyncError ? "재시도" : "새로고침"}
       />
       <AccountDetailHero account={account} onPressAction={openTransactionComposer} />
 

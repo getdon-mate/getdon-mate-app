@@ -61,6 +61,18 @@ interface BootstrapResponse {
   accounts: GroupAccount[]
 }
 
+export interface BackendFailureInfo {
+  code?: string
+  status?: number
+  message: string
+}
+
+let lastBackendFailure: BackendFailureInfo | null = null
+
+export function getLastBackendFailure(): BackendFailureInfo | null {
+  return lastBackendFailure
+}
+
 export interface AccountsBackendAdapter {
   loadBootstrap: () => Promise<BootstrapResponse | null>
   login: (payload: AuthPayload) => Promise<AuthResponse | null>
@@ -88,6 +100,7 @@ function backendEnabled(): boolean {
 
 async function tryBackend<T>(operationName: string, operation: () => Promise<T>): Promise<T | null> {
   if (!backendEnabled()) {
+    lastBackendFailure = null
     logger.info({
       scope: `api.${operationName}`,
       message: "Backend call skipped because real API mode is disabled.",
@@ -96,15 +109,26 @@ async function tryBackend<T>(operationName: string, operation: () => Promise<T>)
   }
 
   try {
-    return await operation()
+    const result = await operation()
+    lastBackendFailure = null
+    return result
   } catch (error) {
     if (isApiError(error)) {
+      lastBackendFailure = {
+        code: error.code,
+        status: error.status,
+        message: error.message,
+      }
       logger.warn({
         scope: `api.${operationName}`,
         message: `${error.code ?? "UNKNOWN"} (${error.status ?? "n/a"}) ${error.message}`,
         details: error.details,
       })
     } else {
+      lastBackendFailure = {
+        code: "UNKNOWN",
+        message: "Unexpected backend error",
+      }
       logger.error({
         scope: `api.${operationName}`,
         message: "Unexpected backend error",

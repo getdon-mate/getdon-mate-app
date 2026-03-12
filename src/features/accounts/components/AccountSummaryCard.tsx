@@ -1,10 +1,11 @@
+import { memo } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import { Icon } from "@shared/ui"
 import { formatKRW } from "@shared/lib/format"
 import { getPaymentSummary } from "../model/selectors"
 import type { GroupAccount } from "../model/types"
 
-export function AccountSummaryCard({
+export const AccountSummaryCard = memo(function AccountSummaryCard({
   account,
   currentMonth,
   onPress,
@@ -38,7 +39,7 @@ export function AccountSummaryCard({
       </Text>
     </Pressable>
   )
-}
+})
 
 const styles = StyleSheet.create({
   accountCard: {

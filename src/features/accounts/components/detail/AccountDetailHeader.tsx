@@ -6,11 +6,13 @@ export function AccountDetailHeader({
   onBack,
   onRefresh,
   refreshPending = false,
+  refreshLabel = "새로고침",
 }: {
   bankName: string
   onBack: () => void
   onRefresh?: () => void
   refreshPending?: boolean
+  refreshLabel?: string
 }) {
   return (
     <View style={styles.topHeader}>
@@ -28,7 +30,7 @@ export function AccountDetailHeader({
         accessibilityRole="button"
         accessibilityLabel="상세 새로고침"
       >
-        <Text style={styles.refreshText}>{refreshPending ? "갱신 중" : "새로고침"}</Text>
+        <Text style={styles.refreshText}>{refreshPending ? "갱신 중" : refreshLabel}</Text>
       </Pressable>
     </View>
   )

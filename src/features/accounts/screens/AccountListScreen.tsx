@@ -27,6 +27,7 @@ export function AccountListScreen() {
     isBootstrapping,
     dataSource,
     prefersRealApi,
+    lastSyncError,
     currentUser,
     accounts,
     isRefreshingAccounts,
@@ -84,11 +85,13 @@ export function AccountListScreen() {
     const source = await refreshAccounts()
     showToast({
       tone: source === "remote" ? "success" : "warning",
-      title: source === "remote" ? "데이터 새로고침 완료" : "데모 데이터 유지",
+      title: source === "remote" ? "데이터 새로고침 완료" : prefersRealApi ? "재시도 필요" : "데모 데이터 유지",
       message:
         source === "remote"
           ? "최신 계좌 데이터를 다시 불러왔습니다."
-          : "실서버 연결에 실패해 현재 데이터를 유지합니다.",
+          : prefersRealApi
+            ? (lastSyncError ?? "실서버 연결에 실패했습니다. 다시 시도해주세요.")
+            : "현재는 데모 모드로 동작 중입니다.",
     })
   }
 
@@ -98,8 +101,11 @@ export function AccountListScreen() {
     if (dataSource === "remote") {
       return `세션과 계좌 목록을 서버 기준으로 불러왔습니다. (${modeLabel}, baseUrl ${baseUrlLabel})`
     }
+    if (prefersRealApi && lastSyncError) {
+      return `${lastSyncError} (${modeLabel}, baseUrl ${baseUrlLabel})`
+    }
     return `현재 화면은 로컬 mock 데이터를 기준으로 동작합니다. (${modeLabel}, baseUrl ${baseUrlLabel})`
-  }, [dataSource])
+  }, [dataSource, lastSyncError, prefersRealApi])
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -112,7 +118,7 @@ export function AccountListScreen() {
           showMessage
         />
         <Button
-          label={isRefreshingAccounts ? "새로고침 중..." : "목록 새로고침"}
+          label={isRefreshingAccounts ? "새로고침 중..." : prefersRealApi && lastSyncError ? "재시도" : "목록 새로고침"}
           variant="ghost"
           onPress={() => void handleRefresh()}
           disabled={isRefreshingAccounts}

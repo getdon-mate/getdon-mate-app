@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
-import { apiConfig, shouldUseRealApi } from "@core/api"
-import { createAccountsBackendV1Adapter } from "@features/accounts/api"
+import { apiConfig, mapApiFailureToUserMessage, shouldUseRealApi } from "@core/api"
+import { createAccountsBackendV1Adapter, getLastBackendFailure } from "@features/accounts/api"
 import { defaultAccounts, defaultUsers } from "@features/accounts/model/fixtures"
 import type {
   AppUser,
@@ -73,6 +73,7 @@ interface UpsertTransactionInput {
 interface AppContextType {
   isBootstrapping: boolean
   isRefreshingAccounts: boolean
+  lastSyncError: string | null
   dataSource: DataSource
   prefersRealApi: boolean
   currentUser: AppUser | null
@@ -223,6 +224,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<AppUser[]>(() => cloneUsers(defaultUsers))
   const [isBootstrapping, setIsBootstrapping] = useState(true)
   const [isRefreshingAccounts, setIsRefreshingAccounts] = useState(false)
+  const [lastSyncError, setLastSyncError] = useState<string | null>(null)
   const [dataSource, setDataSource] = useState<DataSource>(prefersRealApi ? "remote" : "demo")
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null)
   const [accounts, setAccounts] = useState<GroupAccount[]>(() => cloneAccounts(defaultAccounts))
@@ -238,6 +240,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const bootstrap = await backendAdapter.loadBootstrap()
       if (!bootstrap || cancelled) {
         setDataSource("demo")
+        setLastSyncError(prefersRealApi ? mapApiFailureToUserMessage(getLastBackendFailure()) : null)
         setIsBootstrapping(false)
         return
       }
@@ -245,6 +248,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setUsers(cloneUsers(bootstrap.users))
       setAccounts(cloneAccounts(bootstrap.accounts))
       setDataSource("remote")
+      setLastSyncError(null)
       setIsBootstrapping(false)
     }
 
@@ -253,7 +257,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [backendAdapter])
+  }, [backendAdapter, prefersRealApi])
 
   useEffect(() => {
     if (isBootstrapping) return
@@ -394,6 +398,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const bootstrap = await backendAdapter.loadBootstrap()
       if (!bootstrap) {
         setDataSource("demo")
+        setLastSyncError(prefersRealApi ? mapApiFailureToUserMessage(getLastBackendFailure()) : null)
         return "demo" as const
       }
 
@@ -404,11 +409,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return bootstrap.users.find((user) => user.id === prev.id) ?? null
       })
       setDataSource("remote")
+      setLastSyncError(null)
       return "remote" as const
     } finally {
       setIsRefreshingAccounts(false)
     }
-  }, [backendAdapter])
+  }, [backendAdapter, prefersRealApi])
 
   const withdraw = useCallback(() => {
     if (!currentUser) return
@@ -812,6 +818,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSelectedAccountId(null)
     setNotificationPreferences(defaultNotificationPreferences)
     setDataSource("demo")
+    setLastSyncError(null)
   }, [])
 
   return (
@@ -822,6 +829,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         currentUser,
         isBootstrapping,
         isRefreshingAccounts,
+        lastSyncError,
         accounts,
         selectedAccountId,
         notificationPreferences,
