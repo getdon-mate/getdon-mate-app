@@ -7,6 +7,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native"
+import { apiConfig } from "@core/api"
 import { ROUTES } from "@core/navigation/routes"
 import type { RootStackParamList } from "@core/navigation/types"
 import { useApp } from "@core/providers/AppProvider"
@@ -28,7 +29,9 @@ export function AccountListScreen() {
     prefersRealApi,
     currentUser,
     accounts,
+    isRefreshingAccounts,
     selectAccount,
+    refreshAccounts,
     logout,
     withdraw,
     resetDemoData,
@@ -77,18 +80,42 @@ export function AccountListScreen() {
     showToast({ tone: "success", title: feedbackPresets.logout.successTitle, message: feedbackPresets.logout.successMessage })
   }
 
+  async function handleRefresh() {
+    const source = await refreshAccounts()
+    showToast({
+      tone: source === "remote" ? "success" : "warning",
+      title: source === "remote" ? "데이터 새로고침 완료" : "데모 데이터 유지",
+      message:
+        source === "remote"
+          ? "최신 계좌 데이터를 다시 불러왔습니다."
+          : "실서버 연결에 실패해 현재 데이터를 유지합니다.",
+    })
+  }
+
+  const statusMessage = useMemo(() => {
+    const baseUrlLabel = apiConfig.baseUrl ? "설정됨" : "미설정"
+    const modeLabel = `mode=${apiConfig.mode}`
+    if (dataSource === "remote") {
+      return `세션과 계좌 목록을 서버 기준으로 불러왔습니다. (${modeLabel}, baseUrl ${baseUrlLabel})`
+    }
+    return `현재 화면은 로컬 mock 데이터를 기준으로 동작합니다. (${modeLabel}, baseUrl ${baseUrlLabel})`
+  }, [dataSource])
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={[styles.contentWrap, isWide && styles.contentWrapWide]}>
         <UserHeaderCard user={currentUser} initials={initials} onWithdraw={() => void handleWithdraw()} onLogout={() => void handleLogout()} />
         <StatusBanner
           title={dataSource === "remote" ? "백엔드 연결 완료" : prefersRealApi ? "데모 데이터 fallback" : "데모 데이터 사용 중"}
-          message={
-            dataSource === "remote"
-              ? "세션과 계좌 목록을 서버 기준으로 불러왔습니다."
-              : "현재 화면은 로컬 mock 데이터를 기준으로 동작합니다."
-          }
+          message={statusMessage}
           tone={dataSource === "remote" ? "info" : "warning"}
+          showMessage
+        />
+        <Button
+          label={isRefreshingAccounts ? "새로고침 중..." : "목록 새로고침"}
+          variant="ghost"
+          onPress={() => void handleRefresh()}
+          disabled={isRefreshingAccounts}
         />
 
         <PageHeader title="모임통장" subtitle={`내 모임통장 ${accounts.length}개`} />

@@ -72,6 +72,7 @@ interface UpsertTransactionInput {
 
 interface AppContextType {
   isBootstrapping: boolean
+  isRefreshingAccounts: boolean
   dataSource: DataSource
   prefersRealApi: boolean
   currentUser: AppUser | null
@@ -102,6 +103,7 @@ interface AppContextType {
   createTransaction: (accountId: string, data: UpsertTransactionInput) => Promise<void>
   updateTransaction: (accountId: string, transactionId: string, data: UpsertTransactionInput) => Promise<void>
   deleteTransaction: (accountId: string, transactionId: string) => Promise<void>
+  refreshAccounts: () => Promise<DataSource>
   resetDemoData: () => void
 }
 
@@ -220,6 +222,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [users, setUsers] = useState<AppUser[]>(() => cloneUsers(defaultUsers))
   const [isBootstrapping, setIsBootstrapping] = useState(true)
+  const [isRefreshingAccounts, setIsRefreshingAccounts] = useState(false)
   const [dataSource, setDataSource] = useState<DataSource>(prefersRealApi ? "remote" : "demo")
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null)
   const [accounts, setAccounts] = useState<GroupAccount[]>(() => cloneAccounts(defaultAccounts))
@@ -267,6 +270,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setSelectedAccountId(persisted.selectedAccountId)
     }
   }, [accounts, isBootstrapping, users])
+
+  useEffect(() => {
+    if (!selectedAccountId) return
+    if (accounts.some((account) => account.id === selectedAccountId)) return
+    setSelectedAccountId(null)
+  }, [accounts, selectedAccountId])
 
   useEffect(() => {
     if (isBootstrapping) return
@@ -378,6 +387,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setCurrentUser(null)
     setSelectedAccountId(null)
   }, [])
+
+  const refreshAccounts = useCallback(async () => {
+    setIsRefreshingAccounts(true)
+    try {
+      const bootstrap = await backendAdapter.loadBootstrap()
+      if (!bootstrap) {
+        setDataSource("demo")
+        return "demo" as const
+      }
+
+      setUsers(cloneUsers(bootstrap.users))
+      setAccounts(cloneAccounts(bootstrap.accounts))
+      setCurrentUser((prev) => {
+        if (!prev) return prev
+        return bootstrap.users.find((user) => user.id === prev.id) ?? null
+      })
+      setDataSource("remote")
+      return "remote" as const
+    } finally {
+      setIsRefreshingAccounts(false)
+    }
+  }, [backendAdapter])
 
   const withdraw = useCallback(() => {
     if (!currentUser) return
@@ -780,6 +811,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setCurrentUser(null)
     setSelectedAccountId(null)
     setNotificationPreferences(defaultNotificationPreferences)
+    setDataSource("demo")
   }, [])
 
   return (
@@ -789,6 +821,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         prefersRealApi,
         currentUser,
         isBootstrapping,
+        isRefreshingAccounts,
         accounts,
         selectedAccountId,
         notificationPreferences,
@@ -816,6 +849,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         createTransaction,
         updateTransaction,
         deleteTransaction,
+        refreshAccounts,
         resetDemoData,
       }}
     >

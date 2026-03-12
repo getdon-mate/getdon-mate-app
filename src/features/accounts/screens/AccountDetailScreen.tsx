@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-n
 import { ROUTES } from "@core/navigation/routes"
 import type { RootStackParamList } from "@core/navigation/types"
 import { useApp } from "@core/providers/AppProvider"
+import { useFeedback } from "@core/providers/FeedbackProvider"
 import { uiColors } from "@shared/ui"
 import { availableMonths } from "../model/fixtures"
 import { LoadingStateCard } from "../components/LoadingStateCard"
@@ -21,7 +22,8 @@ import type { TransactionType } from "../model/types"
 export function AccountDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const route = useRoute()
-  const { isBootstrapping, accounts, selectedAccountId, clearSelectedAccount, selectAccount } = useApp()
+  const { isBootstrapping, isRefreshingAccounts, accounts, selectedAccountId, clearSelectedAccount, selectAccount, refreshAccounts } = useApp()
+  const { showToast } = useFeedback()
   const { width } = useWindowDimensions()
   const isWide = width >= 1024
 
@@ -67,6 +69,18 @@ export function AccountDetailScreen() {
     setTab("transactions")
   }
 
+  async function handleRefresh() {
+    const source = await refreshAccounts()
+    showToast({
+      tone: source === "remote" ? "success" : "warning",
+      title: source === "remote" ? "상세 데이터 갱신 완료" : "데모 데이터 유지",
+      message:
+        source === "remote"
+          ? "계좌 상세 데이터를 다시 동기화했습니다."
+          : "실서버 연결 실패로 현재 데이터를 유지합니다.",
+    })
+  }
+
   if (!account) {
     return (
       <View style={styles.emptyWrap}>
@@ -78,7 +92,12 @@ export function AccountDetailScreen() {
 
   return (
     <View style={styles.screen}>
-      <AccountDetailHeader bankName={account.bankName} onBack={goToList} />
+      <AccountDetailHeader
+        bankName={account.bankName}
+        onBack={goToList}
+        onRefresh={() => void handleRefresh()}
+        refreshPending={isRefreshingAccounts}
+      />
       <AccountDetailHero account={account} onPressAction={openTransactionComposer} />
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>

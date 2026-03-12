@@ -4,9 +4,13 @@ import { Icon, uiColors } from "@shared/ui"
 export function AccountDetailHeader({
   bankName,
   onBack,
+  onRefresh,
+  refreshPending = false,
 }: {
   bankName: string
   onBack: () => void
+  onRefresh?: () => void
+  refreshPending?: boolean
 }) {
   return (
     <View style={styles.topHeader}>
@@ -17,6 +21,15 @@ export function AccountDetailHeader({
         <Text style={styles.topHeaderTitle}>모임통장 상세</Text>
         <Text style={styles.topHeaderMeta}>{bankName}</Text>
       </View>
+      <Pressable
+        style={[styles.refreshButton, refreshPending && styles.refreshButtonDisabled]}
+        onPress={onRefresh}
+        disabled={refreshPending || !onRefresh}
+        accessibilityRole="button"
+        accessibilityLabel="상세 새로고침"
+      >
+        <Text style={styles.refreshText}>{refreshPending ? "갱신 중" : "새로고침"}</Text>
+      </Pressable>
     </View>
   )
 }
@@ -52,5 +65,21 @@ const styles = StyleSheet.create({
   topHeaderMeta: {
     color: uiColors.textMuted,
     fontSize: 11,
+  },
+  refreshButton: {
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surface,
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  refreshButtonDisabled: {
+    opacity: 0.6,
+  },
+  refreshText: {
+    color: uiColors.text,
+    fontSize: 11,
+    fontWeight: "700",
   },
 })
