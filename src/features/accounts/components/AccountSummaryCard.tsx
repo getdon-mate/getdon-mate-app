@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native"
-import { formatKRW } from "../model/mock-data"
+import { Icon } from "@shared/ui"
+import { formatKRW } from "@shared/lib/format"
 import { getPaymentSummary } from "../model/selectors"
 import type { GroupAccount } from "../model/types"
 
@@ -15,7 +16,7 @@ export function AccountSummaryCard({
   const { paid } = getPaymentSummary(account, currentMonth)
 
   return (
-    <Pressable style={styles.accountCard} onPress={onPress}>
+    <Pressable style={styles.accountCard} onPress={onPress} accessibilityRole="button" accessibilityLabel={`${account.groupName} 상세 열기`}>
       <View style={styles.accountHeaderRow}>
         <View style={styles.identityWrap}>
           <View style={styles.iconBubble}>
@@ -26,7 +27,7 @@ export function AccountSummaryCard({
             <Text style={styles.accountMembers}>참여 멤버 {account.members.length}명</Text>
           </View>
         </View>
-        <Text style={styles.accountChevron}>›</Text>
+        <Icon name="chevronRight" size={22} color="#c5cad3" />
       </View>
       <View style={styles.footerRow}>
         <Text style={styles.accountMeta}>잔액</Text>
@@ -111,10 +112,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
-  },
-  accountChevron: {
-    fontSize: 22,
-    color: "#c5cad3",
-    marginTop: -2,
   },
 })

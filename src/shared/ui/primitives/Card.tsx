@@ -1,15 +1,17 @@
 import type { ReactNode } from "react"
-import { StyleSheet, View, type ViewStyle } from "react-native"
+import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native"
 import { uiColors, uiRadius } from "../tokens"
 
 export function Card({
   children,
   style,
+  containerStyle,
 }: {
   children: ReactNode
-  style?: ViewStyle | ViewStyle[]
+  style?: StyleProp<ViewStyle>
+  containerStyle?: StyleProp<ViewStyle>
 }) {
-  return <View style={[styles.card, style]}>{children}</View>
+  return <View style={[styles.card, style, containerStyle]}>{children}</View>
 }
 
 const styles = StyleSheet.create({

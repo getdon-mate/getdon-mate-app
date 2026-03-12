@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "react-native"
-import { formatDate, formatKRW, getMemberById } from "../model/mock-data"
+import { formatDate, formatKRW } from "@shared/lib/format"
+import { getMemberById } from "../model/member-utils"
 import type { GroupAccount, Transaction } from "../model/types"
 
 export function TransactionRow({ account, tx }: { account: GroupAccount; tx: Transaction }) {

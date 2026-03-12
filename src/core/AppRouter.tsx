@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react"
-import { NavigationContainer, useNavigationContainerRef } from "@react-navigation/native"
+import { NavigationContainer, useNavigationContainerRef, type LinkingOptions } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { StyleSheet } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -8,14 +8,31 @@ import { AccountDetailScreen } from "@features/accounts/screens/AccountDetailScr
 import { AccountListScreen } from "@features/accounts/screens/AccountListScreen"
 import { LoginScreen } from "@features/auth/screens/LoginScreen"
 import { MyPageScreen } from "@features/auth/screens/MyPageScreen"
+import { NotificationSettingsScreen } from "@features/auth/screens/NotificationSettingsScreen"
+import { uiColors } from "@shared/ui"
+import { ROUTES } from "./navigation/routes"
 import type { RootStackParamList } from "./navigation/types"
 import { useApp } from "./providers/AppProvider"
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
 
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: [],
+  config: {
+    screens: {
+      [ROUTES.Login]: "login",
+      [ROUTES.AccountList]: "accounts",
+      [ROUTES.AccountCreate]: "accounts/create",
+      [ROUTES.AccountDetail]: "accounts/:accountId?",
+      [ROUTES.MyPage]: "me",
+      [ROUTES.NotificationSettings]: "settings/notifications",
+    },
+  },
+}
+
 export function AppRouter() {
   const navigationRef = useNavigationContainerRef<RootStackParamList>()
-  const { currentUser, accounts, selectedAccountId } = useApp()
+  const { currentUser, accounts, selectedAccountId, selectAccount } = useApp()
   const hasSelectedAccount = useMemo(
     () => Boolean(selectedAccountId && accounts.some((account) => account.id === selectedAccountId)),
     [accounts, selectedAccountId]
@@ -23,30 +40,41 @@ export function AppRouter() {
 
   const syncNavigation = useCallback(() => {
     if (!navigationRef.isReady()) return
-    const currentRoute = navigationRef.getCurrentRoute()?.name
+    const currentRoute = navigationRef.getCurrentRoute()
+    const currentRouteName = currentRoute?.name
 
     if (!currentUser) {
-      if (currentRoute !== "Login") {
+      if (currentRouteName !== ROUTES.Login) {
         navigationRef.reset({
           index: 0,
-          routes: [{ name: "Login" }],
+          routes: [{ name: ROUTES.Login }],
         })
       }
       return
     }
 
-    if (currentRoute === "Login") {
+    if (currentRouteName === ROUTES.Login) {
       navigationRef.reset({
         index: 0,
-        routes: [{ name: "AccountList" }],
+        routes: [{ name: ROUTES.AccountList }],
       })
       return
     }
 
-    if (currentRoute === "AccountDetail" && !hasSelectedAccount) {
-      navigationRef.navigate("AccountList")
+    if (currentRouteName === ROUTES.AccountDetail) {
+      const accountId = (currentRoute?.params as { accountId?: string } | undefined)?.accountId
+      if (accountId && accounts.some((account) => account.id === accountId)) {
+        if (selectedAccountId !== accountId) {
+          selectAccount(accountId)
+        }
+        return
+      }
+
+      if (!hasSelectedAccount) {
+        navigationRef.navigate(ROUTES.AccountList)
+      }
     }
-  }, [currentUser, hasSelectedAccount, navigationRef])
+  }, [accounts, currentUser, hasSelectedAccount, navigationRef, selectAccount, selectedAccountId])
 
   useEffect(() => {
     syncNavigation()
@@ -54,19 +82,20 @@ export function AppRouter() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <NavigationContainer ref={navigationRef} onReady={syncNavigation} onStateChange={syncNavigation}>
+      <NavigationContainer linking={linking} ref={navigationRef} onReady={syncNavigation} onStateChange={syncNavigation}>
         <Stack.Navigator
-          initialRouteName="Login"
+          initialRouteName={ROUTES.Login}
           screenOptions={{
             headerShown: false,
             contentStyle: styles.container,
           }}
         >
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="AccountList" component={AccountListScreen} />
-          <Stack.Screen name="AccountCreate" component={AccountCreateScreen} />
-          <Stack.Screen name="AccountDetail" component={AccountDetailScreen} />
-          <Stack.Screen name="MyPage" component={MyPageScreen} />
+          <Stack.Screen name={ROUTES.Login} component={LoginScreen} />
+          <Stack.Screen name={ROUTES.AccountList} component={AccountListScreen} />
+          <Stack.Screen name={ROUTES.AccountCreate} component={AccountCreateScreen} />
+          <Stack.Screen name={ROUTES.AccountDetail} component={AccountDetailScreen} />
+          <Stack.Screen name={ROUTES.MyPage} component={MyPageScreen} />
+          <Stack.Screen name={ROUTES.NotificationSettings} component={NotificationSettingsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaView>
@@ -76,7 +105,7 @@ export function AppRouter() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f5f7fb",
+    backgroundColor: uiColors.background,
   },
   container: {
     flex: 1,

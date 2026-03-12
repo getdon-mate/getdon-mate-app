@@ -1,4 +1,4 @@
-import type { TextInputProps, ViewStyle } from "react-native"
+import type { StyleProp, TextInputProps, TextStyle, ViewStyle } from "react-native"
 import { onlyDigits } from "@shared/lib/validation"
 import { InputField } from "./InputField"
 
@@ -12,7 +12,8 @@ export function NumericInputField({
   onChangeText?: (value: string) => void
   label?: string
   error?: string
-  containerStyle?: ViewStyle | ViewStyle[]
+  containerStyle?: StyleProp<ViewStyle>
+  inputStyle?: StyleProp<TextStyle>
 }) {
   return (
     <InputField

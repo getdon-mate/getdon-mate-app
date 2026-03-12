@@ -47,6 +47,9 @@ pnpm run typecheck
 # CI용 웹 검증(typecheck + export)
 pnpm run ci:web
 
+# E2E 스모크 (Playwright)
+pnpm run test:e2e
+
 # Vercel 수동 배포
 pnpm run deploy:vercel:preview
 pnpm run deploy:vercel:production
@@ -85,6 +88,9 @@ pnpm run ci:web
   - `auto`: `EXPO_PUBLIC_API_BASE_URL`이 있으면 backend 우선, 실패 시 fallback 가능
 - `EXPO_PUBLIC_API_BASE_URL`: backend base URL (`http://localhost:4000` 등)
 - `EXPO_PUBLIC_API_TIMEOUT_MS`: 요청 타임아웃(ms, 기본 8000)
+- `EXPO_PUBLIC_ENABLE_DEMO_CONTROLS`: 데모 전용 제어(초기화 버튼) 노출 여부
+- `EXPO_PUBLIC_SHOW_TEST_CREDENTIALS`: 로그인 화면 테스트 계정 힌트 노출 여부
+- `EXPO_PUBLIC_ENABLE_OBSERVABILITY`: 콘솔 기반 에러/API 로깅 활성화 여부
 
 ## 7. Vercel Deployment Pipeline (GET-16)
 
@@ -124,6 +130,7 @@ src/
     accounts/            # 계좌 목록/상세 도메인
   shared/                # 공통 유틸
 docs/plans/              # 작업/스펙 문서
+docs/fe-design-system-guide.md  # 공통 UI/토큰 사용 가이드
 ```
 
 ## 9. Current Related Linear Tasks

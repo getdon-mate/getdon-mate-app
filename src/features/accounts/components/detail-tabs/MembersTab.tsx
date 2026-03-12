@@ -3,12 +3,17 @@ import { StyleSheet, Text, View } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText } from "@shared/lib/validation"
-import { Button, InputField } from "@shared/ui"
-import { getMemberPaymentRate } from "../../model/mock-data"
+import { ActionChip, Button, InputField, uiColors } from "@shared/ui"
+import { getMemberPaymentRate } from "../../model/member-utils"
 import type { GroupAccount, MemberRole } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
 import { MemberRow } from "../MemberRow"
 import { SectionCard } from "../SectionCard"
+import { SectionHeader } from "../SectionHeader"
+
+type MemberSort = "name" | "payment-rate"
+
+type RoleFilter = "all" | MemberRole
 
 export function MembersTab({ account }: { account: GroupAccount }) {
   const { createMember, updateMember, deleteMember } = useApp()
@@ -17,14 +22,32 @@ export function MembersTab({ account }: { account: GroupAccount }) {
   const [phone, setPhone] = useState("")
   const [role, setRole] = useState<MemberRole>("멤버")
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all")
+  const [sortBy, setSortBy] = useState<MemberSort>("payment-rate")
 
   const avgRate =
     account.members.reduce((sum, member) => sum + getMemberPaymentRate(account.duesRecords, member.id), 0) /
     Math.max(account.members.length, 1)
-  const editingMember = useMemo(
-    () => account.members.find((member) => member.id === editingId) ?? null,
-    [account.members, editingId]
-  )
+  const editingMember = useMemo(() => account.members.find((member) => member.id === editingId) ?? null, [account.members, editingId])
+
+  const visibleMembers = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    return [...account.members]
+      .filter((member) => {
+        if (roleFilter !== "all" && member.role !== roleFilter) return false
+        if (!query) return true
+        return member.name.toLowerCase().includes(query) || member.phone.replace(/\D/g, "").includes(query.replace(/\D/g, ""))
+      })
+      .sort((a, b) => {
+        if (sortBy === "name") {
+          return a.name.localeCompare(b.name, "ko")
+        }
+        const rateDiff = getMemberPaymentRate(account.duesRecords, b.id) - getMemberPaymentRate(account.duesRecords, a.id)
+        if (rateDiff !== 0) return rateDiff
+        return a.name.localeCompare(b.name, "ko")
+      })
+  }, [account.duesRecords, account.members, roleFilter, searchQuery, sortBy])
 
   function resetForm() {
     setEditingId(null)
@@ -34,9 +57,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
   }
 
   async function handleSubmit() {
-    const validationError =
-      requireText(name, "멤버 이름을 입력해주세요.") ??
-      requireText(phone, "연락처를 입력해주세요.")
+    const validationError = requireText(name, "멤버 이름을 입력해주세요.") ?? requireText(phone, "연락처를 입력해주세요.")
     if (validationError) {
       showAlert({ title: "입력 오류", message: validationError, tone: "danger" })
       return
@@ -100,6 +121,22 @@ export function MembersTab({ account }: { account: GroupAccount }) {
       </View>
 
       <SectionCard>
+        <SectionHeader title="멤버 검색/정렬" />
+        <View style={styles.formStack}>
+          <InputField value={searchQuery} onChangeText={setSearchQuery} label="검색" placeholder="이름 또는 연락처" />
+          <View style={styles.filterRow}>
+            <ActionChip label="전체" active={roleFilter === "all"} onPress={() => setRoleFilter("all")} />
+            <ActionChip label="총무" active={roleFilter === "총무"} onPress={() => setRoleFilter("총무")} />
+            <ActionChip label="멤버" active={roleFilter === "멤버"} onPress={() => setRoleFilter("멤버")} />
+          </View>
+          <View style={styles.filterRow}>
+            <ActionChip label="납부율순" active={sortBy === "payment-rate"} onPress={() => setSortBy("payment-rate")} />
+            <ActionChip label="이름순" active={sortBy === "name"} onPress={() => setSortBy("name")} />
+          </View>
+        </View>
+      </SectionCard>
+
+      <SectionCard>
         <Text style={styles.sectionTitle}>{editingMember ? "멤버 수정" : "멤버 추가"}</Text>
         <View style={styles.formStack}>
           <InputField value={name} onChangeText={setName} label="이름" placeholder="멤버 이름" />
@@ -120,20 +157,16 @@ export function MembersTab({ account }: { account: GroupAccount }) {
           </View>
           <View style={styles.actionRow}>
             {editingMember ? <Button label="편집 취소" variant="ghost" onPress={resetForm} style={styles.actionButton} /> : null}
-            <Button
-              label={editingMember ? "멤버 수정" : "멤버 추가"}
-              onPress={() => void handleSubmit()}
-              style={styles.actionButton}
-            />
+            <Button label={editingMember ? "멤버 수정" : "멤버 추가"} onPress={() => void handleSubmit()} style={styles.actionButton} />
           </View>
         </View>
       </SectionCard>
 
-      {account.members.length > 0 ? (
+      {visibleMembers.length > 0 ? (
         <SectionCard>
-          <Text style={styles.sectionTitle}>멤버 목록</Text>
+          <SectionHeader title={`멤버 목록 (${visibleMembers.length})`} />
           <View style={styles.stackCompact}>
-            {account.members.map((member) => {
+            {visibleMembers.map((member) => {
               const rate = getMemberPaymentRate(account.duesRecords, member.id)
               return (
                 <MemberRow
@@ -151,10 +184,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
           </View>
         </SectionCard>
       ) : (
-        <EmptyStateCard
-          title="등록된 멤버가 없습니다."
-          description="멤버가 추가되면 역할과 납부율 정보를 이 화면에서 확인할 수 있습니다."
-        />
+        <EmptyStateCard title="조건에 맞는 멤버가 없습니다." description="필터를 바꾸거나 새로운 멤버를 추가해보세요." />
       )}
     </View>
   )
@@ -176,6 +206,11 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 10,
   },
+  filterRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+  },
   roleRow: {
     flexDirection: "row",
     gap: 8,
@@ -191,18 +226,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   summaryLabel: {
-    color: "#6b7280",
+    color: uiColors.textMuted,
     fontSize: 12,
     fontWeight: "600",
   },
   metricText: {
-    color: "#111827",
+    color: uiColors.text,
     fontSize: 18,
     fontWeight: "800",
   },
   sectionTitle: {
     fontSize: 17,
     fontWeight: "700",
-    color: "#111827",
+    color: uiColors.text,
   },
 })

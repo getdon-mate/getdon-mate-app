@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { StyleSheet, Text, View, type ViewStyle } from "react-native"
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native"
 import { uiColors, uiRadius } from "../tokens"
 import { Icon } from "./Icon"
 
@@ -20,6 +20,7 @@ export function Toast({
   autoHideMs = 2400,
   onClose,
   style,
+  containerStyle,
 }: {
   visible: boolean
   title: string
@@ -27,7 +28,8 @@ export function Toast({
   tone?: ToastTone
   autoHideMs?: number
   onClose?: () => void
-  style?: ViewStyle | ViewStyle[]
+  style?: StyleProp<ViewStyle>
+  containerStyle?: StyleProp<ViewStyle>
 }) {
   useEffect(() => {
     if (!visible || !onClose || autoHideMs <= 0) return
@@ -40,7 +42,16 @@ export function Toast({
   if (!visible) return null
 
   return (
-    <View style={[styles.wrap, tone === "success" && styles.success, tone === "warning" && styles.warning, tone === "danger" && styles.danger, style]}>
+    <View
+      style={[
+        styles.wrap,
+        tone === "success" && styles.success,
+        tone === "warning" && styles.warning,
+        tone === "danger" && styles.danger,
+        style,
+        containerStyle,
+      ]}
+    >
       <View style={styles.iconWrap}>
         <Icon name={toneIcon[tone]} size={14} color={uiColors.surface} />
       </View>

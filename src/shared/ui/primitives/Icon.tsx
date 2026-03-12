@@ -11,6 +11,13 @@ const iconGlyph = {
   chevronLeft: "‹",
   chevronRight: "›",
   settings: "⚙",
+  user: "◉",
+  bell: "🔔",
+  logout: "↩",
+  trash: "🗑",
+  search: "⌕",
+  sort: "⇅",
+  closeCircle: "⊗",
 } as const
 
 export type IconName = keyof typeof iconGlyph

@@ -13,7 +13,9 @@
     "typecheck": "tsc --noEmit",
     "ci:web": "pnpm run typecheck && pnpm run export:web",
     "deploy:vercel:preview": "pnpm exec bash scripts/vercel-deploy.sh preview",
-    "deploy:vercel:production": "pnpm exec bash scripts/vercel-deploy.sh production"
+    "deploy:vercel:production": "pnpm exec bash scripts/vercel-deploy.sh production",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
     "@react-navigation/native": "^7.1.33",
@@ -28,6 +30,7 @@
     "react-native-web": "^0.21.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "@types/react": "~19.1.10",
     "babel-plugin-module-resolver": "^5.0.2",
     "babel-preset-expo": "^54.0.10",

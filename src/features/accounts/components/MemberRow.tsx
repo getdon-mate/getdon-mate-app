@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from "react-native"
+import { StyleSheet, Text, View } from "react-native"
 import { Button } from "@shared/ui"
-import { formatMonth } from "../model/mock-data"
+import { formatMonth } from "@shared/lib/format"
 import type { DuesRecord, Member } from "../model/types"
 
 export function MemberRow({

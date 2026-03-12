@@ -1,9 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
-import { availableMonths, formatDate, formatMonth, getMemberById } from "../../model/mock-data"
+import { ActionChip, Icon } from "@shared/ui"
+import { availableMonths } from "../../model/fixtures"
+import { formatDate, formatMonth } from "@shared/lib/format"
+import { getMemberById } from "../../model/member-utils"
 import { getPaymentSummary } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
+import { SectionHeader } from "../SectionHeader"
 import { SectionCard } from "../SectionCard"
 
 export function DuesTab({
@@ -28,16 +32,20 @@ export function DuesTab({
             disabled={monthIndex >= availableMonths.length - 1}
             onPress={() => onSelectMonth(availableMonths[monthIndex + 1])}
             style={styles.arrowButton}
+            accessibilityRole="button"
+            accessibilityLabel="이전 달 보기"
           >
-            <Text style={styles.arrowButtonText}>◀</Text>
+            <Icon name="chevronLeft" size={15} color="#334155" />
           </Pressable>
           <Text style={styles.sectionTitle}>{formatMonth(selectedMonth)}</Text>
           <Pressable
             disabled={monthIndex <= 0}
             onPress={() => onSelectMonth(availableMonths[monthIndex - 1])}
             style={styles.arrowButton}
+            accessibilityRole="button"
+            accessibilityLabel="다음 달 보기"
           >
-            <Text style={styles.arrowButtonText}>▶</Text>
+            <Icon name="chevronRight" size={15} color="#334155" />
           </Pressable>
         </View>
 
@@ -61,7 +69,7 @@ export function DuesTab({
       </SectionCard>
 
       <SectionCard>
-        <Text style={styles.sectionTitle}>멤버별 납부 현황</Text>
+        <SectionHeader title="멤버별 납부 현황" />
         {currentDues.length > 0 ? (
           <View style={styles.stackCompact}>
             {currentDues.map((record) => {
@@ -79,24 +87,13 @@ export function DuesTab({
                     </View>
                   </View>
                   {record.status !== "exempt" && (
-                    <Pressable
-                      style={[
-                        styles.smallOutlineButton,
-                        record.status === "unpaid" ? styles.smallOutlineButtonPrimary : styles.smallOutlineButtonMuted,
-                      ]}
+                    <ActionChip
+                      label={record.status === "unpaid" ? "완납 처리" : "취소"}
+                      active={record.status === "unpaid"}
                       onPress={() => {
                         void toggleDues(record.memberId, selectedMonth)
                       }}
-                    >
-                      <Text
-                        style={[
-                          styles.smallOutlineButtonText,
-                          record.status === "unpaid" ? styles.smallOutlineButtonTextPrimary : styles.smallOutlineButtonTextMuted,
-                        ]}
-                      >
-                        {record.status === "unpaid" ? "완납 처리" : "취소"}
-                      </Text>
-                    </Pressable>
+                    />
                   )}
                 </View>
               )
@@ -181,11 +178,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  arrowButtonText: {
-    color: "#334155",
-    fontSize: 12,
-    fontWeight: "700",
-  },
   memberRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -219,29 +211,5 @@ const styles = StyleSheet.create({
   memberMeta: {
     color: "#6b7280",
     fontSize: 12,
-  },
-  smallOutlineButton: {
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 11,
-    paddingVertical: 7,
-  },
-  smallOutlineButtonPrimary: {
-    borderColor: "#bfdbfe",
-    backgroundColor: "#eff6ff",
-  },
-  smallOutlineButtonMuted: {
-    borderColor: "#d7dce5",
-    backgroundColor: "#f9fafb",
-  },
-  smallOutlineButtonText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  smallOutlineButtonTextPrimary: {
-    color: "#2563eb",
-  },
-  smallOutlineButtonTextMuted: {
-    color: "#4b5563",
   },
 })

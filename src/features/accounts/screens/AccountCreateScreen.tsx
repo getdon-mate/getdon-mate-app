@@ -1,12 +1,13 @@
 import { useState } from "react"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native"
+import { ROUTES } from "@core/navigation/routes"
 import type { RootStackParamList } from "@core/navigation/types"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validateDayOfMonth, validatePositiveNumber } from "@shared/lib/validation"
-import { PageHeader, StatusBanner } from "@shared/ui"
+import { Icon, PageHeader, StatusBanner, uiColors } from "@shared/ui"
 import { AccountCreatePanel } from "../components/AccountCreatePanel"
 
 export function AccountCreateScreen() {
@@ -21,6 +22,8 @@ export function AccountCreateScreen() {
   const [dueDay, setDueDay] = useState("")
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  const { width } = useWindowDimensions()
+  const isWide = width >= 960
 
   async function handleCreate() {
     if (submitting) return
@@ -46,38 +49,42 @@ export function AccountCreateScreen() {
       dueDay: Number(dueDay),
     })
     showToast({ tone: "success", title: "개설 완료", message: "새 모임통장을 만들었습니다." })
-    navigation.goBack()
+    navigation.navigate(ROUTES.AccountList)
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.topRow}>
-        <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>←</Text>
-        </Pressable>
-        <PageHeader title="새 모임통장 개설" subtitle="목록 화면과 분리된 입력 화면에서 정보를 입력합니다." />
-      </View>
-      <StatusBanner
-        title="전용 개설 화면"
-        message="입력 중에도 목록 화면이 길어지지 않도록 모임통장 생성 흐름을 별도 화면으로 분리했습니다."
-      />
-      <AccountCreatePanel
-        groupName={groupName}
-        bankName={bankName}
-        accountNumber={accountNumber}
-        monthlyDues={monthlyDues}
-        dueDay={dueDay}
-        error={error}
-        onChangeGroupName={setGroupName}
-        onChangeBankName={setBankName}
-        onChangeAccountNumber={setAccountNumber}
-        onChangeMonthlyDues={setMonthlyDues}
-        onChangeDueDay={setDueDay}
-        onCancel={() => navigation.goBack()}
-        onSubmit={() => void handleCreate()}
-        submitting={submitting}
-      />
-    </ScrollView>
+    <KeyboardAvoidingView style={styles.screen} behavior={Platform.select({ ios: "padding", android: undefined })}>
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        <View style={[styles.contentWrap, isWide && styles.contentWrapWide]}>
+          <View style={styles.topRow}>
+            <Pressable style={styles.backButton} onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="이전 화면으로 이동">
+              <Icon name="chevronLeft" size={20} color={uiColors.text} />
+            </Pressable>
+            <PageHeader title="새 모임통장 개설" subtitle="목록 화면과 분리된 입력 화면에서 정보를 입력합니다." />
+          </View>
+          <StatusBanner
+            title="전용 개설 화면"
+            message="입력 중에도 목록 화면이 길어지지 않도록 모임통장 생성 흐름을 별도 화면으로 분리했습니다."
+          />
+          <AccountCreatePanel
+            groupName={groupName}
+            bankName={bankName}
+            accountNumber={accountNumber}
+            monthlyDues={monthlyDues}
+            dueDay={dueDay}
+            error={error}
+            onChangeGroupName={setGroupName}
+            onChangeBankName={setBankName}
+            onChangeAccountNumber={setAccountNumber}
+            onChangeMonthlyDues={setMonthlyDues}
+            onChangeDueDay={setDueDay}
+            onCancel={() => navigation.goBack()}
+            onSubmit={() => void handleCreate()}
+            submitting={submitting}
+          />
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   )
 }
 
@@ -90,7 +97,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 32,
+  },
+  contentWrap: {
     gap: 16,
+  },
+  contentWrapWide: {
+    alignSelf: "center",
+    width: "100%",
+    maxWidth: 920,
   },
   topRow: {
     gap: 12,
@@ -102,12 +116,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#ffffff",
-  },
-  backButtonText: {
-    color: "#111827",
-    fontSize: 16,
-    fontWeight: "700",
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surface,
   },
 })

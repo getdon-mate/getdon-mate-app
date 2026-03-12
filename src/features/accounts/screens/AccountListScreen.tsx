@@ -1,17 +1,20 @@
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import {
   ScrollView,
   StyleSheet,
+  useWindowDimensions,
+  View,
 } from "react-native"
+import { ROUTES } from "@core/navigation/routes"
 import type { RootStackParamList } from "@core/navigation/types"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
+import { appEnv } from "@shared/config/app-env"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
 import { getCurrentMonthKey } from "@shared/lib/date"
 import { Button, PageHeader, StatusBanner, uiColors, uiSpacing } from "@shared/ui"
-import { AccountCreatePanel } from "../components/AccountCreatePanel"
 import { LoadingStateCard } from "../components/LoadingStateCard"
 import { AccountSummaryCard } from "../components/AccountSummaryCard"
 import { EmptyStateCard } from "../components/EmptyStateCard"
@@ -26,15 +29,15 @@ export function AccountListScreen() {
     currentUser,
     accounts,
     selectAccount,
-    createAccount,
     logout,
     withdraw,
     resetDemoData,
   } = useApp()
   const { confirm, confirmDanger, showToast } = useFeedback()
   const currentMonth = getCurrentMonthKey()
+  const { width } = useWindowDimensions()
+  const isWide = width >= 960
 
-  const [createSubmitting, setCreateSubmitting] = useState(false)
   const initials = useMemo(() => currentUser?.name.slice(-2) ?? "??", [currentUser])
 
   async function handleWithdraw() {
@@ -76,63 +79,62 @@ export function AccountListScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <UserHeaderCard user={currentUser} initials={initials} onWithdraw={() => void handleWithdraw()} onLogout={() => void handleLogout()} />
-      <StatusBanner
-        title={dataSource === "remote" ? "백엔드 연결 완료" : prefersRealApi ? "데모 데이터 fallback" : "데모 데이터 사용 중"}
-        message={
-          dataSource === "remote"
-            ? "세션과 계좌 목록을 서버 기준으로 불러왔습니다."
-            : "현재 화면은 로컬 mock 데이터를 기준으로 동작합니다."
-        }
-        tone={dataSource === "remote" ? "info" : "warning"}
-      />
+      <View style={[styles.contentWrap, isWide && styles.contentWrapWide]}>
+        <UserHeaderCard user={currentUser} initials={initials} onWithdraw={() => void handleWithdraw()} onLogout={() => void handleLogout()} />
+        <StatusBanner
+          title={dataSource === "remote" ? "백엔드 연결 완료" : prefersRealApi ? "데모 데이터 fallback" : "데모 데이터 사용 중"}
+          message={
+            dataSource === "remote"
+              ? "세션과 계좌 목록을 서버 기준으로 불러왔습니다."
+              : "현재 화면은 로컬 mock 데이터를 기준으로 동작합니다."
+          }
+          tone={dataSource === "remote" ? "info" : "warning"}
+        />
 
-      <PageHeader title="모임통장" subtitle={`내 모임통장 ${accounts.length}개`} />
+        <PageHeader title="모임통장" subtitle={`내 모임통장 ${accounts.length}개`} />
 
-      {isBootstrapping ? (
-        <>
-          <LoadingStateCard />
-          <LoadingStateCard />
-        </>
-      ) : accounts.length > 0 ? (
-        accounts.map((account) => (
-          <AccountSummaryCard
-            key={account.id}
-            account={account}
-            currentMonth={currentMonth}
-            onPress={() => {
-              selectAccount(account.id)
-              navigation.navigate("AccountDetail")
-            }}
+        {isBootstrapping ? (
+          <>
+            <LoadingStateCard />
+            <LoadingStateCard />
+          </>
+        ) : accounts.length > 0 ? (
+          accounts.map((account) => (
+            <AccountSummaryCard
+              key={account.id}
+              account={account}
+              currentMonth={currentMonth}
+              onPress={() => {
+                selectAccount(account.id)
+                navigation.navigate(ROUTES.AccountDetail, { accountId: account.id })
+              }}
+            />
+          ))
+        ) : (
+          <EmptyStateCard
+            title="아직 모임통장이 없습니다."
+            description="새 모임통장을 개설해 회비와 거래 관리를 시작해보세요."
           />
-        ))
-      ) : (
-        <EmptyStateCard
-          title="아직 모임통장이 없습니다."
-          description="새 모임통장을 개설해 회비와 거래 관리를 시작해보세요."
-        />
-      )}
+        )}
 
-      {!isBootstrapping ? (
-        <Button
-          style={styles.addCard}
-          variant="secondary"
-          label="+ 새 모임통장 개설"
-          disabled={createSubmitting}
-          onPress={() => navigation.navigate("AccountCreate")}
-        />
-      ) : null}
+        {!isBootstrapping ? (
+          <Button
+            style={styles.addCard}
+            variant="secondary"
+            label="+ 새 모임통장 개설"
+            onPress={() => navigation.navigate(ROUTES.AccountCreate)}
+          />
+        ) : null}
 
-      {!isBootstrapping ? (
-        <Button
-          style={styles.resetCard}
-          variant="danger"
-          label="데모 데이터 초기화"
-          onPress={handleResetDemoData}
-          disabled={createSubmitting}
-        />
-      ) : null}
-
+        {!isBootstrapping && appEnv.showDemoControls && dataSource !== "remote" ? (
+          <Button
+            style={styles.resetCard}
+            variant="danger"
+            label="데모 데이터 초기화"
+            onPress={handleResetDemoData}
+          />
+        ) : null}
+      </View>
     </ScrollView>
   )
 }
@@ -145,8 +147,15 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: uiSpacing.lg,
     paddingTop: uiSpacing.md,
-    gap: uiSpacing.lg,
     paddingBottom: 30,
+  },
+  contentWrap: {
+    gap: uiSpacing.lg,
+    width: "100%",
+  },
+  contentWrapWide: {
+    alignSelf: "center",
+    maxWidth: 920,
   },
   addCard: {
     borderStyle: "dashed",

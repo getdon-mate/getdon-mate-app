@@ -1,4 +1,5 @@
 import { apiClient, isApiError, shouldUseRealApi } from "@core/api"
+import { logger } from "@shared/lib/logger"
 import type { AppUser, AutoTransfer, GroupAccount, Member, MemberRole, Transaction, TransactionType } from "../model/types"
 
 const API_V1_PREFIX = "/api/v1"
@@ -85,6 +86,10 @@ function backendEnabled(): boolean {
 
 async function tryBackend<T>(operationName: string, operation: () => Promise<T>): Promise<T | null> {
   if (!backendEnabled()) {
+    logger.info({
+      scope: `api.${operationName}`,
+      message: "Backend call skipped because real API mode is disabled.",
+    })
     return null
   }
 
@@ -92,9 +97,17 @@ async function tryBackend<T>(operationName: string, operation: () => Promise<T>)
     return await operation()
   } catch (error) {
     if (isApiError(error)) {
-      console.warn(`[api:${operationName}] ${error.code ?? "UNKNOWN"} (${error.status ?? "n/a"}) ${error.message}`)
+      logger.warn({
+        scope: `api.${operationName}`,
+        message: `${error.code ?? "UNKNOWN"} (${error.status ?? "n/a"}) ${error.message}`,
+        details: error.details,
+      })
     } else {
-      console.warn(`[api:${operationName}] Unexpected backend error`, error)
+      logger.error({
+        scope: `api.${operationName}`,
+        message: "Unexpected backend error",
+        details: error,
+      })
     }
     return null
   }

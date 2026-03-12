@@ -3,12 +3,14 @@ import { Pressable, StyleSheet, Text, View } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
-import { Button, InputField, NumericInputField } from "@shared/ui"
-import { formatFullDate, formatKRW } from "../../model/mock-data"
+import { ActionChip, Button, InputField, NumericInputField, uiColors } from "@shared/ui"
+import { formatFullDate, formatKRW } from "@shared/lib/format"
+import { getMemberById } from "../../model/member-utils"
 import { getTransactionTotals, groupTransactionsByDate } from "../../model/selectors"
 import type { GroupAccount, Transaction, TransactionType } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
 import { SectionCard } from "../SectionCard"
+import { SectionHeader } from "../SectionHeader"
 import { TransactionRow } from "../TransactionRow"
 
 function getToday() {
@@ -18,6 +20,8 @@ function getToday() {
 function getCategoryLabel(type: TransactionType) {
   return type === "income" ? "입금" : "출금"
 }
+
+type SortOrder = "latest" | "oldest"
 
 export function TransactionsTab({
   account,
@@ -31,6 +35,10 @@ export function TransactionsTab({
   const { createTransaction, updateTransaction, deleteTransaction } = useApp()
   const { showAlert, showToast, confirm } = useFeedback()
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all")
+  const [sortOrder, setSortOrder] = useState<SortOrder>("latest")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState("all")
+
   const [draftType, setDraftType] = useState<TransactionType>(initialType)
   const [amount, setAmount] = useState("")
   const [description, setDescription] = useState("")
@@ -44,15 +52,38 @@ export function TransactionsTab({
   }, [composerSignal, editingId, initialType])
 
   const isEditing = editingId !== null
+  const query = searchQuery.trim().toLowerCase()
 
-  const filtered =
-    filter === "all"
-      ? account.transactions
-      : account.transactions.filter((tx) => tx.type === filter)
+  const categories = useMemo(() => {
+    const unique = new Set(account.transactions.map((tx) => tx.category.trim()).filter(Boolean))
+    return ["all", ...Array.from(unique)]
+  }, [account.transactions])
+
+  const filtered = useMemo(() => {
+    const byType =
+      filter === "all" ? account.transactions : account.transactions.filter((tx) => tx.type === filter)
+
+    return byType
+      .filter((tx) => {
+        if (categoryFilter !== "all" && tx.category !== categoryFilter) return false
+        if (!query) return true
+        const memberName = tx.memberId ? getMemberById(account.members, tx.memberId)?.name ?? "" : ""
+        return [tx.description, tx.category, tx.date, memberName].join(" ").toLowerCase().includes(query)
+      })
+      .sort((a, b) => {
+        const base = a.date.localeCompare(b.date)
+        if (base !== 0) {
+          return sortOrder === "latest" ? -base : base
+        }
+        return sortOrder === "latest" ? b.id.localeCompare(a.id) : a.id.localeCompare(b.id)
+      })
+  }, [account.members, account.transactions, categoryFilter, filter, query, sortOrder])
 
   const { income, expense } = getTransactionTotals(account)
   const grouped = groupTransactionsByDate(filtered)
-  const dates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
+  const dates = Object.keys(grouped).sort((a, b) =>
+    sortOrder === "latest" ? b.localeCompare(a) : a.localeCompare(b)
+  )
   const selectedTransaction = useMemo(
     () => account.transactions.find((tx) => tx.id === editingId) ?? null,
     [account.transactions, editingId]
@@ -127,25 +158,23 @@ export function TransactionsTab({
   return (
     <View style={styles.stack}>
       <SectionCard>
-        <Text style={styles.formTitle}>{isEditing ? "거래 수정" : "새 거래 등록"}</Text>
+        <SectionHeader title={isEditing ? "거래 수정" : "새 거래 등록"} />
         <View style={styles.formTypeRow}>
           {(["income", "expense"] as const).map((item) => {
             const active = draftType === item
             return (
-              <Pressable
+              <ActionChip
                 key={item}
-                style={[styles.typeChip, active && styles.typeChipActive]}
+                label={item === "income" ? "입금" : "출금"}
+                active={active}
+                style={styles.flexChip}
                 onPress={() => {
                   setDraftType(item)
                   if (!isEditing) {
                     setCategory(getCategoryLabel(item))
                   }
                 }}
-              >
-                <Text style={[styles.typeChipText, active && styles.typeChipTextActive]}>
-                  {item === "income" ? "입금" : "출금"}
-                </Text>
-              </Pressable>
+              />
             )
           })}
         </View>
@@ -176,18 +205,35 @@ export function TransactionsTab({
         </SectionCard>
       </View>
 
-      <View style={styles.filterRow}>
-        {(["all", "income", "expense"] as const).map((item) => {
-          const active = filter === item
-          return (
-            <Pressable key={item} style={[styles.filterChip, active && styles.filterChipActive]} onPress={() => setFilter(item)}>
-              <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
-                {item === "all" ? "전체" : item === "income" ? "입금" : "출금"}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </View>
+      <SectionCard>
+        <SectionHeader title="거래 필터" />
+        <InputField value={searchQuery} onChangeText={setSearchQuery} label="검색" placeholder="설명, 카테고리, 멤버명" />
+        <View style={styles.filterRow}>
+          {(["all", "income", "expense"] as const).map((item) => (
+            <ActionChip
+              key={item}
+              label={item === "all" ? "전체" : item === "income" ? "입금" : "출금"}
+              active={filter === item}
+              onPress={() => setFilter(item)}
+            />
+          ))}
+          <ActionChip
+            label={sortOrder === "latest" ? "최신순" : "오래된순"}
+            active
+            onPress={() => setSortOrder((prev) => (prev === "latest" ? "oldest" : "latest"))}
+          />
+        </View>
+        <View style={styles.filterRow}>
+          {categories.map((item) => (
+            <ActionChip
+              key={item}
+              label={item === "all" ? "카테고리 전체" : item}
+              active={categoryFilter === item}
+              onPress={() => setCategoryFilter(item)}
+            />
+          ))}
+        </View>
+      </SectionCard>
 
       {dates.length > 0 ? (
         dates.map((date) => (
@@ -219,6 +265,12 @@ export function TransactionsTab({
           description="필터를 바꾸거나 새 거래를 추가하면 이 영역에 거래가 표시됩니다."
         />
       )}
+
+      {selectedTransaction ? (
+        <Text style={styles.editingMeta}>
+          현재 편집 중: {selectedTransaction.description} ({formatKRW(selectedTransaction.amount)})
+        </Text>
+      ) : null}
     </View>
   )
 }
@@ -231,40 +283,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
-  formTitle: {
-    color: "#111827",
-    fontSize: 16,
-    fontWeight: "800",
-  },
   formTypeRow: {
     flexDirection: "row",
     gap: 8,
     marginTop: 12,
   },
-  typeChip: {
+  flexChip: {
     flex: 1,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#dbeafe",
-    backgroundColor: "#eff6ff",
-    paddingVertical: 10,
-    alignItems: "center",
-  },
-  typeChipActive: {
-    backgroundColor: "#2563eb",
-    borderColor: "#2563eb",
-  },
-  typeChipText: {
-    color: "#2563eb",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  typeChipTextActive: {
-    color: "#ffffff",
   },
   formGrid: {
-    gap: 10,
-    marginTop: 12,
+    gap: 8,
+    marginTop: 8,
   },
   formActionRow: {
     flexDirection: "row",
@@ -274,63 +303,53 @@ const styles = StyleSheet.create({
   formActionButton: {
     flex: 1,
   },
-  stackCompact: {
-    gap: 10,
-    marginTop: 10,
-  },
   summaryLabel: {
-    color: "#6b7280",
+    color: uiColors.textMuted,
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   metricText: {
     fontSize: 18,
     fontWeight: "800",
   },
   incomeText: {
-    color: "#16a34a",
+    color: uiColors.success,
   },
   expenseText: {
-    color: "#111827",
+    color: uiColors.text,
   },
   filterRow: {
     flexDirection: "row",
-    gap: 7,
-  },
-  filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#ffffff",
-  },
-  filterChipActive: {
-    backgroundColor: "#2563eb",
-    borderColor: "#2563eb",
-  },
-  filterChipText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#4b5563",
-  },
-  filterChipTextActive: {
-    color: "#ffffff",
+    gap: 8,
+    flexWrap: "wrap",
+    marginTop: 10,
   },
   subtleText: {
-    color: "#6b7280",
-    fontSize: 12,
+    color: uiColors.textMuted,
+    fontSize: 13,
     fontWeight: "600",
   },
+  stackCompact: {
+    gap: 10,
+    marginTop: 10,
+  },
   transactionCard: {
-    gap: 8,
+    gap: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eef2f7",
+    paddingBottom: 8,
   },
   inlineActions: {
     flexDirection: "row",
-    justifyContent: "flex-end",
     gap: 8,
   },
   inlineActionButton: {
-    minWidth: 72,
+    minWidth: 70,
+    paddingVertical: 8,
+  },
+  editingMeta: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    textAlign: "center",
   },
 })

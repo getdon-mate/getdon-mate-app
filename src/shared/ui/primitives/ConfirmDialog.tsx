@@ -1,4 +1,4 @@
-import { Modal, StyleSheet, Text, View } from "react-native"
+import { Modal, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native"
 import { uiColors, uiRadius } from "../tokens"
 import { Button } from "./Button"
 
@@ -9,6 +9,7 @@ export function ConfirmDialog({
   cancelLabel = "취소",
   confirmLabel = "확인",
   confirmTone = "primary",
+  containerStyle,
   onCancel,
   onConfirm,
 }: {
@@ -18,13 +19,14 @@ export function ConfirmDialog({
   cancelLabel?: string
   confirmLabel?: string
   confirmTone?: "primary" | "danger"
+  containerStyle?: StyleProp<ViewStyle>
   onCancel: () => void
   onConfirm: () => void
 }) {
   return (
     <Modal transparent animationType="fade" visible={visible} onRequestClose={onCancel}>
       <View style={styles.overlay}>
-        <View style={styles.dialog}>
+        <View style={[styles.dialog, containerStyle]}>
           <Text style={styles.title}>{title}</Text>
           {message ? <Text style={styles.message}>{message}</Text> : null}
           <View style={styles.actions}>

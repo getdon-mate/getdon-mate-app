@@ -1,25 +1,31 @@
-import { StyleSheet, Text, TextInput, View, type TextInputProps, type ViewStyle } from "react-native"
+import { StyleSheet, Text, TextInput, View, type StyleProp, type TextStyle, type TextInputProps, type ViewStyle } from "react-native"
 import { uiColors, uiRadius } from "../tokens"
 
 export function InputField({
   label,
   error,
   containerStyle,
+  inputStyle,
+  labelStyle,
+  errorStyle,
   ...props
 }: TextInputProps & {
   label?: string
   error?: string
-  containerStyle?: ViewStyle | ViewStyle[]
+  containerStyle?: StyleProp<ViewStyle>
+  inputStyle?: StyleProp<TextStyle>
+  labelStyle?: StyleProp<TextStyle>
+  errorStyle?: StyleProp<TextStyle>
 }) {
   return (
     <View style={[styles.block, containerStyle]}>
-      {label ? <Text style={styles.label}>{label}</Text> : null}
+      {label ? <Text style={[styles.label, labelStyle]}>{label}</Text> : null}
       <TextInput
         {...props}
-        style={[styles.input, props.style]}
+        style={[styles.input, props.style, inputStyle]}
         placeholderTextColor={uiColors.textSoft}
       />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={[styles.error, errorStyle]}>{error}</Text> : null}
     </View>
   )
 }

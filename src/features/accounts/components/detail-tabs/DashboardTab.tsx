@@ -1,9 +1,12 @@
 import { useState } from "react"
-import { Pressable, StyleSheet, Text, View } from "react-native"
+import { StyleSheet, Text, View } from "react-native"
 import { getCurrentMonthKey } from "@shared/lib/date"
-import { getMemberById, formatKRW } from "../../model/mock-data"
+import { ActionChip, uiRecipes } from "@shared/ui"
+import { formatKRW } from "@shared/lib/format"
+import { getMemberById } from "../../model/member-utils"
 import { getPaymentSummary, getRecentTransactions } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"
+import { SectionHeader } from "../SectionHeader"
 import { SectionCard } from "../SectionCard"
 import { TransactionRow } from "../TransactionRow"
 
@@ -28,18 +31,16 @@ export function DashboardTab({
         <Text style={styles.subtleText}>{account.bankName} {account.accountNumber}</Text>
         <Text style={styles.balanceLabel}>현재 잔액</Text>
         <Text style={styles.balanceText}>{showBalance ? formatKRW(account.balance) : "***,***원"}</Text>
-        <Pressable style={styles.smallOutlineButton} onPress={() => setShowBalance((prev) => !prev)}>
-          <Text style={styles.smallOutlineButtonText}>{showBalance ? "잔액 숨기기" : "잔액 보기"}</Text>
-        </Pressable>
+        <ActionChip
+          label={showBalance ? "잔액 숨기기" : "잔액 보기"}
+          onPress={() => setShowBalance((prev) => !prev)}
+          active={showBalance}
+          style={styles.chipSelf}
+        />
       </SectionCard>
 
       <SectionCard>
-        <View style={styles.rowBetween}>
-          <Text style={styles.sectionTitle}>회비 현황</Text>
-          <Pressable onPress={onOpenDues}>
-            <Text style={styles.linkText}>자세히</Text>
-          </Pressable>
-        </View>
+        <SectionHeader title="회비 현황" actionLabel="자세히" onAction={onOpenDues} />
         <View style={styles.summaryPillRow}>
           <View style={styles.summaryPill}>
             <Text style={styles.summaryPillLabel}>완납</Text>
@@ -75,12 +76,7 @@ export function DashboardTab({
       </SectionCard>
 
       <SectionCard>
-        <View style={styles.rowBetween}>
-          <Text style={styles.sectionTitle}>최근 거래내역</Text>
-          <Pressable onPress={onOpenTransactions}>
-            <Text style={styles.linkText}>더보기</Text>
-          </Pressable>
-        </View>
+        <SectionHeader title="최근 거래내역" actionLabel="더보기" onAction={onOpenTransactions} />
         {recentTransactions.length > 0 ? (
           <View style={styles.stackCompact}>
             {recentTransactions.map((tx) => (
@@ -122,35 +118,8 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: "800",
   },
-  smallOutlineButton: {
-    borderWidth: 1,
-    borderColor: "#d7dce5",
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+  chipSelf: {
     alignSelf: "flex-start",
-    backgroundColor: "#f9fafb",
-  },
-  smallOutlineButtonText: {
-    color: "#374151",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  rowBetween: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111827",
-  },
-  linkText: {
-    color: "#2563eb",
-    fontSize: 13,
-    fontWeight: "600",
   },
   metricText: {
     color: "#111827",
@@ -171,6 +140,7 @@ const styles = StyleSheet.create({
     borderColor: "#e5e7eb",
     gap: 4,
   },
+  rowBetween: uiRecipes.rowBetween,
   summaryPillLabel: {
     color: "#6b7280",
     fontSize: 12,

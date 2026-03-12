@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, type PressableProps, type ViewStyle } from "react-native"
+import { Pressable, StyleSheet, Text, type PressableProps, type StyleProp, type TextStyle, type ViewStyle } from "react-native"
 import { uiColors, uiRadius } from "../tokens"
 
 type ButtonVariant = "primary" | "secondary" | "danger" | "ghost"
@@ -9,17 +9,23 @@ export function Button({
   variant = "primary",
   size = "md",
   style,
+  containerStyle,
+  textStyle,
   disabled,
   ...props
 }: PressableProps & {
   label: string
   variant?: ButtonVariant
   size?: ButtonSize
-  style?: ViewStyle | ViewStyle[]
+  style?: StyleProp<ViewStyle>
+  containerStyle?: StyleProp<ViewStyle>
+  textStyle?: StyleProp<TextStyle>
 }) {
   return (
     <Pressable
       {...props}
+      accessibilityRole="button"
+      accessibilityLabel={props.accessibilityLabel ?? label}
       disabled={disabled}
       style={[
         styles.base,
@@ -30,6 +36,7 @@ export function Button({
         size === "lg" && styles.lg,
         disabled && styles.disabled,
         style,
+        containerStyle,
       ]}
     >
       <Text
@@ -39,6 +46,7 @@ export function Button({
           variant === "secondary" && styles.secondaryText,
           variant === "danger" && styles.dangerText,
           variant === "ghost" && styles.ghostText,
+          textStyle,
         ]}
       >
         {label}
