@@ -1,0 +1,113 @@
+import { useState } from "react"
+import { useNavigation } from "@react-navigation/native"
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import type { RootStackParamList } from "@core/navigation/types"
+import { useApp } from "@core/providers/AppProvider"
+import { useFeedback } from "@core/providers/FeedbackProvider"
+import { requireText, validateDayOfMonth, validatePositiveNumber } from "@shared/lib/validation"
+import { PageHeader, StatusBanner } from "@shared/ui"
+import { AccountCreatePanel } from "../components/AccountCreatePanel"
+
+export function AccountCreateScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
+  const { createAccount } = useApp()
+  const { showToast } = useFeedback()
+
+  const [groupName, setGroupName] = useState("")
+  const [bankName, setBankName] = useState("")
+  const [accountNumber, setAccountNumber] = useState("")
+  const [monthlyDues, setMonthlyDues] = useState("")
+  const [dueDay, setDueDay] = useState("")
+  const [error, setError] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+
+  async function handleCreate() {
+    if (submitting) return
+    setError("")
+
+    const validationError =
+      requireText(groupName, "모임명을 입력해주세요.") ??
+      requireText(bankName, "은행명을 입력해주세요.") ??
+      requireText(accountNumber, "계좌번호를 입력해주세요.") ??
+      validatePositiveNumber(monthlyDues, "월 회비를 올바르게 입력해주세요.") ??
+      validateDayOfMonth(dueDay)
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+
+    setSubmitting(true)
+    await createAccount({
+      groupName: groupName.trim(),
+      bankName: bankName.trim(),
+      accountNumber: accountNumber.trim(),
+      monthlyDuesAmount: Number(monthlyDues),
+      dueDay: Number(dueDay),
+    })
+    showToast({ tone: "success", title: "개설 완료", message: "새 모임통장을 만들었습니다." })
+    navigation.goBack()
+  }
+
+  return (
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <View style={styles.topRow}>
+        <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.backButtonText}>←</Text>
+        </Pressable>
+        <PageHeader title="새 모임통장 개설" subtitle="목록 화면과 분리된 입력 화면에서 정보를 입력합니다." />
+      </View>
+      <StatusBanner
+        title="전용 개설 화면"
+        message="입력 중에도 목록 화면이 길어지지 않도록 모임통장 생성 흐름을 별도 화면으로 분리했습니다."
+      />
+      <AccountCreatePanel
+        groupName={groupName}
+        bankName={bankName}
+        accountNumber={accountNumber}
+        monthlyDues={monthlyDues}
+        dueDay={dueDay}
+        error={error}
+        onChangeGroupName={setGroupName}
+        onChangeBankName={setBankName}
+        onChangeAccountNumber={setAccountNumber}
+        onChangeMonthlyDues={setMonthlyDues}
+        onChangeDueDay={setDueDay}
+        onCancel={() => navigation.goBack()}
+        onSubmit={() => void handleCreate()}
+        submitting={submitting}
+      />
+    </ScrollView>
+  )
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#f8fafc",
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 32,
+    gap: 16,
+  },
+  topRow: {
+    gap: 12,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    backgroundColor: "#ffffff",
+  },
+  backButtonText: {
+    color: "#111827",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+})

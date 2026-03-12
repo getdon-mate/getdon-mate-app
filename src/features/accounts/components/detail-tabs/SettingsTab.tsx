@@ -1,5 +1,8 @@
 import { useState } from "react"
+import { useNavigation } from "@react-navigation/native"
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { Pressable, StyleSheet, Text, View } from "react-native"
+import type { RootStackParamList } from "@core/navigation/types"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
@@ -11,6 +14,7 @@ import type { GroupAccount } from "../../model/types"
 type RecordFilter = "all" | "paid" | "unpaid"
 
 export function SettingsTab({ account }: { account: GroupAccount }) {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const {
     currentUser,
     updateAutoTransfer,
@@ -126,6 +130,10 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
     showPendingFeature(label)
   }
 
+  function handleOpenMyPage() {
+    navigation.navigate("MyPage")
+  }
+
   async function handleLogout() {
     const confirmed = await confirm({
       title: feedbackPresets.logout.title,
@@ -167,8 +175,8 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
       </View>
 
       <View style={styles.menuGroup}>
+        <SettingsRow label="프로필 관리" onPress={handleOpenMyPage} />
         <SettingsRow label="알림 설정" onPress={() => handleAlertPlaceholder("알림 설정")} />
-        <SettingsRow label="프로필 관리" onPress={() => handleAlertPlaceholder("프로필 관리")} />
       </View>
 
       <View style={styles.managementSection}>
@@ -279,6 +287,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
       </View>
 
       <View style={styles.menuGroup}>
+        <Text style={styles.sectionHeading}>계정 액션</Text>
         <SettingsRow label="로그아웃" onPress={() => void handleLogout()} />
         <SettingsRow label="회원 탈퇴" onPress={() => void handleWithdraw()} tone="danger" />
       </View>
