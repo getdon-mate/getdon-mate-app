@@ -3,6 +3,7 @@ import { useApp } from "@core/providers/AppProvider"
 import { availableMonths, formatDate, formatMonth, getMemberById } from "../../model/mock-data"
 import { getPaymentSummary } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"
+import { EmptyStateCard } from "../EmptyStateCard"
 import { SectionCard } from "../SectionCard"
 
 export function DuesTab({
@@ -102,10 +103,10 @@ export function DuesTab({
             })}
           </View>
         ) : (
-          <View style={styles.emptyBox}>
-            <Text style={styles.emptyTitle}>이 달의 회비 기록이 없습니다.</Text>
-            <Text style={styles.emptyDescription}>월을 변경하거나 멤버 회비를 등록해 진행률을 확인해보세요.</Text>
-          </View>
+          <EmptyStateCard
+            title="이 달의 회비 기록이 없습니다."
+            description="월을 변경하거나 멤버 회비를 등록해 진행률을 확인해보세요."
+          />
         )}
       </SectionCard>
     </View>
@@ -242,25 +243,5 @@ const styles = StyleSheet.create({
   },
   smallOutlineButtonTextMuted: {
     color: "#4b5563",
-  },
-  emptyBox: {
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#f8fafc",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    gap: 4,
-  },
-  emptyTitle: {
-    color: "#111827",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  emptyDescription: {
-    color: "#6b7280",
-    fontSize: 12,
-    lineHeight: 17,
   },
 })

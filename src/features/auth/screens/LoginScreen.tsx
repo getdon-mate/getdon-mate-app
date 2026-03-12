@@ -5,7 +5,7 @@ import {
   StyleSheet,
 } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
-import { Toast } from "@shared/ui"
+import { Card, SkeletonBlock, Toast, uiSpacing } from "@shared/ui"
 import { AuthFormCard } from "../components/AuthFormCard"
 import { AuthHero } from "../components/AuthHero"
 
@@ -13,7 +13,7 @@ const TEST_EMAIL = "test@test.com"
 const TEST_PASSWORD = "password"
 
 export function LoginScreen() {
-  const { login, signup } = useApp()
+  const { isBootstrapping, login, signup } = useApp()
 
   const [isSignup, setIsSignup] = useState(false)
   const [name, setName] = useState("")
@@ -91,20 +91,39 @@ export function LoginScreen() {
       style={styles.screen}
       behavior={Platform.select({ ios: "padding", android: undefined })}
     >
-      <AuthHero />
-      <AuthFormCard
-        isSignup={isSignup}
-        name={name}
-        email={email}
-        password={password}
-        error={error}
-        onChangeName={setName}
-        onChangeEmail={setEmail}
-        onChangePassword={setPassword}
-        onSubmit={handleSubmit}
-        onToggleMode={() => resetForm(!isSignup)}
-        submitting={submitting}
-      />
+      {isBootstrapping ? (
+        <>
+          <Card style={styles.loadingHeroCard}>
+            <SkeletonBlock width="32%" height={12} />
+            <SkeletonBlock width="54%" height={28} />
+            <SkeletonBlock width="76%" height={14} />
+            <SkeletonBlock width="68%" height={14} />
+          </Card>
+          <Card style={styles.loadingFormCard}>
+            <SkeletonBlock width="28%" height={24} />
+            <SkeletonBlock width="100%" height={48} />
+            <SkeletonBlock width="100%" height={48} />
+            <SkeletonBlock width="100%" height={52} />
+          </Card>
+        </>
+      ) : (
+        <>
+          <AuthHero />
+          <AuthFormCard
+            isSignup={isSignup}
+            name={name}
+            email={email}
+            password={password}
+            error={error}
+            onChangeName={setName}
+            onChangeEmail={setEmail}
+            onChangePassword={setPassword}
+            onSubmit={handleSubmit}
+            onToggleMode={() => resetForm(!isSignup)}
+            submitting={submitting}
+          />
+        </>
+      )}
       <Toast
         visible={toastVisible}
         tone="danger"
@@ -122,5 +141,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 28,
     backgroundColor: "#ffffff",
+  },
+  loadingHeroCard: {
+    gap: uiSpacing.sm,
+    marginBottom: uiSpacing.lg,
+  },
+  loadingFormCard: {
+    gap: uiSpacing.md,
   },
 })

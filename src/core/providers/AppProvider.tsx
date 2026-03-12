@@ -18,6 +18,7 @@ interface CreateOneTimeDuesInput {
 }
 
 interface AppContextType {
+  isBootstrapping: boolean
   currentUser: AppUser | null
   accounts: GroupAccount[]
   selectedAccountId: string | null
@@ -97,6 +98,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const backendAdapter = useMemo(() => createAccountsBackendV1Adapter(), [])
 
   const [users, setUsers] = useState<AppUser[]>(() => cloneUsers(defaultUsers))
+  const [isBootstrapping, setIsBootstrapping] = useState(true)
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null)
   const [accounts, setAccounts] = useState<GroupAccount[]>(() => cloneAccounts(defaultAccounts))
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null)
@@ -110,6 +112,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       setUsers(cloneUsers(bootstrap.users))
       setAccounts(cloneAccounts(bootstrap.accounts))
+      setIsBootstrapping(false)
     }
 
     void loadBootstrap()
@@ -118,6 +121,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       cancelled = true
     }
   }, [backendAdapter])
+
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+
+    if (isBootstrapping) {
+      timeoutId = setTimeout(() => {
+        setIsBootstrapping(false)
+      }, 600)
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId)
+    }
+  }, [isBootstrapping])
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -329,6 +346,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <AppContext.Provider
       value={{
         currentUser,
+        isBootstrapping,
         accounts,
         selectedAccountId,
         login,

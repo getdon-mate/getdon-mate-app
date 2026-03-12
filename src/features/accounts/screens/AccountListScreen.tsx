@@ -10,13 +10,14 @@ import { useApp } from "@core/providers/AppProvider"
 import { getCurrentMonthKey } from "@shared/lib/date"
 import { Button, ConfirmDialog, PageHeader, Toast } from "@shared/ui"
 import { AccountCreatePanel } from "../components/AccountCreatePanel"
+import { LoadingStateCard } from "../components/LoadingStateCard"
 import { AccountSummaryCard } from "../components/AccountSummaryCard"
 import { EmptyStateCard } from "../components/EmptyStateCard"
 import { UserHeaderCard } from "../components/UserHeaderCard"
 
 export function AccountListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
-  const { currentUser, accounts, selectAccount, createAccount, logout, withdraw, resetDemoData } = useApp()
+  const { isBootstrapping, currentUser, accounts, selectAccount, createAccount, logout, withdraw, resetDemoData } = useApp()
   const currentMonth = getCurrentMonthKey()
 
   const [showCreate, setShowCreate] = useState(false)
@@ -104,7 +105,12 @@ export function AccountListScreen() {
 
       <PageHeader title="모임통장" subtitle={`내 모임통장 ${accounts.length}개`} />
 
-      {accounts.length > 0 ? (
+      {isBootstrapping ? (
+        <>
+          <LoadingStateCard />
+          <LoadingStateCard />
+        </>
+      ) : accounts.length > 0 ? (
         accounts.map((account) => (
           <AccountSummaryCard
             key={account.id}
@@ -123,16 +129,18 @@ export function AccountListScreen() {
         />
       )}
 
-      <Button
-        style={styles.addCard}
-        variant="secondary"
-        label={showCreate ? "입력 닫기" : "+ 새 모임통장 개설"}
-        disabled={createSubmitting}
-        onPress={() => {
-          setShowCreate((prev) => !prev)
-          setError("")
-        }}
-      />
+      {!isBootstrapping ? (
+        <Button
+          style={styles.addCard}
+          variant="secondary"
+          label={showCreate ? "입력 닫기" : "+ 새 모임통장 개설"}
+          disabled={createSubmitting}
+          onPress={() => {
+            setShowCreate((prev) => !prev)
+            setError("")
+          }}
+        />
+      ) : null}
 
       {showCreate && (
         <AccountCreatePanel
@@ -156,13 +164,15 @@ export function AccountListScreen() {
         />
       )}
 
-      <Button
-        style={styles.resetCard}
-        variant="danger"
-        label="데모 데이터 초기화"
-        onPress={handleResetDemoData}
-        disabled={createSubmitting}
-      />
+      {!isBootstrapping ? (
+        <Button
+          style={styles.resetCard}
+          variant="danger"
+          label="데모 데이터 초기화"
+          onPress={handleResetDemoData}
+          disabled={createSubmitting}
+        />
+      ) : null}
 
       <ConfirmDialog
         visible={withdrawConfirmVisible}

@@ -1,4 +1,5 @@
 import { StyleSheet, Text } from "react-native"
+import { uiColors, uiTypography } from "@shared/ui"
 import { SectionCard } from "./SectionCard"
 
 export function EmptyStateCard({
@@ -18,12 +19,11 @@ export function EmptyStateCard({
 
 const styles = StyleSheet.create({
   title: {
-    color: "#111827",
+    ...uiTypography.section,
     fontSize: 15,
-    fontWeight: "700",
   },
   description: {
-    color: "#6b7280",
+    color: uiColors.textMuted,
     fontSize: 13,
     lineHeight: 19,
   },
