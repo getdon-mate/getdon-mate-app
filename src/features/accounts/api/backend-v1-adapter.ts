@@ -1,5 +1,5 @@
 import { apiClient, isApiError, shouldUseRealApi } from "@core/api"
-import type { AppUser, AutoTransfer, GroupAccount, Member, MemberRole } from "../model/types"
+import type { AppUser, AutoTransfer, GroupAccount, Member, MemberRole, Transaction, TransactionType } from "../model/types"
 
 const API_V1_PREFIX = "/api/v1"
 
@@ -40,6 +40,14 @@ interface UpsertMemberPayload {
   role: MemberRole
 }
 
+interface UpsertTransactionPayload {
+  type: TransactionType
+  amount: number
+  description: string
+  date: string
+  category: string
+}
+
 interface AuthResponse {
   user: AppUser
   accounts?: GroupAccount[]
@@ -64,6 +72,9 @@ export interface AccountsBackendAdapter {
   createMember: (accountId: string, payload: UpsertMemberPayload) => Promise<Member | null>
   updateMember: (accountId: string, memberId: string, payload: UpsertMemberPayload) => Promise<void>
   deleteMember: (accountId: string, memberId: string) => Promise<void>
+  createTransaction: (accountId: string, payload: UpsertTransactionPayload) => Promise<Transaction | null>
+  updateTransaction: (accountId: string, transactionId: string, payload: UpsertTransactionPayload) => Promise<void>
+  deleteTransaction: (accountId: string, transactionId: string) => Promise<void>
   deleteUser: (userId: string) => Promise<void>
 }
 
@@ -184,6 +195,24 @@ export function createAccountsBackendV1Adapter(): AccountsBackendAdapter {
     async deleteMember(accountId, memberId) {
       await tryBackend("accounts.members.delete", () =>
         apiClient.delete(`${API_V1_PREFIX}/accounts/${accountId}/members/${memberId}`)
+      )
+    },
+
+    async createTransaction(accountId, payload) {
+      return tryBackend("accounts.transactions.create", () =>
+        apiClient.post<Transaction>(`${API_V1_PREFIX}/accounts/${accountId}/transactions`, payload)
+      )
+    },
+
+    async updateTransaction(accountId, transactionId, payload) {
+      await tryBackend("accounts.transactions.update", () =>
+        apiClient.patch(`${API_V1_PREFIX}/accounts/${accountId}/transactions/${transactionId}`, payload)
+      )
+    },
+
+    async deleteTransaction(accountId, transactionId) {
+      await tryBackend("accounts.transactions.delete", () =>
+        apiClient.delete(`${API_V1_PREFIX}/accounts/${accountId}/transactions/${transactionId}`)
       )
     },
 

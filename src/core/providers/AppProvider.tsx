@@ -9,6 +9,8 @@ import type {
   MemberRole,
   OneTimeDues,
   OneTimeDuesRecord,
+  Transaction,
+  TransactionType,
 } from "@features/accounts/model/types"
 
 interface CreateAccountInput {
@@ -39,6 +41,14 @@ interface UpsertMemberInput {
   role: MemberRole
 }
 
+interface UpsertTransactionInput {
+  type: TransactionType
+  amount: number
+  description: string
+  date: string
+  category: string
+}
+
 interface AppContextType {
   isBootstrapping: boolean
   currentUser: AppUser | null
@@ -60,6 +70,9 @@ interface AppContextType {
   createMember: (accountId: string, data: UpsertMemberInput) => Promise<void>
   updateMember: (accountId: string, memberId: string, data: UpsertMemberInput) => Promise<void>
   deleteMember: (accountId: string, memberId: string) => Promise<void>
+  createTransaction: (accountId: string, data: UpsertTransactionInput) => Promise<void>
+  updateTransaction: (accountId: string, transactionId: string, data: UpsertTransactionInput) => Promise<void>
+  deleteTransaction: (accountId: string, transactionId: string) => Promise<void>
   resetDemoData: () => void
 }
 
@@ -138,6 +151,29 @@ function createLocalMember(data: UpsertMemberInput, memberCount: number): Member
     phone: data.phone,
     joinDate: new Date().toISOString().split("T")[0],
     color: pickMemberColor(memberCount),
+  }
+}
+
+function sortTransactions(transactions: Transaction[]) {
+  return [...transactions].sort((a, b) => {
+    const dateCompare = b.date.localeCompare(a.date)
+    if (dateCompare !== 0) return dateCompare
+    return b.id.localeCompare(a.id)
+  })
+}
+
+function getTransactionImpact(transaction: Pick<Transaction, "type" | "amount">) {
+  return transaction.type === "income" ? transaction.amount : -transaction.amount
+}
+
+function createLocalTransaction(data: UpsertTransactionInput): Transaction {
+  return {
+    id: `tx${Date.now()}`,
+    type: data.type,
+    amount: data.amount,
+    description: data.description,
+    date: data.date,
+    category: data.category,
   }
 }
 
@@ -491,6 +527,77 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [backendAdapter]
   )
 
+  const createTransaction = useCallback(
+    async (accountId: string, data: UpsertTransactionInput) => {
+      const remoteTransaction = await backendAdapter.createTransaction(accountId, data)
+      const nextTransaction = remoteTransaction ?? createLocalTransaction(data)
+
+      setAccounts((prev) =>
+        prev.map((acc) => {
+          if (acc.id !== accountId) return acc
+          return {
+            ...acc,
+            balance: acc.balance + getTransactionImpact(nextTransaction),
+            transactions: sortTransactions([nextTransaction, ...acc.transactions]),
+          }
+        })
+      )
+    },
+    [backendAdapter]
+  )
+
+  const updateTransaction = useCallback(
+    async (accountId: string, transactionId: string, data: UpsertTransactionInput) => {
+      setAccounts((prev) =>
+        prev.map((acc) => {
+          if (acc.id !== accountId) return acc
+          const currentTransaction = acc.transactions.find((tx) => tx.id === transactionId)
+          if (!currentTransaction) return acc
+
+          const nextTransaction: Transaction = {
+            ...currentTransaction,
+            ...data,
+          }
+
+          return {
+            ...acc,
+            balance:
+              acc.balance -
+              getTransactionImpact(currentTransaction) +
+              getTransactionImpact(nextTransaction),
+            transactions: sortTransactions(
+              acc.transactions.map((tx) => (tx.id === transactionId ? nextTransaction : tx))
+            ),
+          }
+        })
+      )
+
+      await backendAdapter.updateTransaction(accountId, transactionId, data)
+    },
+    [backendAdapter]
+  )
+
+  const deleteTransaction = useCallback(
+    async (accountId: string, transactionId: string) => {
+      setAccounts((prev) =>
+        prev.map((acc) => {
+          if (acc.id !== accountId) return acc
+          const currentTransaction = acc.transactions.find((tx) => tx.id === transactionId)
+          if (!currentTransaction) return acc
+
+          return {
+            ...acc,
+            balance: acc.balance - getTransactionImpact(currentTransaction),
+            transactions: acc.transactions.filter((tx) => tx.id !== transactionId),
+          }
+        })
+      )
+
+      await backendAdapter.deleteTransaction(accountId, transactionId)
+    },
+    [backendAdapter]
+  )
+
   const resetDemoData = useCallback(() => {
     setUsers(cloneUsers(defaultUsers))
     setAccounts(cloneAccounts(defaultAccounts))
@@ -521,6 +628,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         createMember,
         updateMember,
         deleteMember,
+        createTransaction,
+        updateTransaction,
+        deleteTransaction,
         resetDemoData,
       }}
     >

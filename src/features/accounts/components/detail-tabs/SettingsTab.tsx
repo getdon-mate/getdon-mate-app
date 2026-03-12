@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
+import { feedbackPresets } from "@shared/lib/feedback-presets"
 import { requireText, validateDayOfMonth, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
 import { Button, InputField, NumericInputField, RadioButton, ToggleSwitch } from "@shared/ui"
 import { formatKRW, getMemberById } from "../../model/mock-data"
@@ -20,7 +21,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
     logout,
     withdraw,
   } = useApp()
-  const { showAlert, showToast, confirm } = useFeedback()
+  const { showAlert, showToast, showError, showPendingFeature, confirm, confirmDanger } = useFeedback()
   const [groupName, setGroupName] = useState(account.groupName)
   const [bankName, setBankName] = useState(account.bankName)
   const [accountNumber, setAccountNumber] = useState(account.accountNumber)
@@ -44,13 +45,13 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
 
     const dayError = validateDayOfMonth(day)
     if (enabled && dayError) {
-      showAlert({ title: "입력 오류", message: dayError, tone: "danger" })
+      showError(dayError, feedbackPresets.validationError.title)
       return
     }
 
     const amountError = validatePositiveNumber(amount, "금액을 올바르게 입력해주세요.")
     if (enabled && amountError) {
-      showAlert({ title: "입력 오류", message: amountError, tone: "danger" })
+      showError(amountError, feedbackPresets.validationError.title)
       return
     }
 
@@ -94,7 +95,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
       validatePositiveNumber(duesAmount, "금액을 올바르게 입력해주세요.") ??
       validateIsoDate(dueDate)
     if (validationError) {
-      showAlert({ title: "입력 오류", message: validationError, tone: "danger" })
+      showError(validationError, feedbackPresets.validationError.title)
       return
     }
 
@@ -111,42 +112,40 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
   }
 
   async function handleDeleteAccount() {
-    const confirmed = await confirm({
-      title: "모임통장 삭제",
-      message: "이 모임통장과 관련된 데모 데이터가 제거됩니다.",
-      confirmLabel: "삭제",
-      confirmTone: "danger",
+    const confirmed = await confirmDanger({
+      title: feedbackPresets.deleteAccount.title,
+      message: feedbackPresets.deleteAccount.message,
+      confirmLabel: feedbackPresets.deleteAccount.confirmLabel,
     })
     if (!confirmed) return
     await deleteAccount(account.id)
-    showToast({ tone: "success", title: "삭제 완료", message: "모임통장을 목록에서 제거했습니다." })
+    showToast({ tone: "success", title: feedbackPresets.deleteAccount.successTitle, message: feedbackPresets.deleteAccount.successMessage })
   }
 
   function handleAlertPlaceholder(label: string) {
-    showAlert({ title: label, message: "준비 중인 기능입니다." })
+    showPendingFeature(label)
   }
 
   async function handleLogout() {
     const confirmed = await confirm({
-      title: "로그아웃",
-      message: "현재 세션을 종료하고 로그인 화면으로 이동합니다.",
-      confirmLabel: "로그아웃",
+      title: feedbackPresets.logout.title,
+      message: feedbackPresets.logout.message,
+      confirmLabel: feedbackPresets.logout.confirmLabel,
     })
     if (!confirmed) return
     logout()
-    showToast({ tone: "success", title: "로그아웃 완료", message: "로그인 화면으로 이동합니다." })
+    showToast({ tone: "success", title: feedbackPresets.logout.successTitle, message: feedbackPresets.logout.successMessage })
   }
 
   async function handleWithdraw() {
-    const confirmed = await confirm({
-      title: "회원 탈퇴",
-      message: "계정과 데모 데이터가 제거됩니다. 계속하시겠습니까?",
-      confirmLabel: "탈퇴",
-      confirmTone: "danger",
+    const confirmed = await confirmDanger({
+      title: feedbackPresets.withdraw.title,
+      message: feedbackPresets.withdraw.message,
+      confirmLabel: feedbackPresets.withdraw.confirmLabel,
     })
     if (!confirmed) return
     withdraw()
-    showToast({ tone: "success", title: "탈퇴 완료", message: "계정이 정리되었습니다." })
+    showToast({ tone: "success", title: feedbackPresets.withdraw.successTitle, message: feedbackPresets.withdraw.successMessage })
   }
 
   const profileName = currentUser?.name ?? account.members[0]?.name ?? "사용자"

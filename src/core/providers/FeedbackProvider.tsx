@@ -15,12 +15,20 @@ type ConfirmTone = "primary" | "danger"
 interface FeedbackContextValue {
   showToast: (params: { title: string; message?: string; tone?: ToastTone }) => void
   showAlert: (params: { title: string; message?: string; tone?: AlertTone; confirmLabel?: string }) => void
+  showError: (message: string, title?: string) => void
+  showPendingFeature: (label: string) => void
   confirm: (params: {
     title: string
     message?: string
     confirmLabel?: string
     cancelLabel?: string
     confirmTone?: ConfirmTone
+  }) => Promise<boolean>
+  confirmDanger: (params: {
+    title: string
+    message?: string
+    confirmLabel?: string
+    cancelLabel?: string
   }) => Promise<boolean>
 }
 
@@ -93,6 +101,26 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     []
   )
 
+  const showError = useCallback((message: string, title = "입력 오류") => {
+    setAlertState({
+      visible: true,
+      title,
+      message,
+      tone: "danger",
+      confirmLabel: "확인",
+    })
+  }, [])
+
+  const showPendingFeature = useCallback((label: string) => {
+    setAlertState({
+      visible: true,
+      title: label,
+      message: "준비 중인 기능입니다.",
+      tone: "neutral",
+      confirmLabel: "확인",
+    })
+  }, [])
+
   const confirm = useCallback(
     ({
       title,
@@ -121,13 +149,42 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     []
   )
 
+  const confirmDanger = useCallback(
+    ({
+      title,
+      message = "",
+      confirmLabel = "확인",
+      cancelLabel = "취소",
+    }: {
+      title: string
+      message?: string
+      confirmLabel?: string
+      cancelLabel?: string
+    }) =>
+      new Promise<boolean>((resolve) => {
+        setConfirmState({
+          visible: true,
+          title,
+          message,
+          confirmLabel,
+          cancelLabel,
+          confirmTone: "danger",
+          resolve,
+        })
+      }),
+    []
+  )
+
   const value = useMemo(
     () => ({
       showToast,
       showAlert,
+      showError,
+      showPendingFeature,
       confirm,
+      confirmDanger,
     }),
-    [showToast, showAlert, confirm]
+    [showToast, showAlert, showError, showPendingFeature, confirm, confirmDanger]
   )
 
   return (
