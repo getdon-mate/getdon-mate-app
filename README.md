@@ -131,6 +131,7 @@ src/
   shared/                # 공통 유틸
 docs/plans/              # 작업/스펙 문서
 docs/fe-design-system-guide.md  # 공통 UI/토큰 사용 가이드
+docs/api-runtime-policy.md      # API 모드/실패 정책/DTO 경계 가이드
 ```
 
 ## 9. Current Related Linear Tasks

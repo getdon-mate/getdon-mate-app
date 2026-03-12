@@ -1,6 +1,8 @@
 import { apiClient, isApiError, shouldUseRealApi } from "@core/api"
 import { logger } from "@shared/lib/logger"
 import type { AppUser, AutoTransfer, GroupAccount, Member, MemberRole, Transaction, TransactionType } from "../model/types"
+import type { ApiAuthResponse, ApiBootstrapResponse, ApiGroupAccount, ApiMember, ApiTransaction } from "./dto"
+import { toDomainAccount, toDomainAuthResponse, toDomainBootstrapResponse, toDomainTransaction } from "./mappers"
 
 const API_V1_PREFIX = "/api/v1"
 
@@ -114,49 +116,56 @@ async function tryBackend<T>(operationName: string, operation: () => Promise<T>)
 }
 
 async function fetchAccounts(): Promise<GroupAccount[] | null> {
-  return tryBackend("accounts.list", () => apiClient.get<GroupAccount[]>(`${API_V1_PREFIX}/accounts`))
+  const response = await tryBackend("accounts.list", () => apiClient.get<ApiGroupAccount[]>(`${API_V1_PREFIX}/accounts`))
+  return response?.map(toDomainAccount) ?? null
 }
 
 export function createAccountsBackendV1Adapter(): AccountsBackendAdapter {
   return {
     async loadBootstrap() {
-      return tryBackend("bootstrap", () => apiClient.get<BootstrapResponse>(`${API_V1_PREFIX}/bootstrap`))
+      const response = await tryBackend("bootstrap", () => apiClient.get<ApiBootstrapResponse>(`${API_V1_PREFIX}/bootstrap`))
+      return response ? toDomainBootstrapResponse(response) : null
     },
 
     async login(payload) {
       const response = await tryBackend("auth.login", () =>
-        apiClient.post<AuthResponse>(`${API_V1_PREFIX}/auth/login`, payload)
+        apiClient.post<ApiAuthResponse>(`${API_V1_PREFIX}/auth/login`, payload)
       )
       if (!response) return null
 
-      if (!response.accounts) {
+      const domainResponse = toDomainAuthResponse(response)
+
+      if (!domainResponse.accounts) {
         const accounts = await fetchAccounts()
         if (accounts) {
-          return { ...response, accounts }
+          return { ...domainResponse, accounts }
         }
       }
 
-      return response
+      return domainResponse
     },
 
     async signup(payload) {
       const response = await tryBackend("auth.signup", () =>
-        apiClient.post<AuthResponse>(`${API_V1_PREFIX}/auth/signup`, payload)
+        apiClient.post<ApiAuthResponse>(`${API_V1_PREFIX}/auth/signup`, payload)
       )
       if (!response) return null
 
-      if (!response.accounts) {
+      const domainResponse = toDomainAuthResponse(response)
+
+      if (!domainResponse.accounts) {
         const accounts = await fetchAccounts()
         if (accounts) {
-          return { ...response, accounts }
+          return { ...domainResponse, accounts }
         }
       }
 
-      return response
+      return domainResponse
     },
 
     async createAccount(payload) {
-      return tryBackend("accounts.create", () => apiClient.post<GroupAccount>(`${API_V1_PREFIX}/accounts`, payload))
+      const response = await tryBackend("accounts.create", () => apiClient.post<ApiGroupAccount>(`${API_V1_PREFIX}/accounts`, payload))
+      return response ? toDomainAccount(response) : null
     },
 
     async deleteAccount(accountId) {
@@ -194,9 +203,19 @@ export function createAccountsBackendV1Adapter(): AccountsBackendAdapter {
     },
 
     async createMember(accountId, payload) {
-      return tryBackend("accounts.members.create", () =>
-        apiClient.post<Member>(`${API_V1_PREFIX}/accounts/${accountId}/members`, payload)
+      const response = await tryBackend("accounts.members.create", () =>
+        apiClient.post<ApiMember>(`${API_V1_PREFIX}/accounts/${accountId}/members`, payload)
       )
+      if (!response) return null
+      return {
+        id: response.id,
+        name: response.name,
+        role: response.role,
+        initials: response.initials,
+        phone: response.phone,
+        joinDate: response.joinDate,
+        color: response.color,
+      }
     },
 
     async updateMember(accountId, memberId, payload) {
@@ -212,9 +231,10 @@ export function createAccountsBackendV1Adapter(): AccountsBackendAdapter {
     },
 
     async createTransaction(accountId, payload) {
-      return tryBackend("accounts.transactions.create", () =>
-        apiClient.post<Transaction>(`${API_V1_PREFIX}/accounts/${accountId}/transactions`, payload)
+      const response = await tryBackend("accounts.transactions.create", () =>
+        apiClient.post<ApiTransaction>(`${API_V1_PREFIX}/accounts/${accountId}/transactions`, payload)
       )
+      return response ? toDomainTransaction(response) : null
     },
 
     async updateTransaction(accountId, transactionId, payload) {
