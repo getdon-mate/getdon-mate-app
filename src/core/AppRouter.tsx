@@ -3,9 +3,11 @@ import { NavigationContainer, useNavigationContainerRef } from "@react-navigatio
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { StyleSheet } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { AccountCreateScreen } from "@features/accounts/screens/AccountCreateScreen"
 import { AccountDetailScreen } from "@features/accounts/screens/AccountDetailScreen"
 import { AccountListScreen } from "@features/accounts/screens/AccountListScreen"
 import { LoginScreen } from "@features/auth/screens/LoginScreen"
+import { MyPageScreen } from "@features/auth/screens/MyPageScreen"
 import type { RootStackParamList } from "./navigation/types"
 import { useApp } from "./providers/AppProvider"
 
@@ -62,7 +64,9 @@ export function AppRouter() {
         >
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="AccountList" component={AccountListScreen} />
+          <Stack.Screen name="AccountCreate" component={AccountCreateScreen} />
           <Stack.Screen name="AccountDetail" component={AccountDetailScreen} />
+          <Stack.Screen name="MyPage" component={MyPageScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaView>
