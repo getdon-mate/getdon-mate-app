@@ -34,6 +34,7 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 10.7.0
+          run_install: false
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -57,7 +58,7 @@ jobs:
           test -n "$VERCEL_TOKEN"
 
       - name: Deploy preview to Vercel
-        run: npm run deploy:vercel:preview
+        run: pnpm run deploy:vercel:preview
 
   deploy-production:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -74,6 +75,7 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 10.7.0
+          run_install: false
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -97,4 +99,4 @@ jobs:
           test -n "$VERCEL_TOKEN"
 
       - name: Deploy production to Vercel
-        run: npm run deploy:vercel:production
+        run: pnpm run deploy:vercel:production

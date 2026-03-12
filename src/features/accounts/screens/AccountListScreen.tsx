@@ -10,7 +10,7 @@ import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
 import { getCurrentMonthKey } from "@shared/lib/date"
-import { Button, PageHeader, StatusBanner } from "@shared/ui"
+import { Button, PageHeader, StatusBanner, uiColors, uiSpacing } from "@shared/ui"
 import { AccountCreatePanel } from "../components/AccountCreatePanel"
 import { LoadingStateCard } from "../components/LoadingStateCard"
 import { AccountSummaryCard } from "../components/AccountSummaryCard"
@@ -140,12 +140,12 @@ export function AccountListScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: uiColors.background,
   },
   content: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    gap: 16,
+    paddingHorizontal: uiSpacing.lg,
+    paddingTop: uiSpacing.md,
+    gap: uiSpacing.lg,
     paddingBottom: 30,
   },
   addCard: {

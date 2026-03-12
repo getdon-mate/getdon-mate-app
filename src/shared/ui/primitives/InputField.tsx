@@ -17,7 +17,7 @@ export function InputField({
       <TextInput
         {...props}
         style={[styles.input, props.style]}
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor={uiColors.textSoft}
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#374151",
+    color: uiColors.textMuted,
     paddingHorizontal: 2,
   },
   input: {

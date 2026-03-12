@@ -10,7 +10,7 @@ import {
 } from "react-native"
 import type { RootStackParamList } from "@core/navigation/types"
 import { useApp } from "@core/providers/AppProvider"
-import { uiColors } from "@shared/ui"
+import { uiColors, uiRadius, uiSpacing } from "@shared/ui"
 import {
   availableMonths,
 } from "../model/mock-data"
@@ -165,12 +165,12 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   emptyTitle: {
-    color: "#0f172a",
+    color: uiColors.textStrong,
     fontSize: 16,
     fontWeight: "700",
   },
   primaryButton: {
-    backgroundColor: "#2563eb",
+    backgroundColor: uiColors.primary,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   primaryButtonText: {
-    color: "#ffffff",
+    color: uiColors.surface,
     fontSize: 14,
     fontWeight: "700",
   },
@@ -196,17 +196,17 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#ffffff",
+    backgroundColor: uiColors.surface,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: uiColors.border,
   },
   backButtonText: {
-    color: "#111827",
+    color: uiColors.text,
     fontSize: 16,
     fontWeight: "700",
   },
   topHeaderTitle: {
-    color: "#111827",
+    color: uiColors.text,
     fontSize: 15,
     fontWeight: "700",
   },
@@ -215,17 +215,17 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   topHeaderMeta: {
-    color: "#6b7280",
+    color: uiColors.textMuted,
     fontSize: 11,
   },
   heroCard: {
     marginHorizontal: 14,
     marginTop: 4,
-    borderRadius: 26,
-    backgroundColor: "#3b82f6",
+    borderRadius: uiRadius.xxl,
+    backgroundColor: uiColors.primary,
     paddingHorizontal: 18,
     paddingVertical: 18,
-    gap: 8,
+    gap: uiSpacing.sm,
   },
   heroIdentityRow: {
     flexDirection: "row",
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   heroTitle: {
-    color: "#ffffff",
+    color: uiColors.surface,
     fontSize: 17,
     fontWeight: "700",
   },
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   heroBalanceText: {
-    color: "#ffffff",
+    color: uiColors.surface,
     fontSize: 31,
     fontWeight: "800",
   },
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.22)",
   },
   heroGhostButtonText: {
-    color: "#ffffff",
+    color: uiColors.surface,
     fontSize: 14,
     fontWeight: "700",
   },
@@ -292,10 +292,10 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#ffffff",
+    backgroundColor: uiColors.surface,
   },
   heroPrimaryButtonText: {
-    color: "#111827",
+    color: uiColors.text,
     fontSize: 14,
     fontWeight: "700",
   },
@@ -309,9 +309,9 @@ const styles = StyleSheet.create({
   },
   bottomNav: {
     flexDirection: "row",
-    backgroundColor: "#ffffff",
+    backgroundColor: uiColors.surface,
     borderTopWidth: 1,
-    borderTopColor: "#eef1f5",
+    borderTopColor: uiColors.border,
     paddingVertical: 8,
   },
   navItem: {
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
   navLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#64748b",
+    color: uiColors.textSoft,
   },
   navLabelActive: {
     color: uiColors.primary,

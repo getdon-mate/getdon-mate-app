@@ -68,11 +68,11 @@ const styles = StyleSheet.create({
   },
   secondary: {
     backgroundColor: uiColors.primarySoft,
-    borderColor: "#dbeafe",
+    borderColor: uiColors.primaryBorder,
   },
   danger: {
     backgroundColor: uiColors.dangerSoft,
-    borderColor: "#fecaca",
+    borderColor: uiColors.dangerBorder,
   },
   ghost: {
     backgroundColor: uiColors.surface,
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   primaryText: {
-    color: "#ffffff",
+    color: uiColors.surface,
   },
   secondaryText: {
     color: uiColors.primary,
@@ -92,6 +92,6 @@ const styles = StyleSheet.create({
     color: uiColors.danger,
   },
   ghostText: {
-    color: "#334155",
+    color: uiColors.text,
   },
 })

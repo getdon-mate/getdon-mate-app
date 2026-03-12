@@ -38,7 +38,7 @@ export function AlertModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(15,23,42,0.45)",
+    backgroundColor: uiColors.overlayStrong,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
