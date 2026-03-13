@@ -12,6 +12,41 @@ const toneIcon: Record<ToastTone, "info" | "check" | "warning" | "close"> = {
   danger: "close",
 }
 
+const toneStyles = {
+  info: {
+    backgroundColor: "#eaf3ff",
+    borderColor: "#cfe0ff",
+    iconBackgroundColor: "#d6e8ff",
+    iconColor: "#2563eb",
+    titleColor: "#1d4ed8",
+    messageColor: "#24538b",
+  },
+  success: {
+    backgroundColor: "#eaf8f0",
+    borderColor: "#cfead9",
+    iconBackgroundColor: "#d7f0e2",
+    iconColor: "#15803d",
+    titleColor: "#15803d",
+    messageColor: "#2b6f4f",
+  },
+  warning: {
+    backgroundColor: "#fff6ea",
+    borderColor: "#f7dfbe",
+    iconBackgroundColor: "#ffe9c9",
+    iconColor: "#d97706",
+    titleColor: "#c26b07",
+    messageColor: "#9a5b0d",
+  },
+  danger: {
+    backgroundColor: "#fff0f1",
+    borderColor: "#f4d2d8",
+    iconBackgroundColor: "#ffe0e5",
+    iconColor: "#dc2626",
+    titleColor: "#dc2626",
+    messageColor: "#b4232f",
+  },
+} as const
+
 export function Toast({
   visible,
   title,
@@ -41,23 +76,38 @@ export function Toast({
 
   if (!visible) return null
 
+  const palette = toneStyles[tone]
+
   return (
     <View
+      testID="toast-wrap"
       style={[
         styles.wrap,
-        tone === "success" && styles.success,
-        tone === "warning" && styles.warning,
-        tone === "danger" && styles.danger,
+        {
+          backgroundColor: palette.backgroundColor,
+          borderColor: palette.borderColor,
+        },
         style,
         containerStyle,
       ]}
     >
-      <View style={styles.iconWrap}>
-        <Icon name={toneIcon[tone]} size={14} color={uiColors.surface} />
+      <View
+        style={[
+          styles.iconWrap,
+          {
+            backgroundColor: palette.iconBackgroundColor,
+          },
+        ]}
+      >
+        <Icon name={toneIcon[tone]} size={14} color={palette.iconColor} />
       </View>
       <View style={styles.textWrap}>
-        <Text style={styles.title}>{title}</Text>
-        {message ? <Text style={styles.message}>{message}</Text> : null}
+        <Text style={[styles.title, { color: palette.titleColor }]}>{title}</Text>
+        {message ? (
+          <Text testID="toast-message" style={[styles.message, { color: palette.messageColor }]}>
+            {message}
+          </Text>
+        ) : null}
       </View>
     </View>
   )
@@ -66,52 +116,44 @@ export function Toast({
 const styles = StyleSheet.create({
   wrap: {
     position: "absolute",
-    left: 16,
-    right: 16,
+    alignSelf: "center",
+    width: "auto",
+    maxWidth: 360,
     bottom: 20,
     zIndex: 100,
     flexDirection: "row",
-    gap: 10,
-    alignItems: "center",
-    backgroundColor: uiColors.textStrong,
-    borderRadius: uiRadius.lg,
+    gap: 12,
+    alignItems: "flex-start",
+    borderRadius: uiRadius.xl,
     borderWidth: 1,
-    borderColor: uiColors.textMuted,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  success: {
-    backgroundColor: uiColors.success,
-    borderColor: uiColors.successBorder,
-  },
-  warning: {
-    backgroundColor: "#b45309",
-    borderColor: "#f59e0b",
-  },
-  danger: {
-    backgroundColor: uiColors.danger,
-    borderColor: uiColors.dangerBorder,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    shadowColor: "#0f172a",
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
   },
   iconWrap: {
-    width: 20,
-    height: 20,
+    width: 22,
+    height: 22,
     borderRadius: uiRadius.full,
-    backgroundColor: "rgba(255,255,255,0.2)",
     alignItems: "center",
     justifyContent: "center",
+    marginTop: 1,
   },
   textWrap: {
-    flex: 1,
-    gap: 2,
+    flexShrink: 1,
+    gap: 4,
   },
   title: {
-    color: uiColors.surface,
     fontSize: 13,
     fontWeight: "700",
+    lineHeight: 18,
   },
   message: {
-    color: uiColors.surface,
     fontSize: 12,
     fontWeight: "500",
+    lineHeight: 18,
   },
 })
