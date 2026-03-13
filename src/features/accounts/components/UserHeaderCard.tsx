@@ -5,12 +5,14 @@ import type { AppUser } from "../model/types"
 export function UserHeaderCard({
   user,
   initials,
+  unreadNotificationCount,
   onOpenNotifications,
   onOpenMyPage,
   onOpenAppSettings,
 }: {
   user: AppUser | null
   initials: string
+  unreadNotificationCount?: number
   onOpenNotifications: () => void
   onOpenMyPage: () => void
   onOpenAppSettings: () => void
@@ -27,6 +29,11 @@ export function UserHeaderCard({
       <View style={styles.actionGroup}>
         <Pressable style={styles.iconButton} onPress={onOpenNotifications} accessibilityRole="button" accessibilityLabel="알림 목록 열기">
           <Icon name="bell" size={16} color={uiColors.textStrong} />
+          {unreadNotificationCount ? (
+            <View style={styles.notificationBadge} testID="notification-badge">
+              <Text style={styles.notificationBadgeText}>{unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}</Text>
+            </View>
+          ) : null}
         </Pressable>
         <Pressable style={styles.iconButton} onPress={onOpenMyPage} accessibilityRole="button" accessibilityLabel="마이페이지 열기">
           <Icon name="user" size={16} color={uiColors.textStrong} />
@@ -84,6 +91,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: uiColors.surfaceMuted,
+    position: "relative",
+  },
+  notificationBadge: {
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: uiColors.primary,
+    position: "absolute",
+    top: -3,
+    right: -2,
+  },
+  notificationBadgeText: {
+    color: uiColors.surface,
+    fontSize: 10,
+    fontWeight: "700",
   },
   actionGroup: {
     flexDirection: "row",

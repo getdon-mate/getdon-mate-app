@@ -3,6 +3,10 @@ import { AccountListScreen } from "@features/accounts/screens/AccountListScreen"
 import { SettingsTab } from "@features/accounts/components/detail-tabs/SettingsTab"
 import { AppSettingsScreen } from "@features/auth/screens/AppSettingsScreen"
 
+jest.mock("@shared/ui/primitives/Icon", () => ({
+  Icon: ({ name }: { name: string }) => name,
+}))
+
 const mockNavigate = jest.fn()
 const mockGoBack = jest.fn()
 
@@ -31,6 +35,7 @@ jest.mock("@core/providers/AppProvider", () => ({
     dataSource: "demo",
     isRefreshingAccounts: false,
     refreshAccounts: jest.fn(async () => "demo"),
+    unreadNotificationCount: 2,
     notificationPreferences: {
       duesReminder: true,
       transactionAlert: true,
@@ -73,12 +78,13 @@ describe("home global management split", () => {
   })
 
   test("account list exposes global actions and removes demo reset button", () => {
-    const { queryByText, getByLabelText } = render(<AccountListScreen />)
+    const { queryByText, getByLabelText, getByTestId } = render(<AccountListScreen />)
 
     expect(queryByText("데모 데이터 초기화")).toBeNull()
     expect(getByLabelText("알림 목록 열기")).toBeTruthy()
     expect(getByLabelText("마이페이지 열기")).toBeTruthy()
     expect(getByLabelText("앱 설정 열기")).toBeTruthy()
+    expect(getByTestId("notification-badge")).toBeTruthy()
   })
 
   test("account detail settings keeps only account-scoped management", () => {

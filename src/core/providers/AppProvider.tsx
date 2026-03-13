@@ -14,6 +14,7 @@ import type {
   TransactionType,
 } from "@features/accounts/model/types"
 import { logger } from "@shared/lib/logger"
+import { defaultNotificationPreferences, initialNotifications, type NotificationItem } from "@shared/lib/notification-state"
 import {
   readNotificationPreferences,
   writeNotificationPreferences,
@@ -78,8 +79,16 @@ interface AppRuntimeContextType {
   dataSource: DataSource
   prefersRealApi: boolean
   refreshAccounts: () => Promise<DataSource>
+  notifications: NotificationItem[]
+  unreadNotificationCount: number
+  markNotificationRead: (id: string) => Promise<void>
+  markAllNotificationsRead: () => Promise<void>
+  clearNotifications: () => Promise<void>
+  restoreNotifications: () => Promise<void>
+  defaultNotificationPreferences: NotificationPreferences
   notificationPreferences: NotificationPreferences
   updateNotificationPreferences: (next: NotificationPreferences) => Promise<void>
+  resetNotificationPreferences: () => void
 }
 
 interface AppAuthContextType {
@@ -185,6 +194,7 @@ function createLocalAccount(data: CreateAccountInput, currentUser: AppUser): Gro
     members: [
       {
         id: `mem${timestamp}`,
+        userId: currentUser.id,
         name: currentUser.name,
         role: "총무",
         initials: currentUser.name.slice(-2),
@@ -243,12 +253,6 @@ function createLocalTransaction(data: UpsertTransactionInput): Transaction {
   }
 }
 
-const defaultNotificationPreferences: NotificationPreferences = {
-  duesReminder: true,
-  transactionAlert: true,
-  noticeAlert: true,
-}
-
 export function AppProvider({ children }: { children: ReactNode }) {
   const backendAdapter = useMemo(() => createAccountsBackendV1Adapter(), [])
   const prefersRealApi = useMemo(() => shouldUseRealApi(apiConfig), [])
@@ -262,6 +266,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null)
   const [accounts, setAccounts] = useState<GroupAccount[]>(() => cloneAccounts(defaultAccounts))
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(initialSession?.selectedAccountId ?? null)
+  const [notifications, setNotifications] = useState<NotificationItem[]>(() => [...initialNotifications])
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences>(
     () => readNotificationPreferences() ?? defaultNotificationPreferences
   )
@@ -844,15 +849,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setNotificationPreferences(next)
   }, [])
 
+  const resetNotificationPreferences = useCallback(() => {
+    setNotificationPreferences(defaultNotificationPreferences)
+  }, [])
+
+  const markNotificationRead = useCallback(async (id: string) => {
+    setNotifications((prev) => prev.map((item) => (item.id === id ? { ...item, unread: false } : item)))
+  }, [])
+
+  const markAllNotificationsRead = useCallback(async () => {
+    setNotifications((prev) => prev.map((item) => ({ ...item, unread: false })))
+  }, [])
+
+  const clearNotifications = useCallback(async () => {
+    setNotifications([])
+  }, [])
+
+  const restoreNotifications = useCallback(async () => {
+    setNotifications([...initialNotifications])
+  }, [])
+
   const resetDemoData = useCallback(() => {
     setUsers(cloneUsers(defaultUsers))
     setAccounts(cloneAccounts(defaultAccounts))
     setCurrentUser(null)
     setSelectedAccountId(null)
+    setNotifications([...initialNotifications])
     setNotificationPreferences(defaultNotificationPreferences)
     setDataSource("demo")
     setLastSyncError(null)
   }, [])
+
+  const unreadNotificationCount = useMemo(
+    () => notifications.filter((item) => item.unread).length,
+    [notifications]
+  )
 
   const runtimeContextValue = useMemo<AppRuntimeContextType>(
     () => ({
@@ -862,17 +893,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
       dataSource,
       prefersRealApi,
       refreshAccounts,
+      notifications,
+      unreadNotificationCount,
+      markNotificationRead,
+      markAllNotificationsRead,
+      clearNotifications,
+      restoreNotifications,
+      defaultNotificationPreferences,
       notificationPreferences,
       updateNotificationPreferences,
+      resetNotificationPreferences,
     }),
     [
+      clearNotifications,
       dataSource,
+      defaultNotificationPreferences,
       isBootstrapping,
       isRefreshingAccounts,
       lastSyncError,
+      markAllNotificationsRead,
+      markNotificationRead,
+      notifications,
       notificationPreferences,
       prefersRealApi,
       refreshAccounts,
+      resetNotificationPreferences,
+      restoreNotifications,
+      unreadNotificationCount,
       updateNotificationPreferences,
     ]
   )

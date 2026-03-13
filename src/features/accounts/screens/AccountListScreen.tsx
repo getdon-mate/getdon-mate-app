@@ -24,7 +24,7 @@ export function AccountListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const { currentUser } = useAppAuth()
   const { accounts, selectAccount } = useAppAccounts()
-  const { isBootstrapping, isRefreshingAccounts, refreshAccounts } = useAppRuntime()
+  const { isBootstrapping, isRefreshingAccounts, refreshAccounts, unreadNotificationCount } = useAppRuntime()
   const currentMonth = getCurrentMonthKey()
   const { width } = useWindowDimensions()
   const isWide = width >= 960
@@ -51,6 +51,7 @@ export function AccountListScreen() {
         <UserHeaderCard
           user={currentUser}
           initials={initials}
+          unreadNotificationCount={unreadNotificationCount}
           onOpenNotifications={() => navigation.navigate(ROUTES.NotificationList)}
           onOpenMyPage={() => navigation.navigate(ROUTES.MyPage)}
           onOpenAppSettings={() => navigation.navigate(ROUTES.AppSettings)}

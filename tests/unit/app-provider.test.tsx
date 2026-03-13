@@ -127,4 +127,66 @@ describe('AppProvider state transitions', () => {
     })
     expect(statusFor()).toBe('paid')
   })
+
+  test('notification list state persists read/clear/restore actions in app state', async () => {
+    render(
+      <AppProvider>
+        <Harness />
+      </AppProvider>
+    )
+
+    await waitFor(() => expect(getCtx().isBootstrapping).toBe(false))
+
+    expect(getCtx().notifications).toHaveLength(3)
+    expect(getCtx().unreadNotificationCount).toBe(2)
+
+    await act(async () => {
+      await getCtx().markNotificationRead('notice-1')
+    })
+
+    expect(getCtx().unreadNotificationCount).toBe(1)
+
+    await act(async () => {
+      await getCtx().clearNotifications()
+    })
+
+    expect(getCtx().notifications).toHaveLength(0)
+
+    await act(async () => {
+      await getCtx().restoreNotifications()
+    })
+
+    expect(getCtx().notifications).toHaveLength(3)
+    expect(getCtx().unreadNotificationCount).toBe(2)
+  })
+
+  test('notification preferences reset uses shared default source', async () => {
+    render(
+      <AppProvider>
+        <Harness />
+      </AppProvider>
+    )
+
+    await waitFor(() => expect(getCtx().isBootstrapping).toBe(false))
+
+    await act(async () => {
+      await getCtx().updateNotificationPreferences({
+        duesReminder: false,
+        transactionAlert: false,
+        noticeAlert: false,
+      })
+    })
+
+    expect(getCtx().notificationPreferences).toEqual({
+      duesReminder: false,
+      transactionAlert: false,
+      noticeAlert: false,
+    })
+
+    act(() => {
+      getCtx().resetNotificationPreferences()
+    })
+
+    expect(getCtx().notificationPreferences).toEqual(getCtx().defaultNotificationPreferences)
+  })
 })

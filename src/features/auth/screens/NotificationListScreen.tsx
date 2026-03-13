@@ -1,63 +1,21 @@
-import { useMemo, useState } from "react"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import { useAppRuntime } from "@core/providers/AppProvider"
 import { EmptyStateCard } from "@features/accounts/components/EmptyStateCard"
 import type { RootStackParamList } from "@core/navigation/types"
 import { Button, Card, Icon, PageHeader, uiColors, uiRadius, uiSpacing } from "@shared/ui"
 
-type NotificationItem = {
-  id: string
-  title: string
-  body: string
-  time: string
-  unread: boolean
-}
-
-const initialNotifications: NotificationItem[] = [
-  {
-    id: "notice-1",
-    title: "회비 마감이 다가오고 있어요",
-    body: "이번 달 회비 납부 마감이 3일 남았습니다.",
-    time: "방금 전",
-    unread: true,
-  },
-  {
-    id: "notice-2",
-    title: "생활비 통장에 입금이 반영됐어요",
-    body: "김토스님이 50,000원을 채웠습니다.",
-    time: "10분 전",
-    unread: true,
-  },
-  {
-    id: "notice-3",
-    title: "모임 공지가 등록됐어요",
-    body: "이번 주 정산 안내를 확인해보세요.",
-    time: "어제",
-    unread: false,
-  },
-]
-
 export function NotificationListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
-  const [notifications, setNotifications] = useState([...initialNotifications])
-  const unreadCount = useMemo(() => notifications.filter((item) => item.unread).length, [notifications])
-
-  function handleMarkAllRead() {
-    setNotifications((prev) => prev.map((item) => ({ ...item, unread: false })))
-  }
-
-  function handleClearAll() {
-    setNotifications([])
-  }
-
-  function handleRestore() {
-    setNotifications([...initialNotifications])
-  }
-
-  function handleRead(id: string) {
-    setNotifications((prev) => prev.map((item) => (item.id === id ? { ...item, unread: false } : item)))
-  }
+  const {
+    notifications,
+    unreadNotificationCount,
+    markAllNotificationsRead,
+    clearNotifications,
+    restoreNotifications,
+    markNotificationRead,
+  } = useAppRuntime()
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -67,12 +25,12 @@ export function NotificationListScreen() {
             <Icon name="chevronLeft" size={20} color={uiColors.text} />
           </Pressable>
           <View style={styles.headerActions}>
-            <Button label="모두 읽음" variant="ghost" onPress={handleMarkAllRead} style={styles.headerActionButton} />
-            <Button label="비우기" variant="ghost" onPress={handleClearAll} style={styles.headerActionButton} />
+            <Button label="모두 읽음" variant="ghost" onPress={() => void markAllNotificationsRead()} style={styles.headerActionButton} />
+            <Button label="비우기" variant="ghost" onPress={() => void clearNotifications()} style={styles.headerActionButton} />
           </View>
         </View>
         <View style={styles.headerCopy}>
-          <PageHeader title="알림" subtitle={`새 알림 ${unreadCount}개`} />
+          <PageHeader title="알림" subtitle={`새 알림 ${unreadNotificationCount}개`} />
           <Text style={styles.headerHint}>읽음 처리와 목록 정리는 이 화면에서 바로 할 수 있습니다.</Text>
         </View>
       </View>
@@ -82,7 +40,7 @@ export function NotificationListScreen() {
           title="알림이 없습니다."
           description="새 알림이 생기면 이곳에서 바로 확인할 수 있습니다."
           actionLabel="샘플 알림 복원"
-          onAction={handleRestore}
+          onAction={() => void restoreNotifications()}
         />
       ) : (
         <View style={styles.list}>
@@ -93,10 +51,10 @@ export function NotificationListScreen() {
                 <Text style={styles.noticeTime}>{item.time}</Text>
               </View>
               <Text style={styles.noticeBody}>{item.body}</Text>
-              <View style={styles.noticeFooter}>
-                {item.unread ? <View style={styles.unreadDot} /> : <Text style={styles.readLabel}>읽음 완료</Text>}
-                {item.unread ? (
-                  <Button label="읽음 처리" variant="secondary" onPress={() => handleRead(item.id)} style={styles.readButton} />
+                <View style={styles.noticeFooter}>
+                  {item.unread ? <View style={styles.unreadDot} /> : <Text style={styles.readLabel}>읽음 완료</Text>}
+                  {item.unread ? (
+                  <Button label="읽음 처리" variant="secondary" onPress={() => void markNotificationRead(item.id)} style={styles.readButton} />
                 ) : null}
               </View>
             </Card>
