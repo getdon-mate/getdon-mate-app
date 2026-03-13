@@ -156,8 +156,8 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     gap: uiSpacing.lg,
-    backgroundColor: uiColors.surfaceMuted,
-    borderColor: uiColors.borderStrong,
+    backgroundColor: uiColors.surface,
+    borderColor: uiColors.border,
   },
   summaryTop: {
     flexDirection: "row",
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     borderRadius: uiRadius.lg,
     borderWidth: 1,
     borderColor: uiColors.border,
-    backgroundColor: uiColors.surfaceMuted,
+    backgroundColor: uiColors.surface,
   },
   accountAvatar: {
     width: 46,

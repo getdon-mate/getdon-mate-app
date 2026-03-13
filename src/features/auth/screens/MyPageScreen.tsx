@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
   },
   profileCard: {
     gap: uiSpacing.lg,
-    backgroundColor: uiColors.surfaceMuted,
-    borderColor: uiColors.borderStrong,
+    backgroundColor: uiColors.surface,
+    borderColor: uiColors.border,
   },
   profileTopRow: {
     flexDirection: "row",
