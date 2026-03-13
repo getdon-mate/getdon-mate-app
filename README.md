@@ -35,6 +35,7 @@ pnpm run start
 
 # 플랫폼별 실행
 pnpm run ios
+pnpm run ios:dev
 pnpm run android
 pnpm run web
 
@@ -79,6 +80,20 @@ pnpm run ci:web
 ```
 
 `export:web` 성공 시 `dist/` 디렉터리가 생성됩니다.
+
+## 5-1. iOS App Testing
+
+iOS 동작 검증은 Expo Go보다 development build 기준으로 진행합니다.
+
+```bash
+pnpm run ios:dev
+```
+
+메모:
+
+- `app.json`에서 `newArchEnabled: false`를 사용합니다.
+- JS 캐시를 비워야 할 때는 `pnpm run start -- --clear`를 사용합니다.
+- long press, pull-to-refresh, native gesture 확인은 iOS development build를 기준으로 봅니다.
 
 ## 6. API Runtime Config
 

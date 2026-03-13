@@ -3,6 +3,7 @@
     "name": "getdon-mate-app",
     "slug": "getdon-mate-app",
     "version": "1.0.0",
+    "newArchEnabled": false,
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "splash": {
