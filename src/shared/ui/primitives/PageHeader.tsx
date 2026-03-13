@@ -18,17 +18,17 @@ export function PageHeader({
 
 const styles = StyleSheet.create({
   wrap: {
-    gap: 2,
+    gap: 6,
   },
   title: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: "700",
-    color: uiColors.text,
+    color: uiColors.textStrong,
   },
   subtitle: {
-    fontSize: 12,
+    fontSize: 13,
     color: uiColors.textMuted,
-    fontWeight: "600",
-    letterSpacing: 0.35,
+    fontWeight: "500",
+    lineHeight: 19,
   },
 })
