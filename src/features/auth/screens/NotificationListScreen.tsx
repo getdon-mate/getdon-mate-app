@@ -1,11 +1,20 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import { EmptyStateCard } from "@features/accounts/components/EmptyStateCard"
 import type { RootStackParamList } from "@core/navigation/types"
-import { Card, Icon, PageHeader, uiColors, uiSpacing } from "@shared/ui"
+import { Button, Card, Icon, PageHeader, uiColors, uiRadius, uiSpacing } from "@shared/ui"
 
-const mockNotifications = [
+type NotificationItem = {
+  id: string
+  title: string
+  body: string
+  time: string
+  unread: boolean
+}
+
+const initialNotifications: NotificationItem[] = [
   {
     id: "notice-1",
     title: "회비 마감이 다가오고 있어요",
@@ -27,33 +36,73 @@ const mockNotifications = [
     time: "어제",
     unread: false,
   },
-] as const
+]
 
 export function NotificationListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
-  const unreadCount = useMemo(() => mockNotifications.filter((item) => item.unread).length, [])
+  const [notifications, setNotifications] = useState([...initialNotifications])
+  const unreadCount = useMemo(() => notifications.filter((item) => item.unread).length, [notifications])
+
+  function handleMarkAllRead() {
+    setNotifications((prev) => prev.map((item) => ({ ...item, unread: false })))
+  }
+
+  function handleClearAll() {
+    setNotifications([])
+  }
+
+  function handleRestore() {
+    setNotifications([...initialNotifications])
+  }
+
+  function handleRead(id: string) {
+    setNotifications((prev) => prev.map((item) => (item.id === id ? { ...item, unread: false } : item)))
+  }
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.topRow}>
-        <Pressable style={styles.backButton} onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="이전 화면으로 이동">
-          <Icon name="chevronLeft" size={20} color={uiColors.text} />
-        </Pressable>
-        <PageHeader title="알림" subtitle={`새 알림 ${unreadCount}개`} />
+        <View style={styles.headerRow}>
+          <Pressable style={styles.backButton} onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="이전 화면으로 이동">
+            <Icon name="chevronLeft" size={20} color={uiColors.text} />
+          </Pressable>
+          <View style={styles.headerActions}>
+            <Button label="모두 읽음" variant="ghost" onPress={handleMarkAllRead} style={styles.headerActionButton} />
+            <Button label="비우기" variant="ghost" onPress={handleClearAll} style={styles.headerActionButton} />
+          </View>
+        </View>
+        <View style={styles.headerCopy}>
+          <PageHeader title="알림" subtitle={`새 알림 ${unreadCount}개`} />
+          <Text style={styles.headerHint}>읽음 처리와 목록 정리는 이 화면에서 바로 할 수 있습니다.</Text>
+        </View>
       </View>
 
-      <View style={styles.list}>
-        {mockNotifications.map((item) => (
-          <Card key={item.id} style={[styles.noticeCard, item.unread && styles.noticeCardUnread]}>
-            <View style={styles.noticeTopRow}>
-              <Text style={styles.noticeTitle}>{item.title}</Text>
-              <Text style={styles.noticeTime}>{item.time}</Text>
-            </View>
-            <Text style={styles.noticeBody}>{item.body}</Text>
-            {item.unread ? <View style={styles.unreadDot} /> : null}
-          </Card>
-        ))}
-      </View>
+      {notifications.length === 0 ? (
+        <EmptyStateCard
+          title="알림이 없습니다."
+          description="새 알림이 생기면 이곳에서 바로 확인할 수 있습니다."
+          actionLabel="샘플 알림 복원"
+          onAction={handleRestore}
+        />
+      ) : (
+        <View style={styles.list}>
+          {notifications.map((item) => (
+            <Card key={item.id} style={[styles.noticeCard, item.unread && styles.noticeCardUnread]}>
+              <View style={styles.noticeTopRow}>
+                <Text style={styles.noticeTitle}>{item.title}</Text>
+                <Text style={styles.noticeTime}>{item.time}</Text>
+              </View>
+              <Text style={styles.noticeBody}>{item.body}</Text>
+              <View style={styles.noticeFooter}>
+                {item.unread ? <View style={styles.unreadDot} /> : <Text style={styles.readLabel}>읽음 완료</Text>}
+                {item.unread ? (
+                  <Button label="읽음 처리" variant="secondary" onPress={() => handleRead(item.id)} style={styles.readButton} />
+                ) : null}
+              </View>
+            </Card>
+          ))}
+        </View>
+      )}
     </ScrollView>
   )
 }
@@ -70,6 +119,28 @@ const styles = StyleSheet.create({
   topRow: {
     gap: uiSpacing.md,
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: uiSpacing.md,
+  },
+  headerActions: {
+    flexDirection: "row",
+    gap: uiSpacing.sm,
+  },
+  headerActionButton: {
+    minWidth: 86,
+    minHeight: 38,
+  },
+  headerCopy: {
+    gap: 6,
+  },
+  headerHint: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
+  },
   backButton: {
     width: 40,
     height: 40,
@@ -85,10 +156,10 @@ const styles = StyleSheet.create({
   },
   noticeCard: {
     gap: uiSpacing.sm,
-    position: "relative",
   },
   noticeCardUnread: {
-    borderColor: "#c7d2fe",
+    borderColor: uiColors.primaryBorder,
+    backgroundColor: uiColors.primarySoft,
   },
   noticeTopRow: {
     flexDirection: "row",
@@ -111,13 +182,26 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: uiColors.textMuted,
   },
+  noticeFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: uiSpacing.md,
+    marginTop: 4,
+  },
   unreadDot: {
-    position: "absolute",
-    top: 18,
-    right: 16,
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#2563eb",
+    backgroundColor: uiColors.primary,
+  },
+  readLabel: {
+    color: uiColors.textSoft,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  readButton: {
+    minHeight: 36,
+    borderRadius: uiRadius.full,
   },
 })

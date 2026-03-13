@@ -100,7 +100,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
 
     const confirmed = await confirm({
       title: "총무 위임",
-      message: `${targetMember.name}님에게 총무 권한을 위임합니다.`,
+      message: `${targetMember.name}님에게 총무 권한을 위임합니다. 위임 후 현재 총무는 일반 멤버로 변경됩니다.`,
       confirmLabel: "위임",
     })
     if (!confirmed) return
@@ -174,7 +174,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
         <View style={styles.formStack}>
           <InputField value={name} onChangeText={setName} label="이름" placeholder="멤버 이름" />
           <InputField value={phone} onChangeText={setPhone} label="연락처" placeholder="010-0000-0000" />
-          <Text style={styles.formHint}>새 멤버는 기본으로 멤버 권한으로 등록됩니다. 총무는 현재 총무만 다른 멤버에게 위임할 수 있습니다.</Text>
+          <Text style={styles.formHint}>새 멤버는 기본으로 멤버 권한으로 등록됩니다. 현재 총무만 다른 멤버에게 총무를 위임할 수 있고, 현재 총무는 삭제할 수 없습니다.</Text>
           <View style={styles.actionRow}>
             {editingMember ? <Button label="편집 취소" variant="ghost" onPress={resetForm} style={styles.actionButton} /> : null}
             <Button

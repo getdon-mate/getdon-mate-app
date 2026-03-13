@@ -1,6 +1,6 @@
 import { memo } from "react"
 import { StyleSheet, Text, View } from "react-native"
-import { Button, uiColors } from "@shared/ui"
+import { Badge, Button, uiColors } from "@shared/ui"
 import { formatMonth } from "@shared/lib/format"
 import type { DuesRecord, Member } from "../model/types"
 
@@ -29,7 +29,10 @@ export const MemberRow = memo(function MemberRow({
         <View style={styles.memberIdentity}>
           <Text style={[styles.avatar, { backgroundColor: member.color }]}>{member.initials}</Text>
           <View>
-            <Text style={styles.memberName}>{member.name}</Text>
+            <View style={styles.memberNameRow}>
+              <Text style={styles.memberName}>{member.name}</Text>
+              {member.role === "총무" ? <Badge label="현재 총무" tone="primary" /> : null}
+            </View>
             <Text style={styles.memberMeta}>{member.role} · 납부율 {rate}%</Text>
           </View>
         </View>
@@ -44,7 +47,7 @@ export const MemberRow = memo(function MemberRow({
                 style={styles.actionButtonWide}
               />
             ) : null}
-            {onDelete ? <Button label="삭제" variant="danger" onPress={onDelete} style={styles.actionButton} /> : null}
+            {member.role !== "총무" && onDelete ? <Button label="삭제" variant="danger" onPress={onDelete} style={styles.actionButton} /> : null}
           </View>
         ) : null}
       </View>
@@ -106,6 +109,12 @@ const styles = StyleSheet.create({
     color: uiColors.text,
     fontSize: 14,
     fontWeight: "700",
+  },
+  memberNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
   },
   memberMeta: {
     color: uiColors.textMuted,
