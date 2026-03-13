@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText } from "@shared/lib/validation"
-import { ActionChip, Button, InputField, uiColors } from "@shared/ui"
+import { ActionChip, Button, InputField, uiColors, uiRadius } from "@shared/ui"
 import { getMemberPaymentRate } from "../../model/member-utils"
 import type { GroupAccount, MemberRole } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
@@ -144,20 +144,34 @@ export function MembersTab({ account }: { account: GroupAccount }) {
           <View style={styles.roleRow}>
             {(["총무", "멤버"] as const).map((item) => {
               const active = role === item
+              const isManager = item === "총무"
               return (
-                <Button
+                <View
                   key={item}
-                  label={item}
-                  variant={active ? "primary" : "ghost"}
-                  onPress={() => setRole(item)}
-                  style={styles.roleButton}
-                />
+                  style={[
+                    styles.roleButtonWrap,
+                    active && isManager && styles.roleButtonWrapManager,
+                    active && !isManager && styles.roleButtonWrapMember,
+                  ]}
+                >
+                  <Button
+                    label={item}
+                    variant={active ? (isManager ? "secondary" : "primary") : "ghost"}
+                    onPress={() => setRole(item)}
+                    style={styles.roleButton}
+                  />
+                </View>
               )
             })}
           </View>
           <View style={styles.actionRow}>
             {editingMember ? <Button label="편집 취소" variant="ghost" onPress={resetForm} style={styles.actionButton} /> : null}
-            <Button label={editingMember ? "멤버 수정" : "멤버 추가"} onPress={() => void handleSubmit()} style={styles.actionButton} />
+            <Button
+              label={editingMember ? "멤버 수정" : "멤버 추가"}
+              variant="primary"
+              onPress={() => void handleSubmit()}
+              style={styles.actionButton}
+            />
           </View>
         </View>
       </SectionCard>
@@ -214,6 +228,16 @@ const styles = StyleSheet.create({
   roleRow: {
     flexDirection: "row",
     gap: 8,
+  },
+  roleButtonWrap: {
+    flex: 1,
+    borderRadius: uiRadius.md,
+  },
+  roleButtonWrapManager: {
+    backgroundColor: uiColors.surfaceMuted,
+  },
+  roleButtonWrapMember: {
+    backgroundColor: uiColors.primarySoft,
   },
   roleButton: {
     flex: 1,
