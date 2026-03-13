@@ -9,6 +9,7 @@ export interface ApiUser {
 
 export interface ApiMember {
   id: string
+  userId?: string
   name: string
   role: MemberRole
   initials: string

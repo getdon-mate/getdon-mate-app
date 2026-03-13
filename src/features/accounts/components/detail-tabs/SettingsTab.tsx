@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
@@ -66,6 +66,31 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
     setDuesAmount("")
     setDueDate("")
   }
+
+  useEffect(() => {
+    setGroupName(account.groupName)
+    setBankName(account.bankName)
+    setAccountNumber(account.accountNumber)
+    setMonthlyDues(String(account.monthlyDuesAmount))
+    setAccountDueDay(String(account.dueDay))
+    setEnabled(account.autoTransfer.enabled)
+    setDay(String(account.autoTransfer.dayOfMonth))
+    setAmount(String(account.autoTransfer.amount))
+    setFromAccount(account.autoTransfer.fromAccount)
+    resetOneTimeDuesForm()
+    setRecordFilter("all")
+  }, [
+    account.accountNumber,
+    account.autoTransfer.amount,
+    account.autoTransfer.dayOfMonth,
+    account.autoTransfer.enabled,
+    account.autoTransfer.fromAccount,
+    account.bankName,
+    account.dueDay,
+    account.groupName,
+    account.id,
+    account.monthlyDuesAmount,
+  ])
 
   async function handleSaveAutoTransfer() {
     const parsedDay = Number(day)

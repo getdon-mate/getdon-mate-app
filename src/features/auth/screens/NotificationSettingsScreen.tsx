@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { ScrollView, StyleSheet, Text, View } from "react-native"
@@ -7,12 +7,6 @@ import { useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { COPY } from "@shared/constants/copy"
 import { Badge, Button, Card, Icon, PageHeader, ToggleSwitch, uiColors, uiRadius, uiSpacing } from "@shared/ui"
-
-const defaultNotificationPreferences = {
-  duesReminder: true,
-  transactionAlert: true,
-  noticeAlert: true,
-} as const
 
 function NotificationToggleRow({
   title,
@@ -35,17 +29,60 @@ function NotificationToggleRow({
 
 export function NotificationSettingsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
-  const { notificationPreferences, updateNotificationPreferences } = useAppRuntime()
-  const { showToast } = useFeedback()
+  const { notificationPreferences, updateNotificationPreferences, defaultNotificationPreferences } = useAppRuntime()
+  const { showToast, confirm } = useFeedback()
 
   const [draft, setDraft] = useState(notificationPreferences)
+  const allowExitRef = useRef(false)
   const enabledCount = [draft.duesReminder, draft.transactionAlert, draft.noticeAlert].filter(Boolean).length
   const dirtyCount = Number(draft.duesReminder !== notificationPreferences.duesReminder)
     + Number(draft.transactionAlert !== notificationPreferences.transactionAlert)
     + Number(draft.noticeAlert !== notificationPreferences.noticeAlert)
+  const isDirty = dirtyCount > 0
+
+  useEffect(() => {
+    setDraft(notificationPreferences)
+  }, [notificationPreferences])
+
+  const attemptExit = useCallback(async () => {
+    if (!isDirty) {
+      allowExitRef.current = true
+      navigation.goBack()
+      return
+    }
+
+    const confirmed = await confirm({
+      title: "변경 내용 폐기",
+      message: "저장하지 않은 알림 설정 변경이 있습니다. 이 화면을 나가면 변경 내용이 사라집니다.",
+      confirmLabel: "나가기",
+      cancelLabel: "계속 수정",
+      confirmTone: "danger",
+    })
+
+    if (!confirmed) return
+
+    setDraft(notificationPreferences)
+    allowExitRef.current = true
+    navigation.goBack()
+  }, [confirm, isDirty, navigation, notificationPreferences])
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("beforeRemove", (event) => {
+      if (!isDirty || allowExitRef.current) {
+        allowExitRef.current = false
+        return
+      }
+
+      event.preventDefault()
+      void attemptExit()
+    })
+
+    return unsubscribe
+  }, [attemptExit, isDirty, navigation])
 
   async function handleSave() {
     await updateNotificationPreferences(draft)
+    allowExitRef.current = true
     showToast({ tone: "success", title: "저장 완료", message: COPY.notification.saved })
     navigation.goBack()
   }
@@ -94,7 +131,7 @@ export function NotificationSettingsScreen() {
       </Card>
 
       <View style={styles.actions}>
-        <Button label="취소" variant="ghost" onPress={() => navigation.goBack()} style={styles.actionButton} />
+        <Button label="취소" variant="ghost" onPress={() => void attemptExit()} style={styles.actionButton} />
         <Button label="저장" onPress={() => void handleSave()} style={styles.actionButton} />
       </View>
     </ScrollView>

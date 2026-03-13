@@ -20,6 +20,7 @@ export function toDomainUser(user: ApiUser): AppUser {
 function toDomainMember(member: ApiMember): Member {
   return {
     id: member.id,
+    userId: member.userId,
     name: member.name,
     role: member.role,
     initials: member.initials,

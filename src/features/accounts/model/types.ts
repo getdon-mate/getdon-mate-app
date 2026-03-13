@@ -2,6 +2,7 @@ export type MemberRole = "총무" | "멤버"
 
 export interface Member {
   id: string
+  userId?: string
   name: string
   role: MemberRole
   initials: string

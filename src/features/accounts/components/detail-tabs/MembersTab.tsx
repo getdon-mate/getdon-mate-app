@@ -32,8 +32,14 @@ export function MembersTab({ account }: { account: GroupAccount }) {
   const editingMember = useMemo(() => account.members.find((member) => member.id === editingId) ?? null, [account.members, editingId])
   const currentManager = useMemo(() => account.members.find((member) => member.role === "총무") ?? null, [account.members])
   const currentUserMember = useMemo(
-    () => account.members.find((member) => member.name === currentUser?.name) ?? null,
-    [account.members, currentUser?.name]
+    () =>
+      account.members.find((member) => {
+        if (currentUser?.id && member.userId) {
+          return member.userId === currentUser.id
+        }
+        return member.name === currentUser?.name
+      }) ?? null,
+    [account.members, currentUser?.id, currentUser?.name]
   )
   const canDelegateManager = currentUserMember?.role === "총무"
 
