@@ -1,27 +1,29 @@
-import { StyleSheet, Text, type TextStyle } from "react-native"
+import Ionicons from "@expo/vector-icons/Ionicons"
+import type { ComponentProps } from "react"
+import type { StyleProp, TextStyle } from "react-native"
 import { uiColors } from "../tokens"
 
-const iconGlyph = {
-  check: "✓",
-  close: "✕",
-  info: "i",
-  warning: "!",
-  plus: "+",
-  minus: "−",
-  chevronLeft: "‹",
-  chevronRight: "›",
-  settings: "⚙",
-  user: "◉",
-  bell: "🔔",
-  refresh: "↻",
-  logout: "↩",
-  trash: "🗑",
-  search: "⌕",
-  sort: "⇅",
-  closeCircle: "⊗",
-} as const
+const iconNameMap = {
+  check: "checkmark",
+  close: "close",
+  info: "information-circle-outline",
+  warning: "warning-outline",
+  plus: "add",
+  minus: "remove",
+  chevronLeft: "chevron-back",
+  chevronRight: "chevron-forward",
+  settings: "settings-outline",
+  user: "person-circle-outline",
+  bell: "notifications-outline",
+  refresh: "refresh",
+  logout: "log-out-outline",
+  trash: "trash-outline",
+  search: "search-outline",
+  sort: "swap-vertical-outline",
+  closeCircle: "close-circle-outline",
+} as const satisfies Record<string, ComponentProps<typeof Ionicons>["name"]>
 
-export type IconName = keyof typeof iconGlyph
+export type IconName = keyof typeof iconNameMap
 
 export function Icon({
   name,
@@ -32,29 +34,15 @@ export function Icon({
   name: IconName
   size?: number
   color?: string
-  style?: TextStyle | TextStyle[]
+  style?: StyleProp<TextStyle>
 }) {
   return (
-    <Text
-      style={[
-        styles.base,
-        {
-          fontSize: size,
-          color,
-          lineHeight: size + 1,
-        },
-        style,
-      ]}
+    <Ionicons
+      name={iconNameMap[name]}
+      size={size}
+      color={color}
+      style={style}
       accessibilityLabel={`icon-${name}`}
-    >
-      {iconGlyph[name]}
-    </Text>
+    />
   )
 }
-
-const styles = StyleSheet.create({
-  base: {
-    fontWeight: "700",
-    textAlign: "center",
-  },
-})
