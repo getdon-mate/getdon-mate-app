@@ -13,7 +13,8 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.anonymous.getdon-mate-app"
     },
     "android": {},
     "web": {

@@ -5,10 +5,11 @@
   "packageManager": "pnpm@10.7.0",
   "main": "expo/AppEntry",
   "scripts": {
+    "check:ios-dev-env": "node scripts/check-ios-dev-env.mjs",
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "ios:dev": "expo run:ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "ios:dev": "export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 && pnpm run check:ios-dev-env && expo run:ios",
     "web": "expo start --web",
     "export:web": "expo export --platform web",
     "typecheck": "tsc --noEmit",
@@ -39,6 +40,7 @@
     "@types/react": "~19.1.10",
     "babel-plugin-module-resolver": "^5.0.2",
     "babel-preset-expo": "^54.0.10",
+    "glob": "^11.0.3",
     "jest-expo": "~54.0.17",
     "react-test-renderer": "^19.1.0",
     "typescript": "~5.9.2"
