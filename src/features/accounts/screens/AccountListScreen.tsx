@@ -13,9 +13,6 @@ import {
 import { ROUTES } from "@core/navigation/routes"
 import type { RootStackParamList } from "@core/navigation/types"
 import { useAppAccounts, useAppAuth, useAppRuntime } from "@core/providers/AppProvider"
-import { useFeedback } from "@core/providers/FeedbackProvider"
-import { appEnv } from "@shared/config/app-env"
-import { feedbackPresets } from "@shared/lib/feedback-presets"
 import { getCurrentMonthKey } from "@shared/lib/date"
 import { Button, Icon, uiColors, uiSpacing } from "@shared/ui"
 import { LoadingStateCard } from "../components/LoadingStateCard"
@@ -26,29 +23,13 @@ import { UserHeaderCard } from "../components/UserHeaderCard"
 export function AccountListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const { currentUser } = useAppAuth()
-  const { accounts, selectAccount, resetDemoData } = useAppAccounts()
-  const { isBootstrapping, dataSource, isRefreshingAccounts, refreshAccounts } = useAppRuntime()
-  const { confirmDanger, showToast } = useFeedback()
+  const { accounts, selectAccount } = useAppAccounts()
+  const { isBootstrapping, isRefreshingAccounts, refreshAccounts } = useAppRuntime()
   const currentMonth = getCurrentMonthKey()
   const { width } = useWindowDimensions()
   const isWide = width >= 960
 
   const initials = useMemo(() => currentUser?.name.slice(-2) ?? "??", [currentUser])
-
-  async function handleResetDemoData() {
-    const confirmed = await confirmDanger({
-      title: feedbackPresets.resetDemoData.title,
-      message: feedbackPresets.resetDemoData.message,
-      confirmLabel: feedbackPresets.resetDemoData.confirmLabel,
-    })
-    if (!confirmed) return
-    resetDemoData()
-    showToast({
-      tone: "success",
-      title: feedbackPresets.resetDemoData.successTitle,
-      message: feedbackPresets.resetDemoData.successMessage,
-    })
-  }
 
   async function handleRefresh() {
     await refreshAccounts()
@@ -71,6 +52,8 @@ export function AccountListScreen() {
           user={currentUser}
           initials={initials}
           onOpenNotifications={() => navigation.navigate(ROUTES.NotificationList)}
+          onOpenMyPage={() => navigation.navigate(ROUTES.MyPage)}
+          onOpenAppSettings={() => navigation.navigate(ROUTES.AppSettings)}
         />
 
         <View style={styles.sectionHeader}>
@@ -119,15 +102,6 @@ export function AccountListScreen() {
             variant="secondary"
             label="+ 새 모임통장 개설"
             onPress={() => navigation.navigate(ROUTES.AccountCreate)}
-          />
-        ) : null}
-
-        {!isBootstrapping && appEnv.showDemoControls && dataSource !== "remote" ? (
-          <Button
-            style={styles.resetCard}
-            variant="danger"
-            label="데모 데이터 초기화"
-            onPress={handleResetDemoData}
           />
         ) : null}
       </View>
@@ -189,8 +163,5 @@ const styles = StyleSheet.create({
   },
   addCard: {
     borderStyle: "dashed",
-  },
-  resetCard: {
-    marginTop: -2,
   },
 })

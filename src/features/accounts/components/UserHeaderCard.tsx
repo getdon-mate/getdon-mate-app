@@ -6,10 +6,14 @@ export function UserHeaderCard({
   user,
   initials,
   onOpenNotifications,
+  onOpenMyPage,
+  onOpenAppSettings,
 }: {
   user: AppUser | null
   initials: string
   onOpenNotifications: () => void
+  onOpenMyPage: () => void
+  onOpenAppSettings: () => void
 }) {
   return (
     <View style={styles.headerCard}>
@@ -20,9 +24,17 @@ export function UserHeaderCard({
         <Text style={styles.headerName}>{user?.name}님의 모임</Text>
         <Text style={styles.headerEmail}>함께하는 통장을 관리해보세요</Text>
       </View>
-      <Pressable style={styles.iconButton} onPress={onOpenNotifications} accessibilityRole="button" accessibilityLabel="알림 목록 열기">
-        <Icon name="bell" size={16} color="#0f172a" />
-      </Pressable>
+      <View style={styles.actionGroup}>
+        <Pressable style={styles.iconButton} onPress={onOpenNotifications} accessibilityRole="button" accessibilityLabel="알림 목록 열기">
+          <Icon name="bell" size={16} color="#0f172a" />
+        </Pressable>
+        <Pressable style={styles.iconButton} onPress={onOpenMyPage} accessibilityRole="button" accessibilityLabel="마이페이지 열기">
+          <Icon name="user" size={16} color="#0f172a" />
+        </Pressable>
+        <Pressable style={styles.iconButton} onPress={onOpenAppSettings} accessibilityRole="button" accessibilityLabel="앱 설정 열기">
+          <Icon name="settings" size={16} color="#0f172a" />
+        </Pressable>
+      </View>
     </View>
   )
 }
@@ -72,5 +84,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#f3f4f6",
+  },
+  actionGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
 })

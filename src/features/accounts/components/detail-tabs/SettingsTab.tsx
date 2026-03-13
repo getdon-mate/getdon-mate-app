@@ -1,9 +1,5 @@
 import { useMemo, useState } from "react"
-import { useNavigation } from "@react-navigation/native"
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { Pressable, StyleSheet, Text, View } from "react-native"
-import { ROUTES } from "@core/navigation/routes"
-import type { RootStackParamList } from "@core/navigation/types"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
@@ -26,9 +22,7 @@ function getNextTransferDate(day: number) {
 }
 
 export function SettingsTab({ account }: { account: GroupAccount }) {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const {
-    currentUser,
     updateAutoTransfer,
     updateAccount,
     createOneTimeDues,
@@ -37,10 +31,8 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
     deleteOneTimeDues,
     toggleOneTimeDuesRecord,
     deleteAccount,
-    logout,
-    withdraw,
   } = useApp()
-  const { showAlert, showToast, showError, confirm, confirmDanger } = useFeedback()
+  const { showAlert, showToast, showError, confirmDanger } = useFeedback()
   const [groupName, setGroupName] = useState(account.groupName)
   const [bankName, setBankName] = useState(account.bankName)
   const [accountNumber, setAccountNumber] = useState(account.accountNumber)
@@ -58,10 +50,6 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
   const [editingDuesId, setEditingDuesId] = useState<string | null>(null)
 
   const [recordFilter, setRecordFilter] = useState<RecordFilter>("all")
-
-  const profileName = currentUser?.name ?? account.members[0]?.name ?? "사용자"
-  const profileEmail = currentUser?.email ?? "email@example.com"
-  const profileInitial = profileName.slice(0, 1)
 
   const nextTransferPreview = useMemo(() => {
     const parsedDay = Number(day)
@@ -211,54 +199,9 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
     showToast({ tone: "success", title: feedbackPresets.deleteAccount.successTitle, message: feedbackPresets.deleteAccount.successMessage })
   }
 
-  function handleOpenMyPage() {
-    navigation.navigate(ROUTES.MyPage)
-  }
-
-  function handleOpenNotificationSettings() {
-    navigation.navigate(ROUTES.NotificationSettings)
-  }
-
-  async function handleLogout() {
-    const confirmed = await confirm({
-      title: feedbackPresets.logout.title,
-      message: feedbackPresets.logout.message,
-      confirmLabel: feedbackPresets.logout.confirmLabel,
-    })
-    if (!confirmed) return
-    logout()
-    showToast({ tone: "success", title: feedbackPresets.logout.successTitle, message: feedbackPresets.logout.successMessage })
-  }
-
-  async function handleWithdraw() {
-    const confirmed = await confirmDanger({
-      title: feedbackPresets.withdraw.title,
-      message: feedbackPresets.withdraw.message,
-      confirmLabel: feedbackPresets.withdraw.confirmLabel,
-    })
-    if (!confirmed) return
-    withdraw()
-    showToast({ tone: "success", title: feedbackPresets.withdraw.successTitle, message: feedbackPresets.withdraw.successMessage })
-  }
-
   return (
     <View style={styles.screen}>
-      <Text style={styles.pageTitle}>설정</Text>
-
-      <View style={styles.profileCard}>
-        <View style={styles.avatarCircle}>
-          <Text style={styles.avatarText}>{profileInitial}</Text>
-        </View>
-        <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>{profileName}</Text>
-          <Text style={styles.profileEmail}>{profileEmail}</Text>
-        </View>
-      </View>
-
-      <View style={styles.menuGroup}>
-        <SettingsRow label="프로필 관리" icon="user" onPress={handleOpenMyPage} />
-        <SettingsRow label="알림 설정" icon="bell" onPress={handleOpenNotificationSettings} />
-      </View>
+      <Text style={styles.pageTitle}>모임 관리</Text>
 
       <View style={styles.managementSection}>
         <Text style={styles.sectionHeading}>모임통장 관리</Text>
@@ -396,12 +339,6 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
         </View>
       </View>
 
-      <View style={styles.menuGroup}>
-        <Text style={styles.sectionHeading}>계정 액션</Text>
-        <SettingsRow label="로그아웃" icon="logout" onPress={() => void handleLogout()} />
-        <SettingsRow label="회원 탈퇴" icon="trash" onPress={() => void handleWithdraw()} tone="danger" />
-      </View>
-
       <Button style={styles.dangerAction} variant="danger" label="이 모임통장 삭제" onPress={() => void handleDeleteAccount()} />
     </View>
   )
@@ -424,30 +361,6 @@ function FilterOption({
   )
 }
 
-function SettingsRow({
-  label,
-  icon,
-  onPress,
-  tone = "default",
-}: {
-  label: string
-  icon: "user" | "bell" | "logout" | "trash"
-  onPress: () => void
-  tone?: "default" | "danger"
-}) {
-  return (
-    <Pressable style={styles.menuRow} onPress={onPress} accessibilityRole="button" accessibilityLabel={label}>
-      <View style={styles.menuRowLeft}>
-        <View style={[styles.menuIconBadge, tone === "danger" && styles.menuIconBadgeDanger]}>
-          <Icon name={icon} size={12} color={tone === "danger" ? "#ef4444" : "#475569"} />
-        </View>
-        <Text style={[styles.menuLabel, tone === "danger" && styles.menuLabelDanger]}>{label}</Text>
-      </View>
-      <Icon name="chevronRight" size={18} color="#c5cad3" />
-    </Pressable>
-  )
-}
-
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -459,87 +372,6 @@ const styles = StyleSheet.create({
     color: "#111827",
     paddingHorizontal: 8,
     paddingVertical: 4,
-  },
-  profileCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: "#ffffff",
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#eef1f5",
-  },
-  avatarCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "#e7f0ff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: {
-    color: "#2563eb",
-    fontSize: 24,
-    fontWeight: "700",
-  },
-  profileInfo: {
-    gap: 6,
-  },
-  profileName: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#0f172a",
-  },
-  profileEmail: {
-    fontSize: 14,
-    color: "#6b7280",
-  },
-  menuGroup: {
-    marginTop: 12,
-    backgroundColor: "#ffffff",
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "#edf0f4",
-    borderRadius: 18,
-    overflow: "hidden",
-  },
-  menuRow: {
-    minHeight: 56,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eef0f3",
-  },
-  menuRowLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  menuIconBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#cbd5e1",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#f8fafc",
-  },
-  menuIconBadgeDanger: {
-    borderColor: "#fecaca",
-    backgroundColor: "#fff5f5",
-  },
-  menuLabel: {
-    fontSize: 15,
-    color: "#1f2937",
-    fontWeight: "500",
-  },
-  menuLabelDanger: {
-    color: "#ef4444",
   },
   managementSection: {
     gap: 12,

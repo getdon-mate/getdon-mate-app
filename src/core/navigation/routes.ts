@@ -4,6 +4,7 @@ export const ROUTES = {
   AccountDetail: "AccountDetail",
   AccountCreate: "AccountCreate",
   MyPage: "MyPage",
+  AppSettings: "AppSettings",
   NotificationList: "NotificationList",
   NotificationSettings: "NotificationSettings",
 } as const

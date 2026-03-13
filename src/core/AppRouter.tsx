@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { AccountCreateScreen } from "@features/accounts/screens/AccountCreateScreen"
 import { AccountDetailScreen } from "@features/accounts/screens/AccountDetailScreen"
 import { AccountListScreen } from "@features/accounts/screens/AccountListScreen"
+import { AppSettingsScreen } from "@features/auth/screens/AppSettingsScreen"
 import { LoginScreen } from "@features/auth/screens/LoginScreen"
 import { MyPageScreen } from "@features/auth/screens/MyPageScreen"
 import { NotificationListScreen } from "@features/auth/screens/NotificationListScreen"
@@ -26,6 +27,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       [ROUTES.AccountCreate]: "accounts/create",
       [ROUTES.AccountDetail]: "accounts/:accountId?",
       [ROUTES.MyPage]: "me",
+      [ROUTES.AppSettings]: "settings",
       [ROUTES.NotificationList]: "notifications",
       [ROUTES.NotificationSettings]: "settings/notifications",
     },
@@ -98,6 +100,7 @@ export function AppRouter() {
           <Stack.Screen name={ROUTES.AccountCreate} component={AccountCreateScreen} />
           <Stack.Screen name={ROUTES.AccountDetail} component={AccountDetailScreen} />
           <Stack.Screen name={ROUTES.MyPage} component={MyPageScreen} />
+          <Stack.Screen name={ROUTES.AppSettings} component={AppSettingsScreen} />
           <Stack.Screen name={ROUTES.NotificationList} component={NotificationListScreen} />
           <Stack.Screen name={ROUTES.NotificationSettings} component={NotificationSettingsScreen} />
         </Stack.Navigator>
