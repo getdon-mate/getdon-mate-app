@@ -146,21 +146,21 @@ export function MembersTab({ account }: { account: GroupAccount }) {
               const active = role === item
               const isManager = item === "총무"
               return (
-                <View
+                <Button
                   key={item}
+                  label={item}
+                  variant="ghost"
+                  onPress={() => setRole(item)}
                   style={[
-                    styles.roleButtonWrap,
-                    active && isManager && styles.roleButtonWrapManager,
-                    active && !isManager && styles.roleButtonWrapMember,
+                    styles.roleButton,
+                    active && isManager && styles.roleButtonManagerActive,
+                    active && !isManager && styles.roleButtonMemberActive,
                   ]}
-                >
-                  <Button
-                    label={item}
-                    variant={active ? (isManager ? "secondary" : "primary") : "ghost"}
-                    onPress={() => setRole(item)}
-                    style={styles.roleButton}
-                  />
-                </View>
+                  textStyle={[
+                    active && isManager && styles.roleButtonManagerText,
+                    active && !isManager && styles.roleButtonMemberText,
+                  ]}
+                />
               )
             })}
           </View>
@@ -229,18 +229,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
-  roleButtonWrap: {
-    flex: 1,
-    borderRadius: uiRadius.md,
-  },
-  roleButtonWrapManager: {
-    backgroundColor: uiColors.surfaceMuted,
-  },
-  roleButtonWrapMember: {
-    backgroundColor: uiColors.primarySoft,
-  },
   roleButton: {
     flex: 1,
+    minHeight: 44,
+  },
+  roleButtonManagerActive: {
+    backgroundColor: uiColors.surfaceMuted,
+    borderColor: uiColors.borderStrong,
+  },
+  roleButtonMemberActive: {
+    backgroundColor: uiColors.primarySoft,
+    borderColor: uiColors.primaryBorder,
+  },
+  roleButtonManagerText: {
+    color: uiColors.textStrong,
+  },
+  roleButtonMemberText: {
+    color: uiColors.primary,
   },
   actionRow: {
     flexDirection: "row",

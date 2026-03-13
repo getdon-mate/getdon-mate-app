@@ -4,7 +4,7 @@ import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
 import { requireText, validateDayOfMonth, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
-import { ActionChip, Button, Icon, InputField, NumericInputField, RadioButton, ToggleSwitch, uiColors } from "@shared/ui"
+import { ActionChip, Button, Icon, InputField, NumericInputField, RadioButton, ToggleSwitch, uiColors, uiRadius, uiSpacing } from "@shared/ui"
 import { formatKRW } from "@shared/lib/format"
 import { getMemberById } from "../../model/member-utils"
 import type { GroupAccount } from "../../model/types"
@@ -199,6 +199,27 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
     showToast({ tone: "success", title: feedbackPresets.deleteAccount.successTitle, message: feedbackPresets.deleteAccount.successMessage })
   }
 
+  async function handleCopyAccountNumber() {
+    try {
+      const clipboard = globalThis.navigator?.clipboard
+      if (!clipboard?.writeText) {
+        showAlert({
+          title: "복사 불가",
+          message: "현재 환경에서는 자동 복사를 지원하지 않습니다.",
+        })
+        return
+      }
+      await clipboard.writeText(account.accountNumber)
+      showToast({ tone: "success", title: "복사 완료", message: "계좌번호를 복사했습니다." })
+    } catch {
+      showAlert({
+        title: "복사 실패",
+        message: "브라우저 권한 때문에 자동 복사에 실패했습니다.",
+        tone: "danger",
+      })
+    }
+  }
+
   return (
     <View style={styles.screen}>
       <Text style={styles.pageTitle}>모임 관리</Text>
@@ -206,9 +227,36 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
       <View style={styles.managementSection}>
         <Text style={styles.sectionHeading}>모임통장 관리</Text>
         <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>계좌 정보</Text>
-          <Text style={styles.infoTitle}>{account.bankName} {account.accountNumber}</Text>
-          <Text style={styles.infoMeta}>월 회비 {formatKRW(account.monthlyDuesAmount)} · 납부일 {account.dueDay}일</Text>
+          <View style={styles.rowBetween}>
+            <View style={styles.infoTitleWrap}>
+              <Text style={styles.infoLabel}>계좌 정보</Text>
+              <Text style={styles.infoTitle}>{account.bankName}</Text>
+            </View>
+            <View style={styles.infoBadge}>
+              <Text style={styles.infoBadgeText}>Manage</Text>
+            </View>
+          </View>
+          <View style={styles.accountNumberRow}>
+            <Text style={styles.accountNumberText}>{account.accountNumber}</Text>
+            <Pressable
+              onPress={() => void handleCopyAccountNumber()}
+              style={styles.copyButton}
+              accessibilityRole="button"
+              accessibilityLabel="계좌번호 복사"
+            >
+              <Icon name="copy" size={16} color={uiColors.primary} />
+            </Pressable>
+          </View>
+          <View style={styles.infoMetricsRow}>
+            <View style={styles.infoMetricCard}>
+              <Text style={styles.infoMetricLabel}>월 회비</Text>
+              <Text style={styles.infoMetricValue}>{formatKRW(account.monthlyDuesAmount)}</Text>
+            </View>
+            <View style={styles.infoMetricCard}>
+              <Text style={styles.infoMetricLabel}>납부일</Text>
+              <Text style={styles.infoMetricValue}>{account.dueDay}일</Text>
+            </View>
+          </View>
         </View>
 
         <View style={styles.panelCard}>
@@ -364,55 +412,124 @@ function FilterOption({
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: uiColors.background,
   },
   pageTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: "700",
-    color: "#111827",
+    color: uiColors.textStrong,
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 6,
   },
   managementSection: {
-    gap: 12,
+    gap: 14,
     paddingTop: 14,
   },
   sectionHeading: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#6b7280",
+    color: uiColors.textMuted,
     paddingHorizontal: 8,
     letterSpacing: 0.2,
   },
   infoCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 20,
+    backgroundColor: uiColors.surface,
+    borderRadius: uiRadius.xxl,
     padding: 18,
-    gap: 6,
+    gap: 12,
     borderWidth: 1,
-    borderColor: "#edf0f4",
+    borderColor: uiColors.border,
   },
   infoLabel: {
     fontSize: 12,
-    color: "#94a3b8",
+    color: uiColors.textSoft,
     fontWeight: "600",
   },
+  infoTitleWrap: {
+    gap: 3,
+  },
   infoTitle: {
-    fontSize: 16,
-    color: "#111827",
+    fontSize: 18,
+    color: uiColors.textStrong,
     fontWeight: "700",
   },
   infoMeta: {
     fontSize: 13,
-    color: "#64748b",
+    color: uiColors.textMuted,
+  },
+  infoBadge: {
+    borderWidth: 1,
+    borderColor: uiColors.primaryBorder,
+    backgroundColor: uiColors.primarySoft,
+    borderRadius: uiRadius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  infoBadgeText: {
+    color: uiColors.primary,
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  accountNumberRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: uiSpacing.md,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    borderRadius: uiRadius.lg,
+    backgroundColor: uiColors.surface,
+  },
+  accountNumberText: {
+    flex: 1,
+    color: uiColors.textStrong,
+    fontSize: 22,
+    fontWeight: "800",
+    letterSpacing: 0.2,
+  },
+  copyButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: uiColors.primarySoft,
+    borderWidth: 1,
+    borderColor: uiColors.primaryBorder,
+  },
+  infoMetricsRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  infoMetricCard: {
+    flex: 1,
+    gap: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: uiRadius.lg,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surface,
+  },
+  infoMetricLabel: {
+    color: uiColors.textSoft,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  infoMetricValue: {
+    color: uiColors.textStrong,
+    fontSize: 15,
+    fontWeight: "700",
   },
   panelCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 20,
+    backgroundColor: uiColors.surface,
+    borderRadius: uiRadius.xxl,
     padding: 18,
     gap: 14,
     borderWidth: 1,
-    borderColor: "#edf0f4",
+    borderColor: uiColors.border,
   },
   rowBetween: {
     flexDirection: "row",
@@ -423,7 +540,7 @@ const styles = StyleSheet.create({
   panelTitle: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#111827",
+    color: uiColors.textStrong,
   },
   formStack: {
     gap: 10,
@@ -452,53 +569,53 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: 13,
-    color: "#64748b",
+    color: uiColors.textMuted,
     fontWeight: "600",
   },
   filterLabelActive: {
-    color: "#1d4ed8",
+    color: uiColors.primary,
   },
   duesList: {
     gap: 10,
   },
   emptyBox: {
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 12,
-    backgroundColor: "#f8fafc",
+    borderColor: uiColors.border,
+    borderRadius: uiRadius.lg,
+    backgroundColor: uiColors.surface,
     paddingHorizontal: 12,
     paddingVertical: 11,
     gap: 4,
   },
   emptyTitle: {
-    color: "#111827",
+    color: uiColors.textStrong,
     fontSize: 13,
     fontWeight: "700",
   },
   emptyDescription: {
-    color: "#6b7280",
+    color: uiColors.textMuted,
     fontSize: 12,
     lineHeight: 17,
   },
   duesCard: {
     borderWidth: 1,
-    borderColor: "#e6e9ef",
-    borderRadius: 14,
+    borderColor: uiColors.border,
+    borderRadius: uiRadius.lg,
     padding: 12,
     gap: 8,
-    backgroundColor: "#fbfcfe",
+    backgroundColor: uiColors.surface,
   },
   duesTitle: {
-    color: "#111827",
+    color: uiColors.textStrong,
     fontSize: 14,
     fontWeight: "700",
   },
   duesMeta: {
-    color: "#64748b",
+    color: uiColors.textMuted,
     fontSize: 12,
   },
   recordName: {
-    color: "#475569",
+    color: uiColors.textMuted,
     fontSize: 13,
   },
   statusChip: {
@@ -511,22 +628,22 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   statusChipPaid: {
-    backgroundColor: "#e8f5e9",
-    borderColor: "#b7e0bc",
+    backgroundColor: uiColors.successSoft,
+    borderColor: uiColors.successBorder,
   },
   statusChipUnpaid: {
-    backgroundColor: "#fff1f2",
-    borderColor: "#fecdd3",
+    backgroundColor: uiColors.dangerSoft,
+    borderColor: uiColors.dangerBorder,
   },
   statusChipText: {
     fontSize: 12,
     fontWeight: "600",
   },
   statusChipTextPaid: {
-    color: "#15803d",
+    color: uiColors.success,
   },
   statusChipTextUnpaid: {
-    color: "#dc2626",
+    color: uiColors.danger,
   },
   dangerAction: {
     marginTop: 14,

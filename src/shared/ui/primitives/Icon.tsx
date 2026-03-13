@@ -21,6 +21,7 @@ const iconNameMap = {
   search: "search-outline",
   sort: "swap-vertical-outline",
   closeCircle: "close-circle-outline",
+  copy: "copy-outline",
 } as const satisfies Record<string, ComponentProps<typeof Ionicons>["name"]>
 
 export type IconName = keyof typeof iconNameMap
