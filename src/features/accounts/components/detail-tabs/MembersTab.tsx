@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react"
 import { StyleSheet, Text, View } from "react-native"
-import { useApp } from "@core/providers/AppProvider"
+import { useApp, useAppAuth } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText } from "@shared/lib/validation"
-import { ActionChip, Button, InputField, uiColors, uiRadius } from "@shared/ui"
+import { ActionChip, Button, InputField, uiColors } from "@shared/ui"
 import { getMemberPaymentRate } from "../../model/member-utils"
-import type { GroupAccount, MemberRole } from "../../model/types"
+import type { GroupAccount } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
 import { MemberRow } from "../MemberRow"
 import { SectionCard } from "../SectionCard"
@@ -13,14 +13,14 @@ import { SectionHeader } from "../SectionHeader"
 
 type MemberSort = "name" | "payment-rate"
 
-type RoleFilter = "all" | MemberRole
+type RoleFilter = "all" | "총무" | "멤버"
 
 export function MembersTab({ account }: { account: GroupAccount }) {
   const { createMember, updateMember, deleteMember } = useApp()
   const { showAlert, showToast, confirm } = useFeedback()
+  const { currentUser } = useAppAuth()
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
-  const [role, setRole] = useState<MemberRole>("멤버")
   const [editingId, setEditingId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all")
@@ -30,6 +30,12 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     account.members.reduce((sum, member) => sum + getMemberPaymentRate(account.duesRecords, member.id), 0) /
     Math.max(account.members.length, 1)
   const editingMember = useMemo(() => account.members.find((member) => member.id === editingId) ?? null, [account.members, editingId])
+  const currentManager = useMemo(() => account.members.find((member) => member.role === "총무") ?? null, [account.members])
+  const currentUserMember = useMemo(
+    () => account.members.find((member) => member.name === currentUser?.name) ?? null,
+    [account.members, currentUser?.name]
+  )
+  const canDelegateManager = currentUserMember?.role === "총무"
 
   const visibleMembers = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
@@ -53,7 +59,6 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     setEditingId(null)
     setName("")
     setPhone("")
-    setRole("멤버")
   }
 
   async function handleSubmit() {
@@ -66,7 +71,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     const payload = {
       name: name.trim(),
       phone: phone.trim(),
-      role,
+      role: "멤버" as const,
     }
 
     if (editingId) {
@@ -87,7 +92,35 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     setEditingId(member.id)
     setName(member.name)
     setPhone(member.phone)
-    setRole(member.role)
+  }
+
+  async function handleDelegateManager(memberId: string) {
+    const targetMember = account.members.find((item) => item.id === memberId)
+    if (!targetMember || !currentManager || !canDelegateManager || targetMember.id === currentManager.id) return
+
+    const confirmed = await confirm({
+      title: "총무 위임",
+      message: `${targetMember.name}님에게 총무 권한을 위임합니다.`,
+      confirmLabel: "위임",
+    })
+    if (!confirmed) return
+
+    await updateMember(account.id, currentManager.id, {
+      name: currentManager.name,
+      phone: currentManager.phone,
+      role: "멤버",
+    })
+    await updateMember(account.id, targetMember.id, {
+      name: targetMember.name,
+      phone: targetMember.phone,
+      role: "총무",
+    })
+
+    showToast({
+      tone: "success",
+      title: "위임 완료",
+      message: `${targetMember.name}님이 새로운 총무가 되었습니다.`,
+    })
   }
 
   async function handleDelete(memberId: string) {
@@ -141,29 +174,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
         <View style={styles.formStack}>
           <InputField value={name} onChangeText={setName} label="이름" placeholder="멤버 이름" />
           <InputField value={phone} onChangeText={setPhone} label="연락처" placeholder="010-0000-0000" />
-          <View style={styles.roleRow}>
-            {(["총무", "멤버"] as const).map((item) => {
-              const active = role === item
-              const isManager = item === "총무"
-              return (
-                <Button
-                  key={item}
-                  label={item}
-                  variant="ghost"
-                  onPress={() => setRole(item)}
-                  style={[
-                    styles.roleButton,
-                    active && isManager && styles.roleButtonManagerActive,
-                    active && !isManager && styles.roleButtonMemberActive,
-                  ]}
-                  textStyle={[
-                    active && isManager && styles.roleButtonManagerText,
-                    active && !isManager && styles.roleButtonMemberText,
-                  ]}
-                />
-              )
-            })}
-          </View>
+          <Text style={styles.formHint}>새 멤버는 기본으로 멤버 권한으로 등록됩니다. 총무는 현재 총무만 다른 멤버에게 위임할 수 있습니다.</Text>
           <View style={styles.actionRow}>
             {editingMember ? <Button label="편집 취소" variant="ghost" onPress={resetForm} style={styles.actionButton} /> : null}
             <Button
@@ -189,6 +200,13 @@ export function MembersTab({ account }: { account: GroupAccount }) {
                   rate={rate}
                   duesRecords={account.duesRecords}
                   onEdit={() => handleEdit(member.id)}
+                  onDelegateOwner={
+                    canDelegateManager && member.role !== "총무" && member.id !== currentUserMember?.id
+                      ? () => {
+                          void handleDelegateManager(member.id)
+                        }
+                      : undefined
+                  }
                   onDelete={() => {
                     void handleDelete(member.id)
                   }}
@@ -225,28 +243,6 @@ const styles = StyleSheet.create({
     gap: 8,
     flexWrap: "wrap",
   },
-  roleRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  roleButton: {
-    flex: 1,
-    minHeight: 44,
-  },
-  roleButtonManagerActive: {
-    backgroundColor: uiColors.surfaceMuted,
-    borderColor: uiColors.borderStrong,
-  },
-  roleButtonMemberActive: {
-    backgroundColor: uiColors.primarySoft,
-    borderColor: uiColors.primaryBorder,
-  },
-  roleButtonManagerText: {
-    color: uiColors.textStrong,
-  },
-  roleButtonMemberText: {
-    color: uiColors.primary,
-  },
   actionRow: {
     flexDirection: "row",
     gap: 8,
@@ -268,5 +264,10 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "700",
     color: uiColors.text,
+  },
+  formHint: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
   },
 })

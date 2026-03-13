@@ -9,12 +9,14 @@ export const MemberRow = memo(function MemberRow({
   rate,
   duesRecords,
   onEdit,
+  onDelegateOwner,
   onDelete,
 }: {
   member: Member
   rate: number
   duesRecords: DuesRecord[]
   onEdit?: () => void
+  onDelegateOwner?: () => void
   onDelete?: () => void
 }) {
   const history = duesRecords
@@ -31,9 +33,17 @@ export const MemberRow = memo(function MemberRow({
             <Text style={styles.memberMeta}>{member.role} · 납부율 {rate}%</Text>
           </View>
         </View>
-        {onEdit || onDelete ? (
+        {onEdit || onDelegateOwner || onDelete ? (
           <View style={styles.actions}>
             {onEdit ? <Button label="수정" variant="ghost" onPress={onEdit} style={styles.actionButton} /> : null}
+            {onDelegateOwner ? (
+              <Button
+                label="총무 위임"
+                variant="secondary"
+                onPress={onDelegateOwner}
+                style={styles.actionButtonWide}
+              />
+            ) : null}
             {onDelete ? <Button label="삭제" variant="danger" onPress={onDelete} style={styles.actionButton} /> : null}
           </View>
         ) : null}
@@ -74,6 +84,10 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     minWidth: 64,
+    paddingVertical: 8,
+  },
+  actionButtonWide: {
+    minWidth: 92,
     paddingVertical: 8,
   },
   avatar: {
