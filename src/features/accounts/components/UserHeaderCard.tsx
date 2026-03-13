@@ -1,16 +1,15 @@
 import { Pressable, StyleSheet, Text, View } from "react-native"
+import { Icon } from "@shared/ui"
 import type { AppUser } from "../model/types"
 
 export function UserHeaderCard({
   user,
   initials,
-  onWithdraw,
-  onLogout,
+  onOpenNotifications,
 }: {
   user: AppUser | null
   initials: string
-  onWithdraw: () => void
-  onLogout: () => void
+  onOpenNotifications: () => void
 }) {
   return (
     <View style={styles.headerCard}>
@@ -21,14 +20,9 @@ export function UserHeaderCard({
         <Text style={styles.headerName}>{user?.name}님의 모임</Text>
         <Text style={styles.headerEmail}>함께하는 통장을 관리해보세요</Text>
       </View>
-      <View style={styles.headerActions}>
-        <Pressable style={styles.iconButton} onPress={onLogout}>
-          <Text style={styles.iconButtonText}>로그아웃</Text>
-        </Pressable>
-        <Pressable style={styles.iconButton} onPress={onWithdraw}>
-          <Text style={[styles.iconButtonText, styles.iconButtonDangerText]}>탈퇴</Text>
-        </Pressable>
-      </View>
+      <Pressable style={styles.iconButton} onPress={onOpenNotifications} accessibilityRole="button" accessibilityLabel="알림 목록 열기">
+        <Icon name="bell" size={16} color="#0f172a" />
+      </Pressable>
     </View>
   )
 }
@@ -71,22 +65,12 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     fontSize: 12,
   },
-  headerActions: {
-    flexDirection: "row",
-    gap: 6,
-  },
   iconButton: {
-    paddingHorizontal: 11,
-    paddingVertical: 8,
-    borderRadius: 999,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#f3f4f6",
-  },
-  iconButtonText: {
-    color: "#334155",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  iconButtonDangerText: {
-    color: "#dc2626",
   },
 })

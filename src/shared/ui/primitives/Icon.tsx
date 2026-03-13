@@ -13,6 +13,7 @@ const iconGlyph = {
   settings: "⚙",
   user: "◉",
   bell: "🔔",
+  refresh: "↻",
   logout: "↩",
   trash: "🗑",
   search: "⌕",

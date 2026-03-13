@@ -7,7 +7,7 @@ import type { RootStackParamList } from "@core/navigation/types"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validateDayOfMonth, validatePositiveNumber } from "@shared/lib/validation"
-import { Icon, PageHeader, StatusBanner, uiColors } from "@shared/ui"
+import { Icon, PageHeader, uiColors } from "@shared/ui"
 import { AccountCreatePanel } from "../components/AccountCreatePanel"
 
 export function AccountCreateScreen() {
@@ -62,10 +62,6 @@ export function AccountCreateScreen() {
             </Pressable>
             <PageHeader title="새 모임통장 개설" subtitle="목록 화면과 분리된 입력 화면에서 정보를 입력합니다." />
           </View>
-          <StatusBanner
-            title="전용 개설 화면"
-            message="입력 중에도 목록 화면이 길어지지 않도록 모임통장 생성 흐름을 별도 화면으로 분리했습니다."
-          />
           <AccountCreatePanel
             groupName={groupName}
             bankName={bankName}

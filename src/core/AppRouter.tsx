@@ -8,6 +8,7 @@ import { AccountDetailScreen } from "@features/accounts/screens/AccountDetailScr
 import { AccountListScreen } from "@features/accounts/screens/AccountListScreen"
 import { LoginScreen } from "@features/auth/screens/LoginScreen"
 import { MyPageScreen } from "@features/auth/screens/MyPageScreen"
+import { NotificationListScreen } from "@features/auth/screens/NotificationListScreen"
 import { NotificationSettingsScreen } from "@features/auth/screens/NotificationSettingsScreen"
 import { uiColors } from "@shared/ui"
 import { ROUTES } from "./navigation/routes"
@@ -25,6 +26,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       [ROUTES.AccountCreate]: "accounts/create",
       [ROUTES.AccountDetail]: "accounts/:accountId?",
       [ROUTES.MyPage]: "me",
+      [ROUTES.NotificationList]: "notifications",
       [ROUTES.NotificationSettings]: "settings/notifications",
     },
   },
@@ -96,6 +98,7 @@ export function AppRouter() {
           <Stack.Screen name={ROUTES.AccountCreate} component={AccountCreateScreen} />
           <Stack.Screen name={ROUTES.AccountDetail} component={AccountDetailScreen} />
           <Stack.Screen name={ROUTES.MyPage} component={MyPageScreen} />
+          <Stack.Screen name={ROUTES.NotificationList} component={NotificationListScreen} />
           <Stack.Screen name={ROUTES.NotificationSettings} component={NotificationSettingsScreen} />
         </Stack.Navigator>
       </NavigationContainer>

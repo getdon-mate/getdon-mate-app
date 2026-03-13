@@ -6,5 +6,6 @@ export type RootStackParamList = {
   [ROUTES.AccountDetail]: { accountId?: string } | undefined
   [ROUTES.AccountCreate]: undefined
   [ROUTES.MyPage]: undefined
+  [ROUTES.NotificationList]: undefined
   [ROUTES.NotificationSettings]: undefined
 }
