@@ -20,6 +20,7 @@ import {
   type NotificationPreferences,
 } from "@shared/lib/preferences-storage"
 import { clearPersistedSession, readPersistedSession, writePersistedSession } from "@shared/lib/session-storage"
+import { memberAccentPalette } from "@shared/ui/palette"
 
 type DataSource = "demo" | "remote"
 
@@ -204,8 +205,7 @@ function buildMemberInitials(name: string) {
 }
 
 function pickMemberColor(index: number) {
-  const palette = ["#3b82f6", "#22c55e", "#a855f7", "#f59e0b", "#ef4444", "#14b8a6"]
-  return palette[index % palette.length]
+  return memberAccentPalette[index % memberAccentPalette.length]
 }
 
 function createLocalMember(data: UpsertMemberInput, memberCount: number): Member {

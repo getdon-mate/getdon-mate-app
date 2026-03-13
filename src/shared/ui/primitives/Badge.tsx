@@ -47,11 +47,11 @@ const styles = StyleSheet.create({
   },
   primary: {
     backgroundColor: uiColors.primarySoft,
-    borderColor: "#dbeafe",
+    borderColor: uiColors.primaryBorder,
   },
   danger: {
     backgroundColor: uiColors.dangerSoft,
-    borderColor: "#fecaca",
+    borderColor: uiColors.dangerBorder,
   },
   text: {
     fontSize: 12,

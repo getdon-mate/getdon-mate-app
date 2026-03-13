@@ -22,7 +22,7 @@ const styles = StyleSheet.create({
     borderRadius: uiRadius.xl,
     padding: 18,
     gap: 10,
-    shadowColor: "#0f172a",
+    shadowColor: uiColors.textStrong,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.06,
     shadowRadius: 14,

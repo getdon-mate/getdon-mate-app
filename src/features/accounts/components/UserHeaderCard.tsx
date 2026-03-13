@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native"
-import { Icon } from "@shared/ui"
+import { Icon, uiColors } from "@shared/ui"
 import type { AppUser } from "../model/types"
 
 export function UserHeaderCard({
@@ -26,13 +26,13 @@ export function UserHeaderCard({
       </View>
       <View style={styles.actionGroup}>
         <Pressable style={styles.iconButton} onPress={onOpenNotifications} accessibilityRole="button" accessibilityLabel="알림 목록 열기">
-          <Icon name="bell" size={16} color="#0f172a" />
+          <Icon name="bell" size={16} color={uiColors.textStrong} />
         </Pressable>
         <Pressable style={styles.iconButton} onPress={onOpenMyPage} accessibilityRole="button" accessibilityLabel="마이페이지 열기">
-          <Icon name="user" size={16} color="#0f172a" />
+          <Icon name="user" size={16} color={uiColors.textStrong} />
         </Pressable>
         <Pressable style={styles.iconButton} onPress={onOpenAppSettings} accessibilityRole="button" accessibilityLabel="앱 설정 열기">
-          <Icon name="settings" size={16} color="#0f172a" />
+          <Icon name="settings" size={16} color={uiColors.textStrong} />
         </Pressable>
       </View>
     </View>
@@ -41,10 +41,10 @@ export function UserHeaderCard({
 
 const styles = StyleSheet.create({
   headerCard: {
-    backgroundColor: "#ffffff",
+    backgroundColor: uiColors.surface,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#eef1f5",
+    borderColor: uiColors.border,
     paddingHorizontal: 16,
     paddingVertical: 14,
     flexDirection: "row",
@@ -55,12 +55,12 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#dbeafe",
+    backgroundColor: uiColors.accentSoft,
     alignItems: "center",
     justifyContent: "center",
   },
   profileBadgeText: {
-    color: "#2563eb",
+    color: uiColors.primary,
     fontSize: 14,
     fontWeight: "700",
   },
@@ -69,12 +69,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   headerName: {
-    color: "#111827",
+    color: uiColors.text,
     fontWeight: "700",
     fontSize: 19,
   },
   headerEmail: {
-    color: "#6b7280",
+    color: uiColors.textMuted,
     fontSize: 12,
   },
   iconButton: {
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f3f4f6",
+    backgroundColor: uiColors.surfaceMuted,
   },
   actionGroup: {
     flexDirection: "row",

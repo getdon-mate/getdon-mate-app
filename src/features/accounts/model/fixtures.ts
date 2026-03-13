@@ -10,16 +10,16 @@ export const defaultUsers: AppUser[] = [
 ]
 
 const studyMembers: Member[] = [
-  { id: "m1", name: "김지현", role: "총무", initials: "지현", phone: "010-1234-5678", joinDate: "2025-06-01", color: "#3b82f6" },
-  { id: "m2", name: "이승우", role: "멤버", initials: "승우", phone: "010-2345-6789", joinDate: "2025-06-01", color: "#22c55e" },
-  { id: "m3", name: "박소연", role: "멤버", initials: "소연", phone: "010-3456-7890", joinDate: "2025-06-15", color: "#a855f7" },
-  { id: "m4", name: "정민호", role: "멤버", initials: "민호", phone: "010-4567-8901", joinDate: "2025-07-01", color: "#f59e0b" },
+  { id: "m1", name: "김지현", role: "총무", initials: "지현", phone: "010-1234-5678", joinDate: "2025-06-01", color: memberAccentPalette[0] },
+  { id: "m2", name: "이승우", role: "멤버", initials: "승우", phone: "010-2345-6789", joinDate: "2025-06-01", color: memberAccentPalette[1] },
+  { id: "m3", name: "박소연", role: "멤버", initials: "소연", phone: "010-3456-7890", joinDate: "2025-06-15", color: memberAccentPalette[2] },
+  { id: "m4", name: "정민호", role: "멤버", initials: "민호", phone: "010-4567-8901", joinDate: "2025-07-01", color: memberAccentPalette[3] },
 ]
 
 const hikingMembers: Member[] = [
-  { id: "h1", name: "김지현", role: "총무", initials: "지현", phone: "010-1234-5678", joinDate: "2025-03-01", color: "#3b82f6" },
-  { id: "h2", name: "오정석", role: "멤버", initials: "정석", phone: "010-1111-2222", joinDate: "2025-03-01", color: "#22c55e" },
-  { id: "h3", name: "서영희", role: "멤버", initials: "영희", phone: "010-3333-4444", joinDate: "2025-04-01", color: "#a855f7" },
+  { id: "h1", name: "김지현", role: "총무", initials: "지현", phone: "010-1234-5678", joinDate: "2025-03-01", color: memberAccentPalette[0] },
+  { id: "h2", name: "오정석", role: "멤버", initials: "정석", phone: "010-1111-2222", joinDate: "2025-03-01", color: memberAccentPalette[1] },
+  { id: "h3", name: "서영희", role: "멤버", initials: "영희", phone: "010-3333-4444", joinDate: "2025-04-01", color: memberAccentPalette[2] },
 ]
 
 const studyDuesRecords: DuesRecord[] = [
@@ -87,3 +87,4 @@ export const defaultAccounts: GroupAccount[] = [
 ]
 
 export const availableMonths = ["2026-03", "2026-02"]
+import { memberAccentPalette } from "@shared/ui/palette"

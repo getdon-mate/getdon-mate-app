@@ -92,13 +92,13 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 26,
     fontWeight: "700",
-    color: "#111827",
+    color: uiColors.text,
     marginBottom: 4,
   },
   switchText: {
     textAlign: "center",
     marginTop: 4,
-    color: "#2563eb",
+    color: uiColors.primary,
     fontSize: 14,
     fontWeight: "600",
   },

@@ -1,6 +1,6 @@
 import { memo } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
-import { Icon } from "@shared/ui"
+import { Icon, uiColors } from "@shared/ui"
 import { formatKRW } from "@shared/lib/format"
 import { getPaymentSummary } from "../model/selectors"
 import type { GroupAccount } from "../model/types"
@@ -28,7 +28,7 @@ export const AccountSummaryCard = memo(function AccountSummaryCard({
             <Text style={styles.accountMembers}>참여 멤버 {account.members.length}명</Text>
           </View>
         </View>
-        <Icon name="chevronRight" size={22} color="#c5cad3" />
+        <Icon name="chevronRight" size={22} color={uiColors.textSoft} />
       </View>
       <View style={styles.footerRow}>
         <Text style={styles.accountMeta}>잔액</Text>
@@ -43,14 +43,14 @@ export const AccountSummaryCard = memo(function AccountSummaryCard({
 
 const styles = StyleSheet.create({
   accountCard: {
-    backgroundColor: "#ffffff",
+    backgroundColor: uiColors.surface,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: "#edf0f4",
+    borderColor: uiColors.border,
     padding: 18,
     gap: 12,
     position: "relative",
-    shadowColor: "#0f172a",
+    shadowColor: uiColors.textStrong,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.06,
     shadowRadius: 14,
@@ -72,12 +72,12 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: "#dbeafe",
+    backgroundColor: uiColors.accentSoft,
     alignItems: "center",
     justifyContent: "center",
   },
   iconText: {
-    color: "#2563eb",
+    color: uiColors.primary,
     fontSize: 18,
     fontWeight: "700",
   },
@@ -86,27 +86,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   accountTitle: {
-    color: "#111827",
+    color: uiColors.text,
     fontSize: 18,
     fontWeight: "700",
   },
   accountMembers: {
-    color: "#6b7280",
+    color: uiColors.textMuted,
     fontSize: 13,
     fontWeight: "500",
   },
   accountBalance: {
-    color: "#111827",
+    color: uiColors.text,
     fontSize: 28,
     fontWeight: "800",
   },
   accountMeta: {
-    color: "#6b7280",
+    color: uiColors.textMuted,
     fontSize: 13,
     fontWeight: "600",
   },
   accountSubMeta: {
-    color: "#64748b",
+    color: uiColors.textMuted,
     fontSize: 13,
   },
   footerRow: {

@@ -1,6 +1,6 @@
 import { memo } from "react"
 import { StyleSheet, Text, View } from "react-native"
-import { Button } from "@shared/ui"
+import { Button, uiColors } from "@shared/ui"
 import { formatMonth } from "@shared/lib/format"
 import type { DuesRecord, Member } from "../model/types"
 
@@ -50,11 +50,11 @@ export const MemberRow = memo(function MemberRow({
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderColor: "#e6e9ef",
+    borderColor: uiColors.border,
     borderRadius: 14,
     padding: 12,
     gap: 8,
-    backgroundColor: "#fbfcfe",
+    backgroundColor: uiColors.surfaceMuted,
   },
   rowBetween: {
     flexDirection: "row",
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    color: "#ffffff",
+    color: uiColors.surface,
     textAlign: "center",
     textAlignVertical: "center",
     fontSize: 11,
@@ -89,12 +89,12 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   memberName: {
-    color: "#111827",
+    color: uiColors.text,
     fontSize: 14,
     fontWeight: "700",
   },
   memberMeta: {
-    color: "#6b7280",
+    color: uiColors.textMuted,
     fontSize: 12,
   },
 })

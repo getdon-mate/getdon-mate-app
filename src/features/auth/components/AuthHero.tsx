@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from "react-native"
+import { uiColors } from "@shared/ui"
 
 export function AuthHero() {
   return (
@@ -19,13 +20,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   heroTitle: {
-    color: "#111827",
+    color: uiColors.text,
     fontSize: 30,
     fontWeight: "700",
     marginBottom: 8,
   },
   heroSubtitle: {
-    color: "#6b7280",
+    color: uiColors.textMuted,
     fontSize: 13,
     lineHeight: 20,
     textAlign: "center",
@@ -34,13 +35,13 @@ const styles = StyleSheet.create({
     width: 68,
     height: 68,
     borderRadius: 24,
-    backgroundColor: "#dbeafe",
+    backgroundColor: uiColors.accentSoft,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 18,
   },
   iconText: {
-    color: "#2563eb",
+    color: uiColors.primary,
     fontWeight: "700",
     fontSize: 30,
   },
