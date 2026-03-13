@@ -189,4 +189,39 @@ describe('AppProvider state transitions', () => {
 
     expect(getCtx().notificationPreferences).toEqual(getCtx().defaultNotificationPreferences)
   })
+
+  test('delegateManager keeps a single manager and deleteMember promotes a fallback manager', async () => {
+    render(
+      <AppProvider>
+        <Harness />
+      </AppProvider>
+    )
+
+    await waitFor(() => expect(getCtx().isBootstrapping).toBe(false))
+
+    await act(async () => {
+      await getCtx().login('test@test.com', 'password')
+    })
+
+    const accountManagers = () =>
+      getCtx().accounts
+        .find((account) => account.id === 'acc1')
+        ?.members.filter((member) => member.role === '총무')
+        .map((member) => member.id) ?? []
+
+    expect(accountManagers()).toEqual(['m1'])
+
+    await act(async () => {
+      await getCtx().delegateManager('acc1', 'm2')
+    })
+
+    expect(accountManagers()).toEqual(['m2'])
+
+    await act(async () => {
+      await getCtx().deleteMember('acc1', 'm2')
+    })
+
+    expect(accountManagers()).toHaveLength(1)
+    expect(accountManagers()[0]).not.toBe('m2')
+  })
 })

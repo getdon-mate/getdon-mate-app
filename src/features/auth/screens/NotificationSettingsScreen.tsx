@@ -33,6 +33,7 @@ export function NotificationSettingsScreen() {
   const { showToast, confirm } = useFeedback()
 
   const [draft, setDraft] = useState(notificationPreferences)
+  const [saving, setSaving] = useState(false)
   const allowExitRef = useRef(false)
   const enabledCount = [draft.duesReminder, draft.transactionAlert, draft.noticeAlert].filter(Boolean).length
   const dirtyCount = Number(draft.duesReminder !== notificationPreferences.duesReminder)
@@ -81,10 +82,16 @@ export function NotificationSettingsScreen() {
   }, [attemptExit, isDirty, navigation])
 
   async function handleSave() {
-    await updateNotificationPreferences(draft)
-    allowExitRef.current = true
-    showToast({ tone: "success", title: "저장 완료", message: COPY.notification.saved })
-    navigation.goBack()
+    if (saving) return
+    setSaving(true)
+    try {
+      await updateNotificationPreferences(draft)
+      allowExitRef.current = true
+      showToast({ tone: "success", title: "저장 완료", message: COPY.notification.saved })
+      navigation.goBack()
+    } finally {
+      setSaving(false)
+    }
   }
 
   function handleResetDefaults() {
@@ -108,7 +115,7 @@ export function NotificationSettingsScreen() {
         </Text>
         <View style={styles.metaRow}>
           <Text style={styles.metaText}>미저장 변경 {dirtyCount}건</Text>
-          <Button label="기본값 복원" variant="ghost" onPress={handleResetDefaults} style={styles.resetButton} />
+          <Button label="기본값 복원" variant="ghost" onPress={handleResetDefaults} style={styles.resetButton} disabled={saving} />
         </View>
       </Card>
 
@@ -116,23 +123,23 @@ export function NotificationSettingsScreen() {
         <NotificationToggleRow
           title="회비 마감 알림"
           value={draft.duesReminder}
-          onToggle={() => setDraft((prev) => ({ ...prev, duesReminder: !prev.duesReminder }))}
+          onToggle={() => !saving && setDraft((prev) => ({ ...prev, duesReminder: !prev.duesReminder }))}
         />
         <NotificationToggleRow
           title="입출금 알림"
           value={draft.transactionAlert}
-          onToggle={() => setDraft((prev) => ({ ...prev, transactionAlert: !prev.transactionAlert }))}
+          onToggle={() => !saving && setDraft((prev) => ({ ...prev, transactionAlert: !prev.transactionAlert }))}
         />
         <NotificationToggleRow
           title="공지 알림"
           value={draft.noticeAlert}
-          onToggle={() => setDraft((prev) => ({ ...prev, noticeAlert: !prev.noticeAlert }))}
+          onToggle={() => !saving && setDraft((prev) => ({ ...prev, noticeAlert: !prev.noticeAlert }))}
         />
       </Card>
 
       <View style={styles.actions}>
-        <Button label="취소" variant="ghost" onPress={() => void attemptExit()} style={styles.actionButton} />
-        <Button label="저장" onPress={() => void handleSave()} style={styles.actionButton} />
+        <Button label="취소" variant="ghost" onPress={() => void attemptExit()} style={styles.actionButton} disabled={saving} />
+        <Button label={saving ? "저장 중..." : "저장"} onPress={() => void handleSave()} style={styles.actionButton} disabled={saving} />
       </View>
     </ScrollView>
   )

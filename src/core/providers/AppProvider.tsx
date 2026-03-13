@@ -117,6 +117,7 @@ interface AppAccountsContextType {
   toggleOneTimeDuesRecord: (accountId: string, duesId: string, memberId: string) => Promise<void>
   createMember: (accountId: string, data: UpsertMemberInput) => Promise<void>
   updateMember: (accountId: string, memberId: string, data: UpsertMemberInput) => Promise<void>
+  delegateManager: (accountId: string, targetMemberId: string) => Promise<void>
   deleteMember: (accountId: string, memberId: string) => Promise<void>
   createTransaction: (accountId: string, data: UpsertTransactionInput) => Promise<void>
   updateTransaction: (accountId: string, transactionId: string, data: UpsertTransactionInput) => Promise<void>
@@ -168,7 +169,7 @@ function cloneUsers(source: AppUser[]): AppUser[] {
 function cloneAccounts(source: GroupAccount[]): GroupAccount[] {
   return source.map((account) => ({
     ...account,
-    members: account.members.map((member) => ({ ...member })),
+    members: normalizeMemberRoles(account.members.map((member) => ({ ...member }))),
     duesRecords: account.duesRecords.map((record) => ({ ...record })),
     transactions: account.transactions.map((tx) => ({ ...tx })),
     autoTransfer: { ...account.autoTransfer },
@@ -228,6 +229,20 @@ function createLocalMember(data: UpsertMemberInput, memberCount: number): Member
     joinDate: new Date().toISOString().split("T")[0],
     color: pickMemberColor(memberCount),
   }
+}
+
+function normalizeMemberRoles(members: Member[], preferredManagerId?: string): Member[] {
+  if (members.length === 0) return members
+
+  const chosenManagerId =
+    (preferredManagerId && members.some((member) => member.id === preferredManagerId) && preferredManagerId) ||
+    members.find((member) => member.role === "총무")?.id ||
+    members[0]?.id
+
+  return members.map((member) => ({
+    ...member,
+    role: member.id === chosenManagerId ? "총무" : "멤버",
+  }))
 }
 
 function sortTransactions(transactions: Transaction[]) {
@@ -707,7 +722,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
           return {
             ...acc,
-            members: [...acc.members, nextMember],
+            members: normalizeMemberRoles([...acc.members, nextMember], nextMember.role === "총무" ? nextMember.id : undefined),
             duesRecords: [
               ...acc.duesRecords,
               {
@@ -730,19 +745,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setAccounts((prev) =>
         prev.map((acc) => {
           if (acc.id !== accountId) return acc
+          const nextMembers = acc.members.map((member) =>
+            member.id === memberId
+              ? {
+                  ...member,
+                  name: data.name,
+                  phone: data.phone,
+                  role: data.role,
+                  initials: buildMemberInitials(data.name),
+                }
+              : member
+          )
           return {
             ...acc,
-            members: acc.members.map((member) =>
-              member.id === memberId
-                ? {
-                    ...member,
-                    name: data.name,
-                    phone: data.phone,
-                    role: data.role,
-                    initials: buildMemberInitials(data.name),
-                  }
-                : member
-            ),
+            members: normalizeMemberRoles(nextMembers, data.role === "총무" ? memberId : undefined),
           }
         })
       )
@@ -752,14 +768,52 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [backendAdapter]
   )
 
+  const delegateManager = useCallback(
+    async (accountId: string, targetMemberId: string) => {
+      const snapshot = accounts.find((account) => account.id === accountId)
+
+      setAccounts((prev) =>
+        prev.map((acc) =>
+          acc.id === accountId
+            ? {
+                ...acc,
+                members: normalizeMemberRoles(acc.members, targetMemberId),
+              }
+            : acc
+        )
+      )
+
+      const currentManager = snapshot?.members.find((member) => member.role === "총무")
+      const targetMember = snapshot?.members.find((member) => member.id === targetMemberId)
+
+      if (currentManager && currentManager.id !== targetMemberId) {
+        await backendAdapter.updateMember(accountId, currentManager.id, {
+          name: currentManager.name,
+          phone: currentManager.phone,
+          role: "멤버",
+        })
+      }
+
+      if (targetMember) {
+        await backendAdapter.updateMember(accountId, targetMember.id, {
+          name: targetMember.name,
+          phone: targetMember.phone,
+          role: "총무",
+        })
+      }
+    },
+    [accounts, backendAdapter]
+  )
+
   const deleteMember = useCallback(
     async (accountId: string, memberId: string) => {
       setAccounts((prev) =>
         prev.map((acc) => {
           if (acc.id !== accountId) return acc
+          const nextMembers = acc.members.filter((member) => member.id !== memberId)
           return {
             ...acc,
-            members: acc.members.filter((member) => member.id !== memberId),
+            members: normalizeMemberRoles(nextMembers),
             duesRecords: acc.duesRecords.filter((record) => record.memberId !== memberId),
             oneTimeDues: acc.oneTimeDues.map((dues) => ({
               ...dues,
@@ -954,6 +1008,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleOneTimeDuesRecord,
       createMember,
       updateMember,
+      delegateManager,
       deleteMember,
       createTransaction,
       updateTransaction,
@@ -966,6 +1021,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       closeOneTimeDues,
       createAccount,
       createMember,
+      delegateManager,
       createOneTimeDues,
       createTransaction,
       deleteAccount,

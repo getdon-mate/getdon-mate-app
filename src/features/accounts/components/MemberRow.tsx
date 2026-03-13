@@ -10,6 +10,7 @@ export const MemberRow = memo(function MemberRow({
   duesRecords,
   onEdit,
   onDelegateOwner,
+  delegatePending,
   onDelete,
 }: {
   member: Member
@@ -17,6 +18,7 @@ export const MemberRow = memo(function MemberRow({
   duesRecords: DuesRecord[]
   onEdit?: () => void
   onDelegateOwner?: () => void
+  delegatePending?: boolean
   onDelete?: () => void
 }) {
   const history = duesRecords
@@ -41,10 +43,11 @@ export const MemberRow = memo(function MemberRow({
             {onEdit ? <Button label="수정" variant="ghost" onPress={onEdit} style={styles.actionButton} /> : null}
             {onDelegateOwner ? (
               <Button
-                label="총무 위임"
+                label={delegatePending ? "위임 중..." : "총무 위임"}
                 variant="secondary"
                 onPress={onDelegateOwner}
                 style={styles.actionButtonWide}
+                disabled={delegatePending}
               />
             ) : null}
             {member.role !== "총무" && onDelete ? <Button label="삭제" variant="danger" onPress={onDelete} style={styles.actionButton} /> : null}

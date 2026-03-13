@@ -16,7 +16,7 @@ type MemberSort = "name" | "payment-rate"
 type RoleFilter = "all" | "총무" | "멤버"
 
 export function MembersTab({ account }: { account: GroupAccount }) {
-  const { createMember, updateMember, deleteMember } = useApp()
+  const { createMember, updateMember, delegateManager, deleteMember } = useApp()
   const { showAlert, showToast, confirm } = useFeedback()
   const { currentUser } = useAppAuth()
   const [name, setName] = useState("")
@@ -25,6 +25,8 @@ export function MembersTab({ account }: { account: GroupAccount }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all")
   const [sortBy, setSortBy] = useState<MemberSort>("payment-rate")
+  const [submitting, setSubmitting] = useState(false)
+  const [delegatingId, setDelegatingId] = useState<string | null>(null)
 
   const avgRate =
     account.members.reduce((sum, member) => sum + getMemberPaymentRate(account.duesRecords, member.id), 0) /
@@ -68,6 +70,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
   }
 
   async function handleSubmit() {
+    if (submitting) return
     const validationError = requireText(name, "멤버 이름을 입력해주세요.") ?? requireText(phone, "연락처를 입력해주세요.")
     if (validationError) {
       showAlert({ title: "입력 오류", message: validationError, tone: "danger" })
@@ -80,16 +83,21 @@ export function MembersTab({ account }: { account: GroupAccount }) {
       role: "멤버" as const,
     }
 
-    if (editingId) {
-      await updateMember(account.id, editingId, payload)
-      showToast({ tone: "success", title: "수정 완료", message: "멤버 정보를 수정했습니다." })
-      resetForm()
-      return
-    }
+    setSubmitting(true)
+    try {
+      if (editingId) {
+        await updateMember(account.id, editingId, payload)
+        showToast({ tone: "success", title: "수정 완료", message: "멤버 정보를 수정했습니다." })
+        resetForm()
+        return
+      }
 
-    await createMember(account.id, payload)
-    showToast({ tone: "success", title: "추가 완료", message: "새 멤버를 등록했습니다." })
-    resetForm()
+      await createMember(account.id, payload)
+      showToast({ tone: "success", title: "추가 완료", message: "새 멤버를 등록했습니다." })
+      resetForm()
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   function handleEdit(memberId: string) {
@@ -111,22 +119,17 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     })
     if (!confirmed) return
 
-    await updateMember(account.id, currentManager.id, {
-      name: currentManager.name,
-      phone: currentManager.phone,
-      role: "멤버",
-    })
-    await updateMember(account.id, targetMember.id, {
-      name: targetMember.name,
-      phone: targetMember.phone,
-      role: "총무",
-    })
-
-    showToast({
-      tone: "success",
-      title: "위임 완료",
-      message: `${targetMember.name}님이 새로운 총무가 되었습니다.`,
-    })
+    setDelegatingId(targetMember.id)
+    try {
+      await delegateManager(account.id, targetMember.id)
+      showToast({
+        tone: "success",
+        title: "위임 완료",
+        message: `${targetMember.name}님이 새로운 총무가 되었습니다.`,
+      })
+    } finally {
+      setDelegatingId(null)
+    }
   }
 
   async function handleDelete(memberId: string) {
@@ -178,16 +181,17 @@ export function MembersTab({ account }: { account: GroupAccount }) {
       <SectionCard>
         <Text style={styles.sectionTitle}>{editingMember ? "멤버 수정" : "멤버 추가"}</Text>
         <View style={styles.formStack}>
-          <InputField value={name} onChangeText={setName} label="이름" placeholder="멤버 이름" />
-          <InputField value={phone} onChangeText={setPhone} label="연락처" placeholder="010-0000-0000" />
+          <InputField value={name} onChangeText={setName} label="이름" placeholder="멤버 이름" editable={!submitting} />
+          <InputField value={phone} onChangeText={setPhone} label="연락처" placeholder="010-0000-0000" editable={!submitting} />
           <Text style={styles.formHint}>새 멤버는 기본으로 멤버 권한으로 등록됩니다. 현재 총무만 다른 멤버에게 총무를 위임할 수 있고, 현재 총무는 삭제할 수 없습니다.</Text>
           <View style={styles.actionRow}>
-            {editingMember ? <Button label="편집 취소" variant="ghost" onPress={resetForm} style={styles.actionButton} /> : null}
+            {editingMember ? <Button label="편집 취소" variant="ghost" onPress={resetForm} style={styles.actionButton} disabled={submitting} /> : null}
             <Button
-              label={editingMember ? "멤버 수정" : "멤버 추가"}
+              label={submitting ? "처리 중..." : editingMember ? "멤버 수정" : "멤버 추가"}
               variant="primary"
               onPress={() => void handleSubmit()}
               style={styles.actionButton}
+              disabled={submitting}
             />
           </View>
         </View>
@@ -213,6 +217,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
                         }
                       : undefined
                   }
+                  delegatePending={delegatingId === member.id}
                   onDelete={() => {
                     void handleDelete(member.id)
                   }}

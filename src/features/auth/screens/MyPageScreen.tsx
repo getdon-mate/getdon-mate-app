@@ -16,10 +16,12 @@ export function MyPageScreen() {
 
   const [name, setName] = useState(currentUser?.name ?? "")
   const [email, setEmail] = useState(currentUser?.email ?? "")
+  const [saving, setSaving] = useState(false)
   const { width } = useWindowDimensions()
   const isWide = width >= 960
 
   async function handleSave() {
+    if (saving) return
     const validationError =
       requireText(name, "이름을 입력해주세요.") ??
       validateEmail(email)
@@ -28,12 +30,17 @@ export function MyPageScreen() {
       return
     }
 
-    await updateProfile({
-      name: name.trim(),
-      email: email.trim(),
-    })
-    showToast({ tone: "success", title: "저장 완료", message: "마이페이지 정보를 수정했습니다." })
-    navigation.navigate(ROUTES.AccountDetail)
+    setSaving(true)
+    try {
+      await updateProfile({
+        name: name.trim(),
+        email: email.trim(),
+      })
+      showToast({ tone: "success", title: "저장 완료", message: "마이페이지 정보를 수정했습니다." })
+      navigation.navigate(ROUTES.AccountDetail)
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -73,10 +80,10 @@ export function MyPageScreen() {
 
           <Card style={styles.formCard}>
             <Text style={styles.sectionTitle}>기본 정보</Text>
-            <InputField value={name} onChangeText={setName} label="이름" placeholder="이름" />
-            <InputField value={email} onChangeText={setEmail} label="이메일" placeholder="email@example.com" autoCapitalize="none" />
+            <InputField value={name} onChangeText={setName} label="이름" placeholder="이름" editable={!saving} />
+            <InputField value={email} onChangeText={setEmail} label="이메일" placeholder="email@example.com" autoCapitalize="none" editable={!saving} />
             <View style={styles.actionRow}>
-              <Button label="저장" onPress={() => void handleSave()} style={styles.actionButton} />
+              <Button label={saving ? "저장 중..." : "저장"} onPress={() => void handleSave()} style={styles.actionButton} disabled={saving} />
             </View>
           </Card>
         </View>
