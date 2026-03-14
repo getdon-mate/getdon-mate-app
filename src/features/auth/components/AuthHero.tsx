@@ -5,10 +5,10 @@ export function AuthHero() {
   return (
     <View style={styles.hero}>
       <View style={styles.iconWrap}>
-        <Text style={styles.iconText}>⇢</Text>
+        <Text style={styles.iconText}>gm</Text>
       </View>
-      <Text style={styles.heroTitle}>모임의 시작</Text>
-      <Text style={styles.heroSubtitle}>투명하고 편안한 모임통장을 경험해보세요.</Text>
+      <Text style={styles.heroTitle}>getdon mate</Text>
+      <Text style={styles.heroSubtitle}>모임통장을 간단하게 정리하세요.</Text>
     </View>
   )
 }
@@ -21,8 +21,10 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     color: uiColors.text,
-    fontSize: 30,
-    fontWeight: "700",
+    fontSize: 32,
+    fontWeight: "800",
+    letterSpacing: -1,
+    textTransform: "lowercase",
     marginBottom: 8,
   },
   heroSubtitle: {
@@ -43,6 +45,7 @@ const styles = StyleSheet.create({
   iconText: {
     color: uiColors.primary,
     fontWeight: "700",
-    fontSize: 30,
+    fontSize: 22,
+    textTransform: "lowercase",
   },
 })

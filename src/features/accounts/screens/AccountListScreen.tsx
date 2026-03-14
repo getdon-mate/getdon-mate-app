@@ -24,7 +24,7 @@ export function AccountListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const { currentUser } = useAppAuth()
   const { accounts, selectAccount } = useAppAccounts()
-  const { isBootstrapping, isRefreshingAccounts, refreshAccounts, unreadNotificationCount } = useAppRuntime()
+  const { isBootstrapping, isRefreshingAccounts, refreshAccounts, unreadNotificationCount, maskAmounts, toggleMaskAmounts } = useAppRuntime()
   const currentMonth = getCurrentMonthKey()
   const { width } = useWindowDimensions()
   const isWide = width >= 960
@@ -52,6 +52,8 @@ export function AccountListScreen() {
           user={currentUser}
           initials={initials}
           unreadNotificationCount={unreadNotificationCount}
+          maskAmounts={maskAmounts}
+          onToggleMaskAmounts={toggleMaskAmounts}
           onOpenNotifications={() => navigation.navigate(ROUTES.NotificationList)}
           onOpenMyPage={() => navigation.navigate(ROUTES.MyPage)}
           onOpenAppSettings={() => navigation.navigate(ROUTES.AppSettings)}
@@ -84,6 +86,7 @@ export function AccountListScreen() {
               key={account.id}
               account={account}
               currentMonth={currentMonth}
+              maskAmounts={maskAmounts}
               onPress={() => {
                 selectAccount(account.id)
                 navigation.navigate(ROUTES.AccountDetail, { accountId: account.id })

@@ -55,4 +55,13 @@ describe("MyPageScreen", () => {
 
     await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1))
   })
+
+  test("save keeps the user on my page after completion", async () => {
+    const { getAllByText } = render(<MyPageScreen />)
+
+    fireEvent.press(getAllByText("저장")[0])
+
+    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1))
+    expect(mockNavigate).not.toHaveBeenCalled()
+  })
 })

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from "react"
 import { NavigationContainer, useNavigationContainerRef, type LinkingOptions } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
-import { StyleSheet } from "react-native"
+import { StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { AccountCreateScreen } from "@features/accounts/screens/AccountCreateScreen"
 import { AccountDetailScreen } from "@features/accounts/screens/AccountDetailScreen"
@@ -11,10 +11,10 @@ import { LoginScreen } from "@features/auth/screens/LoginScreen"
 import { MyPageScreen } from "@features/auth/screens/MyPageScreen"
 import { NotificationListScreen } from "@features/auth/screens/NotificationListScreen"
 import { NotificationSettingsScreen } from "@features/auth/screens/NotificationSettingsScreen"
-import { uiColors } from "@shared/ui"
+import { SpinnerOverlay, SplashScreen, uiColors } from "@shared/ui"
 import { ROUTES } from "./navigation/routes"
 import type { RootStackParamList } from "./navigation/types"
-import { useAppAccounts, useAppAuth } from "./providers/AppProvider"
+import { useAppAccounts, useAppAuth, useAppRuntime } from "./providers/AppProvider"
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
 
@@ -37,6 +37,7 @@ const linking: LinkingOptions<RootStackParamList> = {
 export function AppRouter() {
   const navigationRef = useNavigationContainerRef<RootStackParamList>()
   const { currentUser } = useAppAuth()
+  const { isBootstrapping, isMutating } = useAppRuntime()
   const { accounts, selectedAccountId, selectAccount } = useAppAccounts()
   const hasSelectedAccount = useMemo(
     () => Boolean(selectedAccountId && accounts.some((account) => account.id === selectedAccountId)),
@@ -87,24 +88,31 @@ export function AppRouter() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <NavigationContainer linking={linking} ref={navigationRef} onReady={syncNavigation} onStateChange={syncNavigation}>
-        <Stack.Navigator
-          initialRouteName={ROUTES.Login}
-          screenOptions={{
-            headerShown: false,
-            contentStyle: styles.container,
-          }}
-        >
-          <Stack.Screen name={ROUTES.Login} component={LoginScreen} />
-          <Stack.Screen name={ROUTES.AccountList} component={AccountListScreen} />
-          <Stack.Screen name={ROUTES.AccountCreate} component={AccountCreateScreen} />
-          <Stack.Screen name={ROUTES.AccountDetail} component={AccountDetailScreen} />
-          <Stack.Screen name={ROUTES.MyPage} component={MyPageScreen} />
-          <Stack.Screen name={ROUTES.AppSettings} component={AppSettingsScreen} />
-          <Stack.Screen name={ROUTES.NotificationList} component={NotificationListScreen} />
-          <Stack.Screen name={ROUTES.NotificationSettings} component={NotificationSettingsScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
+      {isBootstrapping ? (
+        <SplashScreen />
+      ) : (
+        <View style={styles.container}>
+          <NavigationContainer linking={linking} ref={navigationRef} onReady={syncNavigation} onStateChange={syncNavigation}>
+            <Stack.Navigator
+              initialRouteName={ROUTES.Login}
+              screenOptions={{
+                headerShown: false,
+                contentStyle: styles.container,
+              }}
+            >
+              <Stack.Screen name={ROUTES.Login} component={LoginScreen} />
+              <Stack.Screen name={ROUTES.AccountList} component={AccountListScreen} />
+              <Stack.Screen name={ROUTES.AccountCreate} component={AccountCreateScreen} />
+              <Stack.Screen name={ROUTES.AccountDetail} component={AccountDetailScreen} />
+              <Stack.Screen name={ROUTES.MyPage} component={MyPageScreen} />
+              <Stack.Screen name={ROUTES.AppSettings} component={AppSettingsScreen} />
+              <Stack.Screen name={ROUTES.NotificationList} component={NotificationListScreen} />
+              <Stack.Screen name={ROUTES.NotificationSettings} component={NotificationSettingsScreen} />
+            </Stack.Navigator>
+          </NavigationContainer>
+          <SpinnerOverlay visible={isMutating} />
+        </View>
+      )}
     </SafeAreaView>
   )
 }

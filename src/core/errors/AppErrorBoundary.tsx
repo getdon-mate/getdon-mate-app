@@ -11,13 +11,13 @@ interface State {
 export class AppErrorBoundary extends Component<{ children: ReactNode }, State> {
   state: State = {
     hasError: false,
-    message: "예기치 못한 오류가 발생했습니다.",
+    message: "잠시 후 다시 시도해주세요.",
   }
 
   static getDerivedStateFromError(error: Error): State {
     return {
       hasError: true,
-      message: error.message || "예기치 못한 오류가 발생했습니다.",
+      message: error.message || "잠시 후 다시 시도해주세요.",
     }
   }
 
@@ -33,7 +33,7 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
   }
 
   private handleRetry = () => {
-    this.setState({ hasError: false, message: "예기치 못한 오류가 발생했습니다." })
+    this.setState({ hasError: false, message: "잠시 후 다시 시도해주세요." })
   }
 
   private handleReload = () => {
@@ -56,10 +56,10 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
           <Text style={styles.message}>{this.state.message}</Text>
           <View style={styles.actions}>
             <Pressable style={[styles.button, styles.buttonGhost]} onPress={this.handleRetry}>
-              <Text style={styles.buttonGhostText}>다시 시도</Text>
+              <Text style={styles.buttonGhostText}>화면 다시 불러오기</Text>
             </Pressable>
             <Pressable style={[styles.button, styles.buttonPrimary]} onPress={this.handleReload}>
-              <Text style={styles.buttonPrimaryText}>새로고침</Text>
+              <Text style={styles.buttonPrimaryText}>앱 새로고침</Text>
             </Pressable>
           </View>
         </View>

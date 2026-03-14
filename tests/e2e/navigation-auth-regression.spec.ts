@@ -13,7 +13,7 @@ async function openFirstAccountDetail(page: Page) {
 
 test("1) 로그인 후 목록 진입", async ({ page }) => {
   await loginAsTestUser(page)
-  await expect(page.getByText("내 모임통장")).toBeVisible()
+  await expect(page.getByText("내 모임통장 2개")).toBeVisible()
 })
 
 test("2) 목록에서 상세 진입", async ({ page }) => {
@@ -35,14 +35,13 @@ test("3) 상세 탭 전환(회비/거래/멤버/관리)", async ({ page }) => {
   await expect(page.getByText("멤버 검색/정렬")).toBeVisible()
 
   await page.getByText("관리", { exact: true }).last().click()
-  await expect(page.getByText("모임통장 관리")).toBeVisible()
+  await expect(page.getByText("계좌 요약")).toBeVisible()
 })
 
 test("4) 설정에서 알림 설정 화면 진입", async ({ page }) => {
   await loginAsTestUser(page)
-  await openFirstAccountDetail(page)
-  await page.getByText("관리", { exact: true }).last().click()
-  await page.getByText("알림 설정", { exact: true }).first().click()
+  await page.getByLabel("앱 설정 열기").click()
+  await page.getByText("알림 설정", { exact: true }).click()
   await expect(page.getByText("회비 마감 알림", { exact: true })).toBeVisible()
   await expect(page.getByText("입출금 알림", { exact: true })).toBeVisible()
   await expect(page.getByText("공지 알림", { exact: true })).toBeVisible()
@@ -50,9 +49,7 @@ test("4) 설정에서 알림 설정 화면 진입", async ({ page }) => {
 
 test("5) 설정에서 프로필 관리 화면 진입", async ({ page }) => {
   await loginAsTestUser(page)
-  await openFirstAccountDetail(page)
-  await page.getByText("관리", { exact: true }).last().click()
-  await page.getByText("프로필 관리", { exact: true }).click()
+  await page.getByLabel("마이페이지 열기").click()
   await expect(page.getByText("마이페이지")).toBeVisible()
 })
 
@@ -76,7 +73,8 @@ test("7) 목록에서 새 모임통장 개설 화면 진입", async ({ page }) =
 
 test("8) 목록에서 로그아웃 후 로그인 화면 복귀", async ({ page }) => {
   await loginAsTestUser(page)
-  await page.getByText("로그아웃", { exact: true }).first().click()
+  await page.getByLabel("앱 설정 열기").click()
+  await page.getByText("로그아웃", { exact: true }).click()
   await page.getByRole("button", { name: "로그아웃" }).last().click()
   await expect(page.getByText("계정이 없으신가요? 회원가입")).toBeVisible()
 })

@@ -1,12 +1,21 @@
 import { Pressable, StyleSheet, Text, View } from "react-native"
-import { uiColors, uiRadius, uiSpacing } from "@shared/ui"
+import { AmountMask, Icon, uiColors, uiRadius, uiSpacing } from "@shared/ui"
+import { formatKRW } from "@shared/lib/format"
 import type { GroupAccount, TransactionType } from "../../model/types"
 
 export function AccountDetailHero({
   account,
+  maskAmounts,
+  onToggleMask,
+  onCopyInvite,
+  onShareInvite,
   onPressAction,
 }: {
   account: GroupAccount
+  maskAmounts: boolean
+  onToggleMask: () => void
+  onCopyInvite: () => void | Promise<void>
+  onShareInvite: () => void | Promise<void>
   onPressAction: (type: TransactionType) => void
 }) {
   return (
@@ -17,9 +26,20 @@ export function AccountDetailHero({
           <Text style={styles.heroTitle}>{account.groupName}</Text>
           <Text style={styles.heroMeta}>모임원 {account.members.length}명</Text>
         </View>
+        <View style={styles.heroQuickActions}>
+          <Pressable style={styles.iconButton} onPress={onToggleMask} accessibilityRole="button" accessibilityLabel="금액 표시 전환">
+            <Icon name={maskAmounts ? "eyeOff" : "eye"} size={18} color={uiColors.textStrong} />
+          </Pressable>
+          <Pressable style={styles.iconButton} onPress={() => void onCopyInvite()} accessibilityRole="button" accessibilityLabel="초대 링크 복사">
+            <Icon name="copy" size={18} color={uiColors.textStrong} />
+          </Pressable>
+          <Pressable style={styles.iconButton} onPress={() => void onShareInvite()} accessibilityRole="button" accessibilityLabel="모임통장 공유">
+            <Icon name="share" size={18} color={uiColors.textStrong} />
+          </Pressable>
+        </View>
       </View>
       <Text style={styles.heroBalanceLabel}>총 잔액</Text>
-      <Text style={styles.heroBalanceText}>₩ {account.balance.toLocaleString("ko-KR")}</Text>
+      <AmountMask value={formatKRW(account.balance)} masked={maskAmounts} textStyle={styles.heroBalanceText} skeletonHeight={30} />
       <View style={styles.heroActionRow}>
         <Pressable style={styles.heroGhostButton} onPress={() => onPressAction("income")}>
           <Text style={styles.heroGhostButtonText}>채우기</Text>
@@ -64,6 +84,7 @@ const styles = StyleSheet.create({
   },
   heroTitleWrap: {
     gap: 1,
+    flex: 1,
   },
   heroTitle: {
     color: uiColors.textStrong,
@@ -89,6 +110,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     marginTop: 4,
+  },
+  heroQuickActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  iconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surfaceMuted,
+    alignItems: "center",
+    justifyContent: "center",
   },
   heroGhostButton: {
     flex: 1,

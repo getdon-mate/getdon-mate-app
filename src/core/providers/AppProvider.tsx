@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { apiConfig, mapApiFailureToUserMessage, shouldUseRealApi } from "@core/api"
 import { createAccountsBackendV1Adapter, getLastBackendFailure } from "@features/accounts/api"
 import { defaultAccounts, defaultUsers } from "@features/accounts/model/fixtures"
+import { appEnv } from "@shared/config/app-env"
 import type {
   AppUser,
   AutoTransfer,
@@ -16,7 +17,9 @@ import type {
 import { logger } from "@shared/lib/logger"
 import { defaultNotificationPreferences, initialNotifications, type NotificationItem } from "@shared/lib/notification-state"
 import {
+  readAmountMaskPreference,
   readNotificationPreferences,
+  writeAmountMaskPreference,
   writeNotificationPreferences,
   type NotificationPreferences,
 } from "@shared/lib/preferences-storage"
@@ -75,9 +78,12 @@ interface UpsertTransactionInput {
 interface AppRuntimeContextType {
   isBootstrapping: boolean
   isRefreshingAccounts: boolean
+  isMutating: boolean
   lastSyncError: string | null
   dataSource: DataSource
   prefersRealApi: boolean
+  maskAmounts: boolean
+  toggleMaskAmounts: () => void
   refreshAccounts: () => Promise<DataSource>
   notifications: NotificationItem[]
   unreadNotificationCount: number
@@ -268,6 +274,14 @@ function createLocalTransaction(data: UpsertTransactionInput): Transaction {
   }
 }
 
+function delay(ms: number) {
+  if (ms <= 0) return Promise.resolve()
+
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const backendAdapter = useMemo(() => createAccountsBackendV1Adapter(), [])
   const prefersRealApi = useMemo(() => shouldUseRealApi(apiConfig), [])
@@ -276,12 +290,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<AppUser[]>(() => cloneUsers(defaultUsers))
   const [isBootstrapping, setIsBootstrapping] = useState(true)
   const [isRefreshingAccounts, setIsRefreshingAccounts] = useState(false)
+  const [busyCount, setBusyCount] = useState(0)
   const [lastSyncError, setLastSyncError] = useState<string | null>(null)
   const [dataSource, setDataSource] = useState<DataSource>(prefersRealApi ? "remote" : "demo")
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null)
   const [accounts, setAccounts] = useState<GroupAccount[]>(() => cloneAccounts(defaultAccounts))
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(initialSession?.selectedAccountId ?? null)
   const [notifications, setNotifications] = useState<NotificationItem[]>(() => [...initialNotifications])
+  const [maskAmounts, setMaskAmounts] = useState<boolean>(() => readAmountMaskPreference())
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences>(
     () => readNotificationPreferences() ?? defaultNotificationPreferences
   )
@@ -290,6 +306,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     let cancelled = false
 
     async function loadBootstrap() {
+      await delay(appEnv.uiDemoDelayMs)
       const bootstrap = await backendAdapter.loadBootstrap()
       if (!bootstrap || cancelled) {
         setDataSource("demo")
@@ -353,18 +370,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [notificationPreferences])
 
   useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout> | undefined
+    writeAmountMaskPreference(maskAmounts)
+  }, [maskAmounts])
 
-    if (isBootstrapping) {
-      timeoutId = setTimeout(() => {
-        setIsBootstrapping(false)
-      }, 600)
+  const runBusy = useCallback(async <T,>(task: () => Promise<T>) => {
+    setBusyCount((prev) => prev + 1)
+    try {
+      await delay(appEnv.uiDemoDelayMs)
+      return await task()
+    } finally {
+      setBusyCount((prev) => Math.max(0, prev - 1))
     }
-
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId)
-    }
-  }, [isBootstrapping])
+  }, [])
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -428,16 +445,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateProfile = useCallback(
     async (data: UpdateProfileInput) => {
-      setUsers((prev) =>
-        prev.map((user) =>
-          currentUser && user.id === currentUser.id
-            ? { ...user, name: data.name, email: data.email }
-            : user
+      await runBusy(async () => {
+        setUsers((prev) =>
+          prev.map((user) =>
+            currentUser && user.id === currentUser.id
+              ? { ...user, name: data.name, email: data.email }
+              : user
+          )
         )
-      )
-      setCurrentUser((prev) => (prev ? { ...prev, name: data.name, email: data.email } : prev))
+        setCurrentUser((prev) => (prev ? { ...prev, name: data.name, email: data.email } : prev))
+      })
     },
-    [currentUser]
+    [currentUser, runBusy]
   )
 
   const logout = useCallback(() => {
@@ -448,6 +467,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const refreshAccounts = useCallback(async () => {
     setIsRefreshingAccounts(true)
     try {
+      await delay(appEnv.uiDemoDelayMs)
       const bootstrap = await backendAdapter.loadBootstrap()
       if (!bootstrap) {
         setDataSource("demo")
@@ -468,6 +488,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setIsRefreshingAccounts(false)
     }
   }, [backendAdapter, prefersRealApi])
+
+  const toggleMaskAmounts = useCallback(() => {
+    setMaskAmounts((prev) => !prev)
+  }, [])
 
   const withdraw = useCallback(() => {
     if (!currentUser) return
@@ -493,121 +517,133 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async (data: CreateAccountInput) => {
       if (!currentUser) return
 
-      const remoteAccount = await backendAdapter.createAccount(data)
-      if (remoteAccount) {
-        setAccounts((prev) => [...prev, ...cloneAccounts([remoteAccount])])
-        return
-      }
+      await runBusy(async () => {
+        const remoteAccount = await backendAdapter.createAccount(data)
+        if (remoteAccount) {
+          setAccounts((prev) => [...prev, ...cloneAccounts([remoteAccount])])
+          return
+        }
 
-      const account = createLocalAccount(data, currentUser)
-      setAccounts((prev) => [...prev, account])
+        const account = createLocalAccount(data, currentUser)
+        setAccounts((prev) => [...prev, account])
+      })
     },
-    [backendAdapter, currentUser]
+    [backendAdapter, currentUser, runBusy]
   )
 
   const deleteAccount = useCallback(
     async (id: string) => {
-      setAccounts((prev) => prev.filter((acc) => acc.id !== id))
-      setSelectedAccountId((prev) => (prev === id ? null : prev))
+      await runBusy(async () => {
+        setAccounts((prev) => prev.filter((acc) => acc.id !== id))
+        setSelectedAccountId((prev) => (prev === id ? null : prev))
 
-      await backendAdapter.deleteAccount(id)
+        await backendAdapter.deleteAccount(id)
+      })
     },
-    [backendAdapter]
+    [backendAdapter, runBusy]
   )
 
   const toggleDues = useCallback(
     async (memberId: string, month: string) => {
       if (!selectedAccountId) return
 
-      setAccounts((prev) =>
-        prev.map((acc) => {
-          if (acc.id !== selectedAccountId) return acc
-          return {
-            ...acc,
-            duesRecords: acc.duesRecords.map((r) => {
-              if (r.memberId !== memberId || r.month !== month) return r
-              if (r.status === "unpaid") {
-                return {
-                  ...r,
-                  status: "paid" as const,
-                  paidDate: new Date().toISOString().split("T")[0],
-                  amount: acc.monthlyDuesAmount,
+      await runBusy(async () => {
+        setAccounts((prev) =>
+          prev.map((acc) => {
+            if (acc.id !== selectedAccountId) return acc
+            return {
+              ...acc,
+              duesRecords: acc.duesRecords.map((r) => {
+                if (r.memberId !== memberId || r.month !== month) return r
+                if (r.status === "unpaid") {
+                  return {
+                    ...r,
+                    status: "paid" as const,
+                    paidDate: new Date().toISOString().split("T")[0],
+                    amount: acc.monthlyDuesAmount,
+                  }
                 }
-              }
-              if (r.status === "paid") {
-                return {
-                  ...r,
-                  status: "unpaid" as const,
-                  paidDate: undefined,
+                if (r.status === "paid") {
+                  return {
+                    ...r,
+                    status: "unpaid" as const,
+                    paidDate: undefined,
+                  }
                 }
-              }
-              return r
-            }),
-          }
-        })
-      )
+                return r
+              }),
+            }
+          })
+        )
 
-      await backendAdapter.toggleDues(selectedAccountId, memberId, month)
+        await backendAdapter.toggleDues(selectedAccountId, memberId, month)
+      })
     },
-    [backendAdapter, selectedAccountId]
+    [backendAdapter, runBusy, selectedAccountId]
   )
 
   const updateAutoTransfer = useCallback(
     async (accountId: string, autoTransfer: AutoTransfer) => {
-      setAccounts((prev) => prev.map((acc) => (acc.id === accountId ? { ...acc, autoTransfer } : acc)))
-      await backendAdapter.updateAutoTransfer(accountId, autoTransfer)
+      await runBusy(async () => {
+        setAccounts((prev) => prev.map((acc) => (acc.id === accountId ? { ...acc, autoTransfer } : acc)))
+        await backendAdapter.updateAutoTransfer(accountId, autoTransfer)
+      })
     },
-    [backendAdapter]
+    [backendAdapter, runBusy]
   )
 
   const updateAccount = useCallback(
     async (accountId: string, data: UpdateAccountInput) => {
-      setAccounts((prev) =>
-        prev.map((acc) =>
-          acc.id === accountId
-            ? {
-                ...acc,
-                groupName: data.groupName,
-                bankName: data.bankName,
-                accountNumber: data.accountNumber,
-                monthlyDuesAmount: data.monthlyDuesAmount,
-                dueDay: data.dueDay,
-                autoTransfer: {
-                  ...acc.autoTransfer,
-                  dayOfMonth: data.dueDay,
-                  amount: acc.autoTransfer.enabled ? acc.autoTransfer.amount : data.monthlyDuesAmount,
-                },
-              }
-            : acc
+      await runBusy(async () => {
+        setAccounts((prev) =>
+          prev.map((acc) =>
+            acc.id === accountId
+              ? {
+                  ...acc,
+                  groupName: data.groupName,
+                  bankName: data.bankName,
+                  accountNumber: data.accountNumber,
+                  monthlyDuesAmount: data.monthlyDuesAmount,
+                  dueDay: data.dueDay,
+                  autoTransfer: {
+                    ...acc.autoTransfer,
+                    dayOfMonth: data.dueDay,
+                    amount: acc.autoTransfer.enabled ? acc.autoTransfer.amount : data.monthlyDuesAmount,
+                  },
+                }
+              : acc
+          )
         )
-      )
 
-      await backendAdapter.updateAccount(accountId, data)
+        await backendAdapter.updateAccount(accountId, data)
+      })
     },
-    [backendAdapter]
+    [backendAdapter, runBusy]
   )
 
   const createOneTimeDues = useCallback(
     async (accountId: string, data: CreateOneTimeDuesInput) => {
-      setAccounts((prev) =>
-        prev.map((acc) => {
-          if (acc.id !== accountId) return acc
-          const records: OneTimeDuesRecord[] = acc.members.map((m) => ({ memberId: m.id, status: "unpaid" as const }))
-          const newDues: OneTimeDues = {
-            id: `otd${Date.now()}`,
-            title: data.title,
-            amount: data.amount,
-            dueDate: data.dueDate,
-            status: "active",
-            records,
-          }
-          return { ...acc, oneTimeDues: [...acc.oneTimeDues, newDues] }
-        })
-      )
+      await runBusy(async () => {
+        setAccounts((prev) =>
+          prev.map((acc) => {
+            if (acc.id !== accountId) return acc
+            const records: OneTimeDuesRecord[] = acc.members.map((m) => ({ memberId: m.id, status: "unpaid" as const }))
+            const newDues: OneTimeDues = {
+              id: `otd${Date.now()}`,
+              title: data.title,
+              amount: data.amount,
+              dueDate: data.dueDate,
+              status: "active",
+              records,
+            }
+            return { ...acc, oneTimeDues: [...acc.oneTimeDues, newDues] }
+          })
+        )
 
-      await backendAdapter.createOneTimeDues(accountId, data)
+        await backendAdapter.createOneTimeDues(accountId, data)
+      })
     },
-    [backendAdapter]
+    [backendAdapter, runBusy]
   )
 
   const updateOneTimeDues = useCallback(
@@ -671,232 +707,248 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const toggleOneTimeDuesRecord = useCallback(
     async (accountId: string, duesId: string, memberId: string) => {
-      setAccounts((prev) =>
-        prev.map((acc) => {
-          if (acc.id !== accountId) return acc
-          return {
-            ...acc,
-            oneTimeDues: acc.oneTimeDues.map((dues) => {
-              if (dues.id !== duesId) return dues
-              if (dues.status === "closed") return dues
-              return {
-                ...dues,
-                records: dues.records.map((record) => {
-                  if (record.memberId !== memberId) return record
-                  if (record.status === "unpaid") {
+      await runBusy(async () => {
+        setAccounts((prev) =>
+          prev.map((acc) => {
+            if (acc.id !== accountId) return acc
+            return {
+              ...acc,
+              oneTimeDues: acc.oneTimeDues.map((dues) => {
+                if (dues.id !== duesId) return dues
+                if (dues.status === "closed") return dues
+                return {
+                  ...dues,
+                  records: dues.records.map((record) => {
+                    if (record.memberId !== memberId) return record
+                    if (record.status === "unpaid") {
+                      return {
+                        ...record,
+                        status: "paid" as const,
+                        paidDate: new Date().toISOString().split("T")[0],
+                      }
+                    }
                     return {
                       ...record,
-                      status: "paid" as const,
-                      paidDate: new Date().toISOString().split("T")[0],
+                      status: "unpaid" as const,
+                      paidDate: undefined,
                     }
-                  }
-                  return {
-                    ...record,
-                    status: "unpaid" as const,
-                    paidDate: undefined,
-                  }
-                }),
-              }
-            }),
-          }
-        })
-      )
+                  }),
+                }
+              }),
+            }
+          })
+        )
 
-      await backendAdapter.toggleOneTimeDuesRecord(accountId, duesId, memberId)
+        await backendAdapter.toggleOneTimeDuesRecord(accountId, duesId, memberId)
+      })
     },
-    [backendAdapter]
+    [backendAdapter, runBusy]
   )
 
   const createMember = useCallback(
     async (accountId: string, data: UpsertMemberInput) => {
-      const remoteMember = await backendAdapter.createMember(accountId, data)
+      await runBusy(async () => {
+        const remoteMember = await backendAdapter.createMember(accountId, data)
 
-      setAccounts((prev) =>
-        prev.map((acc) => {
-          if (acc.id !== accountId) return acc
-          const nextMember = remoteMember ?? createLocalMember(data, acc.members.length)
-          const nextDues = acc.oneTimeDues.map((dues) => ({
-            ...dues,
-            records: [...dues.records, { memberId: nextMember.id, status: "unpaid" as const }],
-          }))
+        setAccounts((prev) =>
+          prev.map((acc) => {
+            if (acc.id !== accountId) return acc
+            const nextMember = remoteMember ?? createLocalMember(data, acc.members.length)
+            const nextDues = acc.oneTimeDues.map((dues) => ({
+              ...dues,
+              records: [...dues.records, { memberId: nextMember.id, status: "unpaid" as const }],
+            }))
 
-          return {
-            ...acc,
-            members: normalizeMemberRoles([...acc.members, nextMember], nextMember.role === "총무" ? nextMember.id : undefined),
-            duesRecords: [
-              ...acc.duesRecords,
-              {
-                memberId: nextMember.id,
-                month: new Date().toISOString().slice(0, 7),
-                status: "unpaid" as const,
-                amount: acc.monthlyDuesAmount,
-              },
-            ],
-            oneTimeDues: nextDues,
-          }
-        })
-      )
+            return {
+              ...acc,
+              members: normalizeMemberRoles([...acc.members, nextMember], nextMember.role === "총무" ? nextMember.id : undefined),
+              duesRecords: [
+                ...acc.duesRecords,
+                {
+                  memberId: nextMember.id,
+                  month: new Date().toISOString().slice(0, 7),
+                  status: "unpaid" as const,
+                  amount: acc.monthlyDuesAmount,
+                },
+              ],
+              oneTimeDues: nextDues,
+            }
+          })
+        )
+      })
     },
-    [backendAdapter]
+    [backendAdapter, runBusy]
   )
 
   const updateMember = useCallback(
     async (accountId: string, memberId: string, data: UpsertMemberInput) => {
-      setAccounts((prev) =>
-        prev.map((acc) => {
-          if (acc.id !== accountId) return acc
-          const nextMembers = acc.members.map((member) =>
-            member.id === memberId
-              ? {
-                  ...member,
-                  name: data.name,
-                  phone: data.phone,
-                  role: data.role,
-                  initials: buildMemberInitials(data.name),
-                }
-              : member
-          )
-          return {
-            ...acc,
-            members: normalizeMemberRoles(nextMembers, data.role === "총무" ? memberId : undefined),
-          }
-        })
-      )
+      await runBusy(async () => {
+        setAccounts((prev) =>
+          prev.map((acc) => {
+            if (acc.id !== accountId) return acc
+            const nextMembers = acc.members.map((member) =>
+              member.id === memberId
+                ? {
+                    ...member,
+                    name: data.name,
+                    phone: data.phone,
+                    role: data.role,
+                    initials: buildMemberInitials(data.name),
+                  }
+                : member
+            )
+            return {
+              ...acc,
+              members: normalizeMemberRoles(nextMembers, data.role === "총무" ? memberId : undefined),
+            }
+          })
+        )
 
-      await backendAdapter.updateMember(accountId, memberId, data)
+        await backendAdapter.updateMember(accountId, memberId, data)
+      })
     },
-    [backendAdapter]
+    [backendAdapter, runBusy]
   )
 
   const delegateManager = useCallback(
     async (accountId: string, targetMemberId: string) => {
-      const snapshot = accounts.find((account) => account.id === accountId)
+      await runBusy(async () => {
+        const snapshot = accounts.find((account) => account.id === accountId)
 
-      setAccounts((prev) =>
-        prev.map((acc) =>
-          acc.id === accountId
-            ? {
-                ...acc,
-                members: normalizeMemberRoles(acc.members, targetMemberId),
-              }
-            : acc
+        setAccounts((prev) =>
+          prev.map((acc) =>
+            acc.id === accountId
+              ? {
+                  ...acc,
+                  members: normalizeMemberRoles(acc.members, targetMemberId),
+                }
+              : acc
+          )
         )
-      )
 
-      const currentManager = snapshot?.members.find((member) => member.role === "총무")
-      const targetMember = snapshot?.members.find((member) => member.id === targetMemberId)
+        const currentManager = snapshot?.members.find((member) => member.role === "총무")
+        const targetMember = snapshot?.members.find((member) => member.id === targetMemberId)
 
-      if (currentManager && currentManager.id !== targetMemberId) {
-        await backendAdapter.updateMember(accountId, currentManager.id, {
-          name: currentManager.name,
-          phone: currentManager.phone,
-          role: "멤버",
-        })
-      }
+        if (currentManager && currentManager.id !== targetMemberId) {
+          await backendAdapter.updateMember(accountId, currentManager.id, {
+            name: currentManager.name,
+            phone: currentManager.phone,
+            role: "멤버",
+          })
+        }
 
-      if (targetMember) {
-        await backendAdapter.updateMember(accountId, targetMember.id, {
-          name: targetMember.name,
-          phone: targetMember.phone,
-          role: "총무",
-        })
-      }
+        if (targetMember) {
+          await backendAdapter.updateMember(accountId, targetMember.id, {
+            name: targetMember.name,
+            phone: targetMember.phone,
+            role: "총무",
+          })
+        }
+      })
     },
-    [accounts, backendAdapter]
+    [accounts, backendAdapter, runBusy]
   )
 
   const deleteMember = useCallback(
     async (accountId: string, memberId: string) => {
-      setAccounts((prev) =>
-        prev.map((acc) => {
-          if (acc.id !== accountId) return acc
-          const nextMembers = acc.members.filter((member) => member.id !== memberId)
-          return {
-            ...acc,
-            members: normalizeMemberRoles(nextMembers),
-            duesRecords: acc.duesRecords.filter((record) => record.memberId !== memberId),
-            oneTimeDues: acc.oneTimeDues.map((dues) => ({
-              ...dues,
-              records: dues.records.filter((record) => record.memberId !== memberId),
-            })),
-          }
-        })
-      )
+      await runBusy(async () => {
+        setAccounts((prev) =>
+          prev.map((acc) => {
+            if (acc.id !== accountId) return acc
+            const nextMembers = acc.members.filter((member) => member.id !== memberId)
+            return {
+              ...acc,
+              members: normalizeMemberRoles(nextMembers),
+              duesRecords: acc.duesRecords.filter((record) => record.memberId !== memberId),
+              oneTimeDues: acc.oneTimeDues.map((dues) => ({
+                ...dues,
+                records: dues.records.filter((record) => record.memberId !== memberId),
+              })),
+            }
+          })
+        )
 
-      await backendAdapter.deleteMember(accountId, memberId)
+        await backendAdapter.deleteMember(accountId, memberId)
+      })
     },
-    [backendAdapter]
+    [backendAdapter, runBusy]
   )
 
   const createTransaction = useCallback(
     async (accountId: string, data: UpsertTransactionInput) => {
-      const remoteTransaction = await backendAdapter.createTransaction(accountId, data)
-      const nextTransaction = remoteTransaction ?? createLocalTransaction(data)
+      await runBusy(async () => {
+        const remoteTransaction = await backendAdapter.createTransaction(accountId, data)
+        const nextTransaction = remoteTransaction ?? createLocalTransaction(data)
 
-      setAccounts((prev) =>
-        prev.map((acc) => {
-          if (acc.id !== accountId) return acc
-          return {
-            ...acc,
-            balance: acc.balance + getTransactionImpact(nextTransaction),
-            transactions: sortTransactions([nextTransaction, ...acc.transactions]),
-          }
-        })
-      )
+        setAccounts((prev) =>
+          prev.map((acc) => {
+            if (acc.id !== accountId) return acc
+            return {
+              ...acc,
+              balance: acc.balance + getTransactionImpact(nextTransaction),
+              transactions: sortTransactions([nextTransaction, ...acc.transactions]),
+            }
+          })
+        )
+      })
     },
-    [backendAdapter]
+    [backendAdapter, runBusy]
   )
 
   const updateTransaction = useCallback(
     async (accountId: string, transactionId: string, data: UpsertTransactionInput) => {
-      setAccounts((prev) =>
-        prev.map((acc) => {
-          if (acc.id !== accountId) return acc
-          const currentTransaction = acc.transactions.find((tx) => tx.id === transactionId)
-          if (!currentTransaction) return acc
+      await runBusy(async () => {
+        setAccounts((prev) =>
+          prev.map((acc) => {
+            if (acc.id !== accountId) return acc
+            const currentTransaction = acc.transactions.find((tx) => tx.id === transactionId)
+            if (!currentTransaction) return acc
 
-          const nextTransaction: Transaction = {
-            ...currentTransaction,
-            ...data,
-          }
+            const nextTransaction: Transaction = {
+              ...currentTransaction,
+              ...data,
+            }
 
-          return {
-            ...acc,
-            balance:
-              acc.balance -
-              getTransactionImpact(currentTransaction) +
-              getTransactionImpact(nextTransaction),
-            transactions: sortTransactions(
-              acc.transactions.map((tx) => (tx.id === transactionId ? nextTransaction : tx))
-            ),
-          }
-        })
-      )
+            return {
+              ...acc,
+              balance:
+                acc.balance -
+                getTransactionImpact(currentTransaction) +
+                getTransactionImpact(nextTransaction),
+              transactions: sortTransactions(
+                acc.transactions.map((tx) => (tx.id === transactionId ? nextTransaction : tx))
+              ),
+            }
+          })
+        )
 
-      await backendAdapter.updateTransaction(accountId, transactionId, data)
+        await backendAdapter.updateTransaction(accountId, transactionId, data)
+      })
     },
-    [backendAdapter]
+    [backendAdapter, runBusy]
   )
 
   const deleteTransaction = useCallback(
     async (accountId: string, transactionId: string) => {
-      setAccounts((prev) =>
-        prev.map((acc) => {
-          if (acc.id !== accountId) return acc
-          const currentTransaction = acc.transactions.find((tx) => tx.id === transactionId)
-          if (!currentTransaction) return acc
+      await runBusy(async () => {
+        setAccounts((prev) =>
+          prev.map((acc) => {
+            if (acc.id !== accountId) return acc
+            const currentTransaction = acc.transactions.find((tx) => tx.id === transactionId)
+            if (!currentTransaction) return acc
 
-          return {
-            ...acc,
-            balance: acc.balance - getTransactionImpact(currentTransaction),
-            transactions: acc.transactions.filter((tx) => tx.id !== transactionId),
-          }
-        })
-      )
+            return {
+              ...acc,
+              balance: acc.balance - getTransactionImpact(currentTransaction),
+              transactions: acc.transactions.filter((tx) => tx.id !== transactionId),
+            }
+          })
+        )
 
-      await backendAdapter.deleteTransaction(accountId, transactionId)
+        await backendAdapter.deleteTransaction(accountId, transactionId)
+      })
     },
-    [backendAdapter]
+    [backendAdapter, runBusy]
   )
 
   const updateNotificationPreferences = useCallback(async (next: NotificationPreferences) => {
@@ -929,6 +981,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setCurrentUser(null)
     setSelectedAccountId(null)
     setNotifications([...initialNotifications])
+    setMaskAmounts(false)
     setNotificationPreferences(defaultNotificationPreferences)
     setDataSource("demo")
     setLastSyncError(null)
@@ -943,9 +996,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       isBootstrapping,
       isRefreshingAccounts,
+      isMutating: busyCount > 0,
       lastSyncError,
       dataSource,
       prefersRealApi,
+      maskAmounts,
+      toggleMaskAmounts,
       refreshAccounts,
       notifications,
       unreadNotificationCount,
@@ -959,12 +1015,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       resetNotificationPreferences,
     }),
     [
+      busyCount,
       clearNotifications,
       dataSource,
       defaultNotificationPreferences,
       isBootstrapping,
       isRefreshingAccounts,
       lastSyncError,
+      maskAmounts,
       markAllNotificationsRead,
       markNotificationRead,
       notifications,
@@ -973,6 +1031,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       refreshAccounts,
       resetNotificationPreferences,
       restoreNotifications,
+      toggleMaskAmounts,
       unreadNotificationCount,
       updateNotificationPreferences,
     ]

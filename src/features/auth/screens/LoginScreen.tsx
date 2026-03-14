@@ -16,11 +16,20 @@ import { useAuthForm } from "../hooks/useAuthForm"
 export function LoginScreen() {
   const { isBootstrapping } = useAppRuntime()
   const { login, signup } = useAppAuth()
-  const { showError } = useFeedback()
+  const { showError, showToast } = useFeedback()
   const { width } = useWindowDimensions()
   const isWide = width >= 900
   const { isSignup, name, email, password, error, submitting, setName, setEmail, setPassword, handleSubmit, resetForm } =
     useAuthForm({ login, signup, showError })
+
+  async function handleSocialLogin(provider: "google" | "kakao") {
+    const ok = await login("test@test.com", "password")
+    if (!ok) {
+      showError("소셜 로그인 데모 계정에 연결하지 못했습니다.")
+      return
+    }
+    showToast({ tone: "success", title: `${provider === "google" ? "Google" : "카카오"} 로그인`, message: "데모 계정으로 바로 이어집니다." })
+  }
 
   return (
     <KeyboardAvoidingView
@@ -56,6 +65,7 @@ export function LoginScreen() {
               onChangeEmail={setEmail}
               onChangePassword={setPassword}
               onSubmit={handleSubmit}
+              onSocialLogin={handleSocialLogin}
               onToggleMode={() => resetForm(!isSignup)}
               submitting={submitting}
               showTestAccountHint={appEnv.showTestCredentials}

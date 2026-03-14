@@ -34,6 +34,9 @@ jest.mock("@core/providers/AppProvider", () => ({
     isBootstrapping: false,
     dataSource: "demo",
     isRefreshingAccounts: false,
+    isMutating: false,
+    maskAmounts: false,
+    toggleMaskAmounts: jest.fn(),
     refreshAccounts: jest.fn(async () => "demo"),
     unreadNotificationCount: 2,
     notificationPreferences: {
@@ -95,7 +98,7 @@ describe("home global management split", () => {
     expect(queryByText("알림 설정")).toBeNull()
     expect(queryByText("로그아웃")).toBeNull()
     expect(queryByText("회원 탈퇴")).toBeNull()
-    expect(queryByText("모임통장 관리")).toBeTruthy()
+    expect(queryByText("계좌 요약")).toBeTruthy()
   })
 
   test("app settings screen owns global account actions", () => {
