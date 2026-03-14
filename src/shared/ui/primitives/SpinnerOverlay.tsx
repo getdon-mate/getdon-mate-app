@@ -5,7 +5,7 @@ export function SpinnerOverlay({ visible, label = "업데이트 중" }: { visibl
   if (!visible) return null
 
   return (
-    <View pointerEvents="auto" style={styles.overlay}>
+    <View style={styles.overlay}>
       <View style={styles.card}>
         <ActivityIndicator color={uiColors.textStrong} size="small" />
         <Text style={styles.label}>{label}</Text>

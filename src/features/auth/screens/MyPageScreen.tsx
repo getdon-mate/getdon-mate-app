@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native"
@@ -16,11 +16,12 @@ export function MyPageScreen() {
   const [name, setName] = useState(currentUser?.name ?? "")
   const [email, setEmail] = useState(currentUser?.email ?? "")
   const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
   const { width } = useWindowDimensions()
   const isWide = width >= 960
 
   async function handleSave() {
-    if (saving) return
+    if (savingRef.current) return
     const validationError =
       requireText(name, "이름을 입력해주세요.") ??
       validateEmail(email)
@@ -29,6 +30,7 @@ export function MyPageScreen() {
       return
     }
 
+    savingRef.current = true
     setSaving(true)
     try {
       await updateProfile({
@@ -37,6 +39,7 @@ export function MyPageScreen() {
       })
       showToast({ tone: "success", title: "저장 완료", message: "마이페이지 정보를 수정했습니다." })
     } finally {
+      savingRef.current = false
       setSaving(false)
     }
   }

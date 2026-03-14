@@ -1,4 +1,4 @@
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native"
+import { StyleSheet, Text, View } from "react-native"
 import { uiColors, uiSpacing } from "../tokens"
 
 export function SplashScreen() {
@@ -6,7 +6,11 @@ export function SplashScreen() {
     <View style={styles.screen}>
       <Text style={styles.wordmark}>getdon mate</Text>
       <Text style={styles.caption}>모임통장 관리</Text>
-      <ActivityIndicator color={uiColors.textStrong} size="small" style={styles.spinner} />
+      <View style={styles.loadingRow}>
+        <View style={styles.loadingDot} />
+        <View style={styles.loadingDot} />
+        <View style={styles.loadingDot} />
+      </View>
     </View>
   )
 }
@@ -24,7 +28,6 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: "800",
     letterSpacing: -1.2,
-    textTransform: "lowercase",
   },
   caption: {
     marginTop: uiSpacing.sm,
@@ -32,9 +35,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 2.4,
-    textTransform: "uppercase",
   },
-  spinner: {
+  loadingRow: {
     marginTop: uiSpacing.xl,
+    flexDirection: "row",
+    gap: uiSpacing.sm,
+  },
+  loadingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: uiColors.textSoft,
   },
 })
