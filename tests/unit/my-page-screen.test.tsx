@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from "@testing-library/react-native"
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
 import { MyPageScreen } from "@features/auth/screens/MyPageScreen"
 
 const mockNavigate = jest.fn()
@@ -50,8 +50,10 @@ describe("MyPageScreen", () => {
     const { getAllByText } = render(<MyPageScreen />)
 
     const saveButton = getAllByText("저장")[0]
-    fireEvent.press(saveButton)
-    fireEvent.press(saveButton)
+    await act(async () => {
+      fireEvent.press(saveButton)
+      fireEvent.press(saveButton)
+    })
 
     await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1))
   })
@@ -59,7 +61,9 @@ describe("MyPageScreen", () => {
   test("save keeps the user on my page after completion", async () => {
     const { getAllByText } = render(<MyPageScreen />)
 
-    fireEvent.press(getAllByText("저장")[0])
+    await act(async () => {
+      fireEvent.press(getAllByText("저장")[0])
+    })
 
     await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1))
     expect(mockNavigate).not.toHaveBeenCalled()
