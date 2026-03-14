@@ -2,7 +2,6 @@ import { useState } from "react"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native"
-import { ROUTES } from "@core/navigation/routes"
 import type { RootStackParamList } from "@core/navigation/types"
 import { useAppAuth } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
@@ -37,7 +36,6 @@ export function MyPageScreen() {
         email: email.trim(),
       })
       showToast({ tone: "success", title: "저장 완료", message: "마이페이지 정보를 수정했습니다." })
-      navigation.navigate(ROUTES.AccountDetail)
     } finally {
       setSaving(false)
     }
@@ -50,7 +48,7 @@ export function MyPageScreen() {
           <Pressable style={styles.backButton} onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="이전 화면으로 이동">
             <Icon name="chevronLeft" size={20} color={uiColors.text} />
           </Pressable>
-          <PageHeader title="마이페이지" subtitle="설정에서 들어오는 본인 정보 조회/수정 화면입니다." />
+          <PageHeader title="마이페이지" subtitle="내 정보" />
 
           <Card style={styles.profileCard}>
             <View style={styles.profileTopRow}>
@@ -62,9 +60,7 @@ export function MyPageScreen() {
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>{currentUser?.name ?? "사용자"}</Text>
               <Text style={styles.profileEmail}>{currentUser?.email ?? "email@example.com"}</Text>
-              <Text style={styles.profileHint}>
-                앱 전체 설정과 별도로, 본인 정보는 여기에서만 확인하고 수정합니다.
-              </Text>
+              <Text style={styles.profileHint}>이름과 이메일을 정리할 수 있습니다.</Text>
             </View>
             <View style={styles.summaryGrid}>
               <View style={styles.summaryCard}>

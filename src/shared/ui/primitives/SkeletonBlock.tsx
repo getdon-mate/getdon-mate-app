@@ -5,12 +5,14 @@ export function SkeletonBlock({
   width = "100%",
   height = 14,
   style,
+  testID,
 }: {
   width?: number | `${number}%`
   height?: number
   style?: ViewStyle | ViewStyle[]
+  testID?: string
 }) {
-  return <View style={[styles.base, { width, height }, style]} />
+  return <View testID={testID} style={[styles.base, { width, height }, style]} />
 }
 
 const styles = StyleSheet.create({

@@ -1,4 +1,5 @@
 const NOTIFICATION_PREFERENCES_KEY = "getdon:notification-preferences"
+const AMOUNT_MASK_KEY = "getdon:mask-amounts"
 
 export interface NotificationPreferences {
   duesReminder: boolean
@@ -32,5 +33,23 @@ export function writeNotificationPreferences(preferences: NotificationPreference
 
   try {
     globalThis.localStorage.setItem(NOTIFICATION_PREFERENCES_KEY, JSON.stringify(preferences))
+  } catch {}
+}
+
+export function readAmountMaskPreference(): boolean {
+  if (!canUseStorage()) return false
+
+  try {
+    return globalThis.localStorage.getItem(AMOUNT_MASK_KEY) === "1"
+  } catch {
+    return false
+  }
+}
+
+export function writeAmountMaskPreference(masked: boolean) {
+  if (!canUseStorage()) return
+
+  try {
+    globalThis.localStorage.setItem(AMOUNT_MASK_KEY, masked ? "1" : "0")
   } catch {}
 }

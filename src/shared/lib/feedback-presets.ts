@@ -22,14 +22,14 @@ export const feedbackPresets = {
   },
   resetDemoData: {
     title: "데모 데이터 초기화",
-    message: "현재 변경 내용을 지우고 초기 mock 데이터로 되돌립니다.",
+    message: "현재 변경 내용을 지우고 처음 상태로 되돌립니다.",
     confirmLabel: "초기화",
     successTitle: "초기화 완료",
     successMessage: "데모 데이터를 초기 상태로 되돌렸습니다.",
   },
   deleteAccount: {
     title: "모임통장 삭제",
-    message: "이 모임통장과 관련된 데모 데이터가 제거됩니다.",
+    message: "이 모임통장과 관련 정보가 목록에서 사라집니다.",
     confirmLabel: "삭제",
     successTitle: "삭제 완료",
     successMessage: "모임통장을 목록에서 제거했습니다.",

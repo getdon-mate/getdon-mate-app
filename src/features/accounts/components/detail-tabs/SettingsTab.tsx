@@ -247,10 +247,10 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
 
   return (
     <View style={styles.screen}>
-      <Text style={styles.pageTitle}>모임 관리</Text>
+      <Text style={styles.pageTitle}>설정</Text>
 
       <View style={styles.managementSection}>
-        <Text style={styles.sectionHeading}>모임통장 관리</Text>
+        <Text style={styles.sectionHeading}>계좌 요약</Text>
         <View style={styles.infoCard}>
           <View style={styles.rowBetween}>
             <View style={styles.infoTitleWrap}>
@@ -285,7 +285,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
         </View>
 
         <View style={styles.panelCard}>
-          <Text style={styles.panelTitle}>기본정보 수정</Text>
+          <Text style={styles.panelTitle}>기본 정보</Text>
           <View style={styles.formStack}>
             <InputField value={groupName} onChangeText={setGroupName} label="모임명" placeholder="모임명" />
             <InputField value={bankName} onChangeText={setBankName} label="은행명" placeholder="은행명" />
@@ -316,7 +316,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
         </View>
 
         <View style={styles.panelCard}>
-          <Text style={styles.panelTitle}>{editingDuesId ? "1회성 회비 수정" : "1회성 회비 생성"}</Text>
+          <Text style={styles.panelTitle}>{editingDuesId ? "1회성 회비 수정" : "1회성 회비"}</Text>
           <View style={styles.formStack}>
             <InputField value={title} onChangeText={setTitle} label="회비 명목" placeholder="회비 명목" />
             <NumericInputField value={duesAmount} onChangeText={setDuesAmount} label="금액" placeholder="금액" />
@@ -406,7 +406,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
           ) : (
             <View style={styles.emptyBox}>
               <Text style={styles.emptyTitle}>등록된 1회성 회비가 없습니다.</Text>
-              <Text style={styles.emptyDescription}>위 입력폼에서 회비를 생성하면 멤버별 납부 상태를 관리할 수 있어요.</Text>
+              <Text style={styles.emptyDescription}>위에서 새 항목을 추가해보세요.</Text>
             </View>
           )}
         </View>

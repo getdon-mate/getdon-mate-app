@@ -43,6 +43,7 @@ function getCtx(): AppCtx {
 describe('AppProvider state transitions', () => {
   beforeEach(() => {
     latestCtx = null
+    globalThis.localStorage.clear()
     Object.values(mockAdapter).forEach((fn) => {
       if (typeof fn === 'function' && 'mockClear' in fn) {
         ;(fn as jest.Mock).mockClear()
@@ -223,5 +224,35 @@ describe('AppProvider state transitions', () => {
 
     expect(accountManagers()).toHaveLength(1)
     expect(accountManagers()[0]).not.toBe('m2')
+  })
+
+  test('amount privacy preference toggles and persists across provider mounts', async () => {
+    const { unmount } = render(
+      <AppProvider>
+        <Harness />
+      </AppProvider>
+    )
+
+    await waitFor(() => expect(getCtx().isBootstrapping).toBe(false))
+
+    expect(getCtx().maskAmounts).toBe(false)
+
+    act(() => {
+      getCtx().toggleMaskAmounts()
+    })
+
+    expect(getCtx().maskAmounts).toBe(true)
+
+    unmount()
+    latestCtx = null
+
+    render(
+      <AppProvider>
+        <Harness />
+      </AppProvider>
+    )
+
+    await waitFor(() => expect(getCtx().isBootstrapping).toBe(false))
+    expect(getCtx().maskAmounts).toBe(true)
   })
 })

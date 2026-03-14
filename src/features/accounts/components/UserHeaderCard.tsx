@@ -6,6 +6,8 @@ export function UserHeaderCard({
   user,
   initials,
   unreadNotificationCount,
+  maskAmounts,
+  onToggleMaskAmounts,
   onOpenNotifications,
   onOpenMyPage,
   onOpenAppSettings,
@@ -13,6 +15,8 @@ export function UserHeaderCard({
   user: AppUser | null
   initials: string
   unreadNotificationCount?: number
+  maskAmounts: boolean
+  onToggleMaskAmounts: () => void
   onOpenNotifications: () => void
   onOpenMyPage: () => void
   onOpenAppSettings: () => void
@@ -23,10 +27,13 @@ export function UserHeaderCard({
         <Text style={styles.profileBadgeText}>{initials}</Text>
       </View>
       <View style={styles.headerInfo}>
-        <Text style={styles.headerName}>{user?.name}님의 모임</Text>
-        <Text style={styles.headerEmail}>함께하는 통장을 관리해보세요</Text>
+        <Text style={styles.headerName}>{user?.name ?? "게스트"}</Text>
+        <Text style={styles.headerEmail}>내 모임통장</Text>
       </View>
       <View style={styles.actionGroup}>
+        <Pressable style={styles.iconButton} onPress={onToggleMaskAmounts} accessibilityRole="button" accessibilityLabel="금액 표시 전환">
+          <Icon name={maskAmounts ? "eyeOff" : "eye"} size={16} color={uiColors.textStrong} />
+        </Pressable>
         <Pressable style={styles.iconButton} onPress={onOpenNotifications} accessibilityRole="button" accessibilityLabel="알림 목록 열기">
           <Icon name="bell" size={16} color={uiColors.textStrong} />
           {unreadNotificationCount ? (

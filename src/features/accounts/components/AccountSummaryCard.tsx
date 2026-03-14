@@ -1,6 +1,6 @@
 import { memo } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
-import { Icon, uiColors } from "@shared/ui"
+import { AmountMask, Icon, uiColors } from "@shared/ui"
 import { formatKRW } from "@shared/lib/format"
 import { getPaymentSummary } from "../model/selectors"
 import type { GroupAccount } from "../model/types"
@@ -8,10 +8,12 @@ import type { GroupAccount } from "../model/types"
 export const AccountSummaryCard = memo(function AccountSummaryCard({
   account,
   currentMonth,
+  maskAmounts,
   onPress,
 }: {
   account: GroupAccount
   currentMonth: string
+  maskAmounts: boolean
   onPress: () => void
 }) {
   const { paid } = getPaymentSummary(account, currentMonth)
@@ -32,7 +34,7 @@ export const AccountSummaryCard = memo(function AccountSummaryCard({
       </View>
       <View style={styles.footerRow}>
         <Text style={styles.accountMeta}>잔액</Text>
-        <Text style={styles.accountBalance}>{formatKRW(account.balance)}</Text>
+        <AmountMask value={formatKRW(account.balance)} masked={maskAmounts} textStyle={styles.accountBalance} skeletonHeight={26} />
       </View>
       <Text style={styles.accountSubMeta}>
         {account.bankName} · {paid}/{account.members.length} 완납

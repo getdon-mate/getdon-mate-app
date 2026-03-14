@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigation, useRoute } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native"
+import { ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from "react-native"
+import * as Clipboard from "expo-clipboard"
 import { ROUTES } from "@core/navigation/routes"
 import type { RootStackParamList } from "@core/navigation/types"
 import { useAppAccounts, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { uiColors } from "@shared/ui"
+import { buildAccountInviteLink } from "@shared/lib/invite"
 import { availableMonths } from "../model/fixtures"
 import { LoadingStateCard } from "../components/LoadingStateCard"
 import { DashboardTab } from "../components/detail-tabs/DashboardTab"
@@ -24,9 +26,9 @@ const detailTabMemory = new Map<string, DetailTab>()
 export function AccountDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const route = useRoute()
-  const { isBootstrapping, isRefreshingAccounts, prefersRealApi, lastSyncError, refreshAccounts } = useAppRuntime()
+  const { isBootstrapping, isRefreshingAccounts, prefersRealApi, lastSyncError, refreshAccounts, maskAmounts, toggleMaskAmounts } = useAppRuntime()
   const { accounts, selectedAccountId, clearSelectedAccount, selectAccount } = useAppAccounts()
-  const { showToast } = useFeedback()
+  const { showAlert, showToast } = useFeedback()
   const { width } = useWindowDimensions()
   const isWide = width >= 1024
 
@@ -95,6 +97,31 @@ export function AccountDetailScreen() {
     })
   }
 
+  async function handleCopyInvite() {
+    if (!account) return
+    try {
+      const inviteLink = buildAccountInviteLink(account)
+      await Clipboard.setStringAsync(inviteLink)
+      showToast({ tone: "success", title: "링크 복사 완료", message: "초대 링크를 복사했습니다." })
+    } catch {
+      showAlert({ title: "복사 실패", message: "초대 링크를 복사하지 못했습니다.", tone: "danger" })
+    }
+  }
+
+  async function handleShareInvite() {
+    if (!account) return
+    try {
+      const inviteLink = buildAccountInviteLink(account)
+      await Share.share({
+        message: `${account.groupName} 초대 링크\n${inviteLink}`,
+        url: inviteLink,
+        title: `${account.groupName} 초대`,
+      })
+    } catch {
+      showAlert({ title: "공유 실패", message: "공유 시트를 열지 못했습니다.", tone: "danger" })
+    }
+  }
+
   if (!account) {
     return (
       <View style={styles.emptyWrap}>
@@ -113,7 +140,14 @@ export function AccountDetailScreen() {
         refreshPending={isRefreshingAccounts}
         refreshLabel={prefersRealApi && lastSyncError ? "재시도" : "새로고침"}
       />
-      <AccountDetailHero account={account} onPressAction={openTransactionComposer} />
+      <AccountDetailHero
+        account={account}
+        maskAmounts={maskAmounts}
+        onToggleMask={toggleMaskAmounts}
+        onCopyInvite={handleCopyInvite}
+        onShareInvite={handleShareInvite}
+        onPressAction={openTransactionComposer}
+      />
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         <View style={[styles.contentWrap, isWide && styles.contentWrapWide]}>
