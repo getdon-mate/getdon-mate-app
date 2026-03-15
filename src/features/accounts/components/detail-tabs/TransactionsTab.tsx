@@ -159,7 +159,7 @@ export function TransactionsTab({
   return (
     <View style={styles.stack}>
       <SectionCard>
-        <SectionHeader title={isEditing ? "거래 수정" : "새 거래 등록"} />
+        <SectionHeader title={isEditing ? "거래 수정" : "새 거래 등록"} description="입금과 출금을 바로 기록합니다." />
         <View style={styles.formTypeRow}>
           {(["income", "expense"] as const).map((item) => {
             const active = draftType === item
@@ -180,10 +180,38 @@ export function TransactionsTab({
           })}
         </View>
         <View style={styles.formGrid}>
-          <NumericInputField value={amount} onChangeText={setAmount} label="금액" placeholder="금액" />
-          <InputField value={date} onChangeText={setDate} label="거래일" placeholder="YYYY-MM-DD" />
-          <InputField value={description} onChangeText={setDescription} label="설명" placeholder="예: 회비 입금, 모임 식비" />
-          <InputField value={category} onChangeText={setCategory} label="카테고리" placeholder="예: 회비, 식비" />
+          <NumericInputField
+            value={amount}
+            onChangeText={setAmount}
+            label="금액"
+            placeholder="금액"
+            containerStyle={styles.compactField}
+            inputStyle={styles.compactInput}
+          />
+          <InputField
+            value={date}
+            onChangeText={setDate}
+            label="거래일"
+            placeholder="YYYY-MM-DD"
+            containerStyle={styles.compactField}
+            inputStyle={styles.compactInput}
+          />
+          <InputField
+            value={description}
+            onChangeText={setDescription}
+            label="설명"
+            placeholder="예: 회비 입금, 모임 식비"
+            containerStyle={styles.compactField}
+            inputStyle={styles.compactInput}
+          />
+          <InputField
+            value={category}
+            onChangeText={setCategory}
+            label="카테고리"
+            placeholder="예: 회비, 식비"
+            containerStyle={styles.compactField}
+            inputStyle={styles.compactInput}
+          />
         </View>
         <View style={styles.formActionRow}>
           {isEditing ? <Button label="편집 취소" variant="ghost" onPress={() => resetComposer(initialType)} style={styles.formActionButton} /> : null}
@@ -310,19 +338,27 @@ const styles = StyleSheet.create({
   formTypeRow: {
     flexDirection: "row",
     gap: 8,
-    marginTop: 12,
+    marginTop: 10,
   },
   flexChip: {
     flex: 1,
   },
   formGrid: {
-    gap: 8,
-    marginTop: 8,
+    gap: 6,
+    marginTop: 6,
+  },
+  compactField: {
+    gap: 4,
+  },
+  compactInput: {
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    fontSize: 14,
   },
   formActionRow: {
     flexDirection: "row",
     gap: 8,
-    marginTop: 12,
+    marginTop: 10,
   },
   formActionButton: {
     flex: 1,
@@ -377,8 +413,8 @@ const styles = StyleSheet.create({
   filterSummary: {
     marginTop: 10,
     color: uiColors.textMuted,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 17,
   },
   subtleText: {
     color: uiColors.textMuted,
@@ -393,7 +429,7 @@ const styles = StyleSheet.create({
     gap: 6,
     borderBottomWidth: 1,
     borderBottomColor: "#eef2f7",
-    paddingBottom: 8,
+    paddingBottom: 6,
   },
   inlineActions: {
     flexDirection: "row",

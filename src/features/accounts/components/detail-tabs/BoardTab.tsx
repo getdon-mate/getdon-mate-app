@@ -54,15 +54,35 @@ export function BoardTab({ account }: { account: GroupAccount }) {
   return (
     <View style={styles.stack}>
       <SectionCard>
-        <SectionHeader title="공지 작성" />
+        <SectionHeader title="공지 작성" description="운영 메모와 공지를 바로 남깁니다." />
         <View style={styles.formStack}>
-          <InputField value={title} onChangeText={setTitle} label="제목" placeholder="예: 이번 주 모임 장소 안내" />
-          <InputField value={body} onChangeText={setBody} label="내용" placeholder="공지나 운영 메모를 남겨보세요." multiline />
+          <InputField
+            value={title}
+            onChangeText={setTitle}
+            label="제목"
+            placeholder="예: 이번 주 모임 장소 안내"
+            containerStyle={styles.compactField}
+            inputStyle={styles.compactInput}
+          />
+          <InputField
+            value={body}
+            onChangeText={setBody}
+            label="내용"
+            placeholder="공지나 운영 메모를 남겨보세요."
+            multiline
+            containerStyle={styles.compactField}
+            inputStyle={[styles.compactInput, styles.bodyInput]}
+          />
           <View style={styles.switchRow}>
             <Text style={styles.switchLabel}>상단 고정</Text>
             <ToggleSwitch value={pinned} onPress={() => setPinned((prev) => !prev)} />
           </View>
-          <Button label={currentUser ? "게시하기" : "로그인 후 게시"} onPress={() => void handleCreatePost()} disabled={!currentUser} />
+          <Button
+            label={currentUser ? "게시하기" : "로그인 후 게시"}
+            onPress={() => void handleCreatePost()}
+            disabled={!currentUser}
+            style={styles.submitButton}
+          />
         </View>
       </SectionCard>
 
@@ -92,8 +112,10 @@ export function BoardTab({ account }: { account: GroupAccount }) {
                 onChangeText={(value) => setCommentDrafts((prev) => ({ ...prev, [post.id]: value }))}
                 label="댓글"
                 placeholder="댓글을 남겨보세요."
+                containerStyle={styles.compactField}
+                inputStyle={styles.compactInput}
               />
-              <Button label="댓글 등록" variant="ghost" onPress={() => void handleAddComment(post.id)} />
+              <Button label="댓글 등록" variant="ghost" onPress={() => void handleAddComment(post.id)} style={styles.commentButton} />
             </View>
           </SectionCard>
         ))
@@ -109,8 +131,20 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   formStack: {
-    gap: 10,
+    gap: 8,
     marginTop: 10,
+  },
+  compactField: {
+    gap: 4,
+  },
+  compactInput: {
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    fontSize: 14,
+  },
+  bodyInput: {
+    minHeight: 88,
+    textAlignVertical: "top",
   },
   switchRow: {
     flexDirection: "row",
@@ -119,8 +153,11 @@ const styles = StyleSheet.create({
   },
   switchLabel: {
     color: uiColors.textStrong,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
+  },
+  submitButton: {
+    minHeight: 42,
   },
   postHeader: {
     flexDirection: "row",
@@ -169,7 +206,10 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   commentComposer: {
-    gap: 8,
+    gap: 6,
     marginTop: 12,
+  },
+  commentButton: {
+    minHeight: 40,
   },
 })

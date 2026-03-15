@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import { useEffect, useMemo, useState } from "react"
 import { formatDate } from "@shared/lib/format"
-import { uiColors } from "@shared/ui"
+import { Icon, uiColors } from "@shared/ui"
 import { getCalendarEvents, getCalendarEventsForDate } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
@@ -18,23 +18,65 @@ function getToneLabel(tone: "dues" | "transaction" | "notice") {
   return tone === "dues" ? "회비" : tone === "transaction" ? "거래" : "공지"
 }
 
+function shiftMonth(referenceMonth: string, offset: number) {
+  const [year, month] = referenceMonth.split("-").map(Number)
+  const nextDate = new Date(year, month - 1 + offset, 1)
+  return `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, "0")}`
+}
+
+function getMonthLabel(referenceMonth: string) {
+  const [year, month] = referenceMonth.split("-").map(Number)
+  return `${year}년 ${month}월`
+}
+
+function getInitialDateForMonth(events: ReturnType<typeof getCalendarEvents>, month: string) {
+  return events.find((event) => event.date.startsWith(month))?.date ?? `${month}-01`
+}
+
 export function CalendarTab({ account }: { account: GroupAccount }) {
   const events = getCalendarEvents(account)
   const latestDate = events[events.length - 1]?.date ?? new Date().toISOString().slice(0, 10)
-  const selectedMonth = latestDate.slice(0, 7)
-  const dates = getDatesForMonth(selectedMonth)
+  const initialMonth = latestDate.slice(0, 7)
+  const [visibleMonth, setVisibleMonth] = useState(initialMonth)
   const [selectedDate, setSelectedDate] = useState(latestDate)
+  const dates = useMemo(() => getDatesForMonth(visibleMonth), [visibleMonth])
 
   useEffect(() => {
+    setVisibleMonth(initialMonth)
     setSelectedDate(latestDate)
-  }, [latestDate])
+  }, [initialMonth, latestDate])
 
   const focusedEvents = useMemo(() => getCalendarEventsForDate(events, selectedDate), [events, selectedDate])
+
+  function handleChangeMonth(offset: number) {
+    const nextMonth = shiftMonth(visibleMonth, offset)
+    setVisibleMonth(nextMonth)
+    setSelectedDate((prev) => (prev.startsWith(nextMonth) ? prev : getInitialDateForMonth(events, nextMonth)))
+  }
 
   return (
     <View style={styles.stack}>
       <SectionCard>
         <SectionHeader title="월간 일정" />
+        <View style={styles.monthRow}>
+          <Pressable
+            style={styles.monthButton}
+            onPress={() => handleChangeMonth(-1)}
+            accessibilityRole="button"
+            accessibilityLabel="이전 달 보기"
+          >
+            <Icon name="chevronLeft" size={16} color={uiColors.textStrong} />
+          </Pressable>
+          <Text style={styles.monthLabel}>{getMonthLabel(visibleMonth)}</Text>
+          <Pressable
+            style={styles.monthButton}
+            onPress={() => handleChangeMonth(1)}
+            accessibilityRole="button"
+            accessibilityLabel="다음 달 보기"
+          >
+            <Icon name="chevronRight" size={16} color={uiColors.textStrong} />
+          </Pressable>
+        </View>
         <View style={styles.grid}>
           {dates.map((date) => {
             const count = events.filter((event) => event.date === date).length
@@ -80,11 +122,32 @@ const styles = StyleSheet.create({
   stack: {
     gap: 12,
   },
+  monthRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  monthButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  monthLabel: {
+    color: uiColors.textStrong,
+    fontSize: 15,
+    fontWeight: "800",
+  },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    marginTop: 10,
+    marginTop: 12,
   },
   dayCell: {
     width: "12.5%",

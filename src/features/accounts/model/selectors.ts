@@ -141,7 +141,7 @@ export function getExpenseCategoryBreakdown(account: GroupAccount): CategoryBrea
 }
 
 export function getCalendarEvents(account: GroupAccount): CalendarEventItem[] {
-  const duesEvents = getAccountDuesForMonth(account, new Date().toISOString().slice(0, 7)).map((record) => ({
+  const duesEvents = account.duesRecords.map((record) => ({
     id: `dues-${record.memberId}-${record.month}`,
     date: `${record.month}-${String(account.dueDay).padStart(2, "0")}`,
     title: `${account.groupName} ${record.month} 회비 ${record.status === "paid" ? "완료" : "확인"}`,
