@@ -12,6 +12,7 @@ export const MemberRow = memo(function MemberRow({
   onDelegateOwner,
   delegatePending,
   onDelete,
+  reminderActions,
 }: {
   member: Member
   rate: number
@@ -20,6 +21,7 @@ export const MemberRow = memo(function MemberRow({
   onDelegateOwner?: () => void
   delegatePending?: boolean
   onDelete?: () => void
+  reminderActions?: { label: string; onPress: () => void }[]
 }) {
   const history = duesRecords
     .filter((record) => record.memberId === member.id)
@@ -59,6 +61,13 @@ export const MemberRow = memo(function MemberRow({
           {formatMonth(record.month)} · {record.status === "paid" ? "완납" : record.status === "unpaid" ? "미납" : "면제"}
         </Text>
       ))}
+      {reminderActions && reminderActions.length > 0 ? (
+        <View style={styles.reminderActions}>
+          {reminderActions.map((action) => (
+            <Button key={action.label} label={action.label} variant="ghost" onPress={action.onPress} style={styles.reminderButton} />
+          ))}
+        </View>
+      ) : null}
     </View>
   )
 })
@@ -122,5 +131,14 @@ const styles = StyleSheet.create({
   memberMeta: {
     color: uiColors.textMuted,
     fontSize: 12,
+  },
+  reminderActions: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  reminderButton: {
+    minWidth: 88,
+    paddingVertical: 8,
   },
 })

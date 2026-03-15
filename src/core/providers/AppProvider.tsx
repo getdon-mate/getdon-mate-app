@@ -6,11 +6,15 @@ import { appEnv } from "@shared/config/app-env"
 import type {
   AppUser,
   AutoTransfer,
+  BoardComment,
+  BoardPost,
   GroupAccount,
   Member,
   MemberRole,
   OneTimeDues,
   OneTimeDuesRecord,
+  ReminderItem,
+  ReminderType,
   Transaction,
   TransactionType,
 } from "@features/accounts/model/types"
@@ -51,6 +55,16 @@ interface UpdateOneTimeDuesInput {
 interface UpdateProfileInput {
   name: string
   email: string
+}
+
+interface CreateBoardPostInput {
+  title: string
+  body: string
+  pinned: boolean
+}
+
+interface CreateBoardCommentInput {
+  body: string
 }
 
 interface UpdateAccountInput {
@@ -128,6 +142,10 @@ interface AppAccountsContextType {
   createTransaction: (accountId: string, data: UpsertTransactionInput) => Promise<void>
   updateTransaction: (accountId: string, transactionId: string, data: UpsertTransactionInput) => Promise<void>
   deleteTransaction: (accountId: string, transactionId: string) => Promise<void>
+  sendPaymentReminder: (accountId: string, memberId: string, month: string) => Promise<void>
+  sendTransferRequest: (accountId: string, memberId: string, month: string) => Promise<void>
+  createBoardPost: (accountId: string, data: CreateBoardPostInput) => Promise<void>
+  addBoardComment: (accountId: string, postId: string, data: CreateBoardCommentInput) => Promise<void>
   resetDemoData: () => void
 }
 
@@ -184,6 +202,11 @@ function cloneAccounts(source: GroupAccount[]): GroupAccount[] {
       status: dues.status ?? "active",
       records: dues.records.map((record) => ({ ...record })),
     })),
+    reminders: account.reminders.map((item) => ({ ...item })),
+    boardPosts: account.boardPosts.map((post) => ({
+      ...post,
+      comments: post.comments.map((comment) => ({ ...comment })),
+    })),
   }))
 }
 
@@ -214,6 +237,8 @@ function createLocalAccount(data: CreateAccountInput, currentUser: AppUser): Gro
     transactions: [],
     autoTransfer: { enabled: false, dayOfMonth: data.dueDay, amount: data.monthlyDuesAmount, fromAccount: "" },
     oneTimeDues: [],
+    reminders: [],
+    boardPosts: [],
   }
 }
 
@@ -271,6 +296,54 @@ function createLocalTransaction(data: UpsertTransactionInput): Transaction {
     description: data.description,
     date: data.date,
     category: data.category,
+  }
+}
+
+function createReminder(memberId: string, month: string, type: ReminderType, memberName: string): ReminderItem {
+  return {
+    id: `rem${Date.now()}`,
+    memberId,
+    month,
+    type,
+    message:
+      type === "payment-reminder"
+        ? `${memberName}님께 ${month} 회비 납부 안내를 보냈습니다.`
+        : `${memberName}님께 ${month} 회비 송금 요청을 보냈습니다.`,
+    createdAt: new Date().toISOString(),
+  }
+}
+
+function createReminderNotification(memberName: string, month: string, type: ReminderType): NotificationItem {
+  return {
+    id: `notice-${Date.now()}`,
+    title: type === "payment-reminder" ? "납부 안내를 보냈어요" : "송금 요청을 보냈어요",
+    body:
+      type === "payment-reminder"
+        ? `${memberName}님에게 ${month} 회비 납부 안내를 전송했습니다.`
+        : `${memberName}님에게 ${month} 회비 송금 요청을 전송했습니다.`,
+    time: "방금 전",
+    unread: true,
+  }
+}
+
+function createBoardPost(data: CreateBoardPostInput, authorName: string): BoardPost {
+  return {
+    id: `post${Date.now()}`,
+    title: data.title.trim(),
+    body: data.body.trim(),
+    pinned: data.pinned,
+    createdAt: new Date().toISOString(),
+    authorName,
+    comments: [],
+  }
+}
+
+function createBoardComment(data: CreateBoardCommentInput, authorName: string): BoardComment {
+  return {
+    id: `comment${Date.now()}`,
+    authorName,
+    body: data.body.trim(),
+    createdAt: new Date().toISOString(),
   }
 }
 
@@ -951,6 +1024,101 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [backendAdapter, runBusy]
   )
 
+  const sendReminder = useCallback(
+    async (accountId: string, memberId: string, month: string, type: ReminderType) => {
+      await runBusy(async () => {
+        let reminderNotification: NotificationItem | null = null
+
+        setAccounts((prev) =>
+          prev.map((account) => {
+            if (account.id !== accountId) return account
+            const member = account.members.find((item) => item.id === memberId)
+            if (!member) return account
+            reminderNotification = createReminderNotification(member.name, month, type)
+            return {
+              ...account,
+              reminders: [createReminder(memberId, month, type, member.name), ...account.reminders],
+            }
+          })
+        )
+
+        if (reminderNotification) {
+          setNotifications((prev) => [reminderNotification as NotificationItem, ...prev])
+        }
+      })
+    },
+    [runBusy]
+  )
+
+  const sendPaymentReminder = useCallback(
+    async (accountId: string, memberId: string, month: string) => sendReminder(accountId, memberId, month, "payment-reminder"),
+    [sendReminder]
+  )
+
+  const sendTransferRequest = useCallback(
+    async (accountId: string, memberId: string, month: string) => sendReminder(accountId, memberId, month, "transfer-request"),
+    [sendReminder]
+  )
+
+  const createBoardPostForAccount = useCallback(
+    async (accountId: string, data: CreateBoardPostInput) => {
+      if (!currentUser) return
+
+      await runBusy(async () => {
+        setAccounts((prev) =>
+          prev.map((account) =>
+            account.id === accountId
+              ? {
+                  ...account,
+                  boardPosts: [
+                    createBoardPost(data, currentUser.name),
+                    ...account.boardPosts.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.createdAt.localeCompare(a.createdAt)),
+                  ],
+                }
+              : account
+          )
+        )
+        setNotifications((prev) => [
+          {
+            id: `notice-${Date.now()}`,
+            title: "게시판에 새 글이 등록됐어요",
+            body: `${currentUser.name}님이 새 공지를 남겼습니다.`,
+            time: "방금 전",
+            unread: true,
+          },
+          ...prev,
+        ])
+      })
+    },
+    [currentUser, runBusy]
+  )
+
+  const addBoardComment = useCallback(
+    async (accountId: string, postId: string, data: CreateBoardCommentInput) => {
+      if (!currentUser || !data.body.trim()) return
+
+      await runBusy(async () => {
+        setAccounts((prev) =>
+          prev.map((account) => {
+            if (account.id !== accountId) return account
+            return {
+              ...account,
+              boardPosts: account.boardPosts.map((post) =>
+                post.id === postId
+                  ? {
+                      ...post,
+                      comments: [...post.comments, createBoardComment(data, currentUser.name)],
+                    }
+                  : post
+              ),
+            }
+          })
+        )
+      })
+    },
+    [currentUser, runBusy]
+  )
+
   const updateNotificationPreferences = useCallback(async (next: NotificationPreferences) => {
     setNotificationPreferences(next)
   }, [])
@@ -1072,6 +1240,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       createTransaction,
       updateTransaction,
       deleteTransaction,
+      sendPaymentReminder,
+      sendTransferRequest,
+      createBoardPost: createBoardPostForAccount,
+      addBoardComment,
       resetDemoData,
     }),
     [
@@ -1083,10 +1255,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       delegateManager,
       createOneTimeDues,
       createTransaction,
+      createBoardPostForAccount,
       deleteAccount,
+      addBoardComment,
       deleteMember,
       deleteOneTimeDues,
       deleteTransaction,
+      sendPaymentReminder,
+      sendTransferRequest,
       resetDemoData,
       selectAccount,
       selectedAccountId,

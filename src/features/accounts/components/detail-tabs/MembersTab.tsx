@@ -16,7 +16,7 @@ type MemberSort = "name" | "payment-rate"
 type RoleFilter = "all" | "총무" | "멤버"
 
 export function MembersTab({ account }: { account: GroupAccount }) {
-  const { createMember, updateMember, delegateManager, deleteMember } = useApp()
+  const { createMember, updateMember, delegateManager, deleteMember, sendPaymentReminder, sendTransferRequest } = useApp()
   const { showAlert, showToast, confirm } = useFeedback()
   const { currentUser } = useAppAuth()
   const [name, setName] = useState("")
@@ -44,6 +44,19 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     [account.members, currentUser?.id, currentUser?.name]
   )
   const canDelegateManager = currentUserMember?.role === "총무"
+  const latestMonth = useMemo(
+    () => [...new Set(account.duesRecords.map((record) => record.month))].sort((a, b) => b.localeCompare(a))[0] ?? null,
+    [account.duesRecords]
+  )
+  const unpaidMemberIds = useMemo(
+    () =>
+      new Set(
+        account.duesRecords
+          .filter((record) => record.month === latestMonth && record.status === "unpaid")
+          .map((record) => record.memberId)
+      ),
+    [account.duesRecords, latestMonth]
+  )
 
   const visibleMembers = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
@@ -149,6 +162,19 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     showToast({ tone: "success", title: "삭제 완료", message: "멤버를 제거했습니다." })
   }
 
+  async function handleReminder(memberId: string, memberName: string, type: "payment-reminder" | "transfer-request") {
+    if (!latestMonth) return
+
+    if (type === "payment-reminder") {
+      await sendPaymentReminder(account.id, memberId, latestMonth)
+      showToast({ tone: "success", title: "납부 안내 전송", message: `${memberName}님께 납부 안내를 보냈습니다.` })
+      return
+    }
+
+    await sendTransferRequest(account.id, memberId, latestMonth)
+    showToast({ tone: "success", title: "송금 요청 전송", message: `${memberName}님께 바로 납부할 수 있도록 요청을 보냈습니다.` })
+  }
+
   return (
     <View style={styles.stack}>
       <View style={styles.summaryRow}>
@@ -221,6 +247,24 @@ export function MembersTab({ account }: { account: GroupAccount }) {
                   onDelete={() => {
                     void handleDelete(member.id)
                   }}
+                  reminderActions={
+                    unpaidMemberIds.has(member.id) && latestMonth
+                      ? [
+                          {
+                            label: "납부 안내",
+                            onPress: () => {
+                              void handleReminder(member.id, member.name, "payment-reminder")
+                            },
+                          },
+                          {
+                            label: "송금 요청",
+                            onPress: () => {
+                              void handleReminder(member.id, member.name, "transfer-request")
+                            },
+                          },
+                        ]
+                      : undefined
+                  }
                 />
               )
             })}

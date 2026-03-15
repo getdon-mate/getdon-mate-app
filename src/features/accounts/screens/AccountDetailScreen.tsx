@@ -15,7 +15,10 @@ import { DashboardTab } from "../components/detail-tabs/DashboardTab"
 import { DuesTab } from "../components/detail-tabs/DuesTab"
 import { MembersTab } from "../components/detail-tabs/MembersTab"
 import { SettingsTab } from "../components/detail-tabs/SettingsTab"
+import { StatisticsTab } from "../components/detail-tabs/StatisticsTab"
 import { TransactionsTab } from "../components/detail-tabs/TransactionsTab"
+import { CalendarTab } from "../components/detail-tabs/CalendarTab"
+import { BoardTab } from "../components/detail-tabs/BoardTab"
 import { AccountDetailHeader } from "../components/detail/AccountDetailHeader"
 import { AccountDetailHero } from "../components/detail/AccountDetailHero"
 import { DetailTabBar, type DetailTab } from "../components/detail/DetailTabBar"
@@ -164,6 +167,9 @@ export function AccountDetailScreen() {
             <TransactionsTab account={account} initialType={transactionComposerType} composerSignal={transactionComposerSignal} />
           ) : null}
           {tab === "members" ? <MembersTab account={account} /> : null}
+          {tab === "statistics" ? <StatisticsTab account={account} /> : null}
+          {tab === "calendar" ? <CalendarTab account={account} /> : null}
+          {tab === "board" ? <BoardTab account={account} /> : null}
           {tab === "settings" ? <SettingsTab account={account} /> : null}
         </View>
       </ScrollView>

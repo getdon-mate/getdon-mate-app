@@ -39,7 +39,14 @@ export function AccountDetailHero({
         </View>
       </View>
       <Text style={styles.heroBalanceLabel}>총 잔액</Text>
-      <AmountMask value={formatKRW(account.balance)} masked={maskAmounts} textStyle={styles.heroBalanceText} skeletonHeight={30} />
+      <View style={styles.balanceWrap}>
+        <AmountMask value={formatKRW(account.balance)} masked={maskAmounts} textStyle={styles.heroBalanceText} skeletonHeight={30} />
+        {maskAmounts ? (
+          <View testID="masked-balance-overlay" pointerEvents="none" style={styles.maskOverlay}>
+            <Text style={styles.maskOverlayLabel}>잔액은 필요할 때만 확인하세요</Text>
+          </View>
+        ) : null}
+      </View>
       <View style={styles.heroActionRow}>
         <Pressable style={styles.heroGhostButton} onPress={() => onPressAction("income")}>
           <Text style={styles.heroGhostButtonText}>채우기</Text>
@@ -105,6 +112,26 @@ const styles = StyleSheet.create({
     color: uiColors.textStrong,
     fontSize: 28,
     fontWeight: "800",
+  },
+  balanceWrap: {
+    position: "relative",
+    minHeight: 40,
+    justifyContent: "center",
+  },
+  maskOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 14,
+    backgroundColor: "rgba(248, 250, 252, 0.82)",
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    alignItems: "flex-end",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  maskOverlayLabel: {
+    color: uiColors.textSoft,
+    fontSize: 11,
+    fontWeight: "600",
   },
   heroActionRow: {
     flexDirection: "row",

@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
-import { ActionChip, Button, InputField, NumericInputField, uiColors } from "@shared/ui"
+import { ActionChip, Button, Icon, InputField, NumericInputField, uiColors } from "@shared/ui"
 import { formatFullDate, formatKRW } from "@shared/lib/format"
 import { getMemberById } from "../../model/member-utils"
 import { getTransactionTotals, groupTransactionsByDate } from "../../model/selectors"
@@ -38,6 +38,7 @@ export function TransactionsTab({
   const [sortOrder, setSortOrder] = useState<SortOrder>("latest")
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const [draftType, setDraftType] = useState<TransactionType>(initialType)
   const [amount, setAmount] = useState("")
@@ -206,33 +207,56 @@ export function TransactionsTab({
       </View>
 
       <SectionCard>
-        <SectionHeader title="거래 필터" />
-        <InputField value={searchQuery} onChangeText={setSearchQuery} label="검색" placeholder="설명, 카테고리, 멤버명" />
-        <View style={styles.filterRow}>
-          {(["all", "income", "expense"] as const).map((item) => (
-            <ActionChip
-              key={item}
-              label={item === "all" ? "전체" : item === "income" ? "입금" : "출금"}
-              active={filter === item}
-              onPress={() => setFilter(item)}
-            />
-          ))}
-          <ActionChip
-            label={sortOrder === "latest" ? "최신순" : "오래된순"}
-            active
-            onPress={() => setSortOrder((prev) => (prev === "latest" ? "oldest" : "latest"))}
-          />
+        <View style={styles.filterHeaderRow}>
+          <SectionHeader title="거래 필터" />
+          <Pressable
+            style={styles.filterToggle}
+            onPress={() => setFiltersOpen((prev) => !prev)}
+            accessibilityRole="button"
+            accessibilityLabel={filtersOpen ? "거래 필터 닫기" : "거래 필터 열기"}
+          >
+            <Icon name="filter" size={16} color={uiColors.textStrong} />
+            <Text style={styles.filterToggleText}>{filtersOpen ? "접기" : "필터"}</Text>
+          </Pressable>
         </View>
-        <View style={styles.filterRow}>
-          {categories.map((item) => (
-            <ActionChip
-              key={item}
-              label={item === "all" ? "카테고리 전체" : item}
-              active={categoryFilter === item}
-              onPress={() => setCategoryFilter(item)}
+        {filtersOpen ? (
+          <View style={styles.filterPanel}>
+            <InputField
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              label="검색"
+              accessibilityLabel="거래 검색"
+              placeholder="설명, 카테고리, 멤버명"
             />
-          ))}
-        </View>
+            <View style={styles.filterRow}>
+              {(["all", "income", "expense"] as const).map((item) => (
+                <ActionChip
+                  key={item}
+                  label={item === "all" ? "전체" : item === "income" ? "입금" : "출금"}
+                  active={filter === item}
+                  onPress={() => setFilter(item)}
+                />
+              ))}
+              <ActionChip
+                label={sortOrder === "latest" ? "최신순" : "오래된순"}
+                active
+                onPress={() => setSortOrder((prev) => (prev === "latest" ? "oldest" : "latest"))}
+              />
+            </View>
+            <View style={styles.filterRow}>
+              {categories.map((item) => (
+                <ActionChip
+                  key={item}
+                  label={item === "all" ? "카테고리 전체" : item}
+                  active={categoryFilter === item}
+                  onPress={() => setCategoryFilter(item)}
+                />
+              ))}
+            </View>
+          </View>
+        ) : (
+          <Text style={styles.filterSummary}>필터를 열어 검색, 유형, 카테고리를 좁혀볼 수 있습니다.</Text>
+        )}
       </SectionCard>
 
       {dates.length > 0 ? (
@@ -323,6 +347,38 @@ const styles = StyleSheet.create({
     gap: 8,
     flexWrap: "wrap",
     marginTop: 10,
+  },
+  filterHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  filterToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surfaceMuted,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  filterToggleText: {
+    color: uiColors.textStrong,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  filterPanel: {
+    gap: 4,
+    marginTop: 10,
+  },
+  filterSummary: {
+    marginTop: 10,
+    color: uiColors.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
   },
   subtleText: {
     color: uiColors.textMuted,

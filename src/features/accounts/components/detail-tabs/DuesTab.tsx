@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
+import { useFeedback } from "@core/providers/FeedbackProvider"
 import { ActionChip, Icon } from "@shared/ui"
 import { availableMonths } from "../../model/fixtures"
 import { formatDate, formatMonth } from "@shared/lib/format"
@@ -19,10 +20,22 @@ export function DuesTab({
   selectedMonth: string
   onSelectMonth: (month: string) => void
 }) {
-  const { toggleDues } = useApp()
+  const { toggleDues, sendPaymentReminder, sendTransferRequest } = useApp()
+  const { showToast } = useFeedback()
 
   const monthIndex = availableMonths.indexOf(selectedMonth)
   const { dues: currentDues, paid, unpaid, exempt, progress } = getPaymentSummary(account, selectedMonth)
+
+  async function handleSendReminder(memberId: string, memberName: string, type: "payment-reminder" | "transfer-request") {
+    if (type === "payment-reminder") {
+      await sendPaymentReminder(account.id, memberId, selectedMonth)
+      showToast({ tone: "success", title: "납부 안내 전송", message: `${memberName}님께 부드럽게 안내를 보냈습니다.` })
+      return
+    }
+
+    await sendTransferRequest(account.id, memberId, selectedMonth)
+    showToast({ tone: "success", title: "송금 요청 전송", message: `${memberName}님께 바로 송금할 수 있도록 요청을 보냈습니다.` })
+  }
 
   return (
     <View style={styles.stack}>
@@ -87,13 +100,31 @@ export function DuesTab({
                     </View>
                   </View>
                   {record.status !== "exempt" && (
-                    <ActionChip
-                      label={record.status === "unpaid" ? "완납 처리" : "취소"}
-                      active={record.status === "unpaid"}
-                      onPress={() => {
-                        void toggleDues(record.memberId, selectedMonth)
-                      }}
-                    />
+                    <View style={styles.recordActions}>
+                      {record.status === "unpaid" ? (
+                        <>
+                          <ActionChip
+                            label="납부 안내"
+                            onPress={() => {
+                              void handleSendReminder(record.memberId, member.name, "payment-reminder")
+                            }}
+                          />
+                          <ActionChip
+                            label="송금 요청"
+                            onPress={() => {
+                              void handleSendReminder(record.memberId, member.name, "transfer-request")
+                            }}
+                          />
+                        </>
+                      ) : null}
+                      <ActionChip
+                        label={record.status === "unpaid" ? "완납 처리" : "취소"}
+                        active={record.status === "unpaid"}
+                        onPress={() => {
+                          void toggleDues(record.memberId, selectedMonth)
+                        }}
+                      />
+                    </View>
                   )}
                 </View>
               )
@@ -211,5 +242,11 @@ const styles = StyleSheet.create({
   memberMeta: {
     color: "#6b7280",
     fontSize: 12,
+  },
+  recordActions: {
+    flexDirection: "row",
+    gap: 6,
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
   },
 })
