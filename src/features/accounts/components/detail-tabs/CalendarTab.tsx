@@ -140,7 +140,9 @@ export function CalendarTab({
                 accessibilityLabel={`${date} 일정 보기`}
               >
                 <Text style={[styles.dayLabel, count > 0 && styles.dayLabelActive]}>{Number(date.slice(-2))}</Text>
-                {count > 0 ? <Text style={styles.eventCount}>{count}</Text> : null}
+                <View accessibilityLabel={`${date} 일정 수 ${count}건`} style={styles.eventCountSlot}>
+                  <Text style={[styles.eventCount, count === 0 && styles.eventCountPlaceholder]}>{count > 0 ? count : "0"}</Text>
+                </View>
               </Pressable>
             )
           })}
@@ -264,13 +266,14 @@ const styles = StyleSheet.create({
   dayCell: {
     width: "12.5%",
     minWidth: 38,
+    minHeight: 84,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: uiColors.border,
     backgroundColor: uiColors.surface,
-    paddingVertical: 8,
+    paddingVertical: 10,
     alignItems: "center",
-    gap: 4,
+    justifyContent: "space-between",
   },
   dayCellActive: {
     backgroundColor: uiColors.primarySoft,
@@ -288,10 +291,18 @@ const styles = StyleSheet.create({
   dayLabelActive: {
     color: uiColors.primary,
   },
+  eventCountSlot: {
+    minHeight: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   eventCount: {
     color: uiColors.textStrong,
     fontSize: 11,
     fontWeight: "700",
+  },
+  eventCountPlaceholder: {
+    opacity: 0,
   },
   list: {
     gap: 10,

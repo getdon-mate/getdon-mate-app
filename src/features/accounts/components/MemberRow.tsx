@@ -1,8 +1,16 @@
-import { memo } from "react"
-import { StyleSheet, Text, View } from "react-native"
-import { Badge, Button, uiColors } from "@shared/ui"
+import { memo, useMemo, useState } from "react"
+import { Pressable, StyleSheet, Text, View } from "react-native"
+import { Badge, Icon, uiColors } from "@shared/ui"
 import { formatMonth } from "@shared/lib/format"
 import type { DuesRecord, Member } from "../model/types"
+
+type MenuAction = {
+  label: string
+  icon: "edit" | "user" | "megaphone" | "transfer" | "trash"
+  tone?: "default" | "danger"
+  disabled?: boolean
+  onPress: () => void
+}
 
 export const MemberRow = memo(function MemberRow({
   member,
@@ -23,20 +31,61 @@ export const MemberRow = memo(function MemberRow({
   onDelegateOwner?: () => void
   delegatePending?: boolean
   onDelete?: () => void
-  reminderActions?: { label: string; onPress: () => void }[]
+  reminderActions?: { label: string; icon: "megaphone" | "transfer"; onPress: () => void }[]
   reminderNote?: string
   roleNote?: string
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
   const history = duesRecords
     .filter((record) => record.memberId === member.id)
     .slice(0, 3)
+
+  const actionItems = useMemo<MenuAction[]>(() => {
+    const items: MenuAction[] = []
+
+    if (onEdit) {
+      items.push({
+        label: "수정",
+        icon: "edit",
+        onPress: onEdit,
+      })
+    }
+
+    if (onDelegateOwner) {
+      items.push({
+        label: delegatePending ? "총무 위임 중..." : "총무 위임",
+        icon: "user",
+        disabled: delegatePending,
+        onPress: onDelegateOwner,
+      })
+    }
+
+    for (const action of reminderActions ?? []) {
+      items.push({
+        label: action.label,
+        icon: action.icon,
+        onPress: action.onPress,
+      })
+    }
+
+    if (member.role !== "총무" && onDelete) {
+      items.push({
+        label: "삭제",
+        icon: "trash",
+        tone: "danger",
+        onPress: onDelete,
+      })
+    }
+
+    return items
+  }, [delegatePending, member.role, onDelegateOwner, onDelete, onEdit, reminderActions])
 
   return (
     <View style={styles.card}>
       <View style={styles.rowBetween}>
         <View style={styles.memberIdentity}>
           <Text style={[styles.avatar, { backgroundColor: member.color }]}>{member.initials}</Text>
-          <View>
+          <View style={styles.memberIdentityText}>
             <View style={styles.memberNameRow}>
               <Text style={styles.memberName}>{member.name}</Text>
               {member.role === "총무" ? <Badge label="현재 총무" tone="primary" /> : null}
@@ -45,19 +94,44 @@ export const MemberRow = memo(function MemberRow({
             <Text style={styles.memberMeta}>{member.role} · 납부율 {rate}%</Text>
           </View>
         </View>
-        {onEdit || onDelegateOwner || onDelete ? (
-          <View style={styles.actions}>
-            {onEdit ? <Button label="수정" variant="ghost" onPress={onEdit} style={styles.actionButton} /> : null}
-            {onDelegateOwner ? (
-              <Button
-                label={delegatePending ? "위임 중..." : "총무 위임"}
-                variant="secondary"
-                onPress={onDelegateOwner}
-                style={styles.actionButtonWide}
-                disabled={delegatePending}
-              />
+        {actionItems.length > 0 ? (
+          <View style={styles.menuWrap}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="멤버 메뉴 열기"
+              onPress={() => setMenuOpen((prev) => !prev)}
+              style={[styles.menuButton, menuOpen && styles.menuButtonActive]}
+            >
+              <Icon name="ellipsis" size={16} color={uiColors.textStrong} />
+            </Pressable>
+            {menuOpen ? (
+              <View style={styles.menuPanel}>
+                {actionItems.map((action, index) => (
+                  <Pressable
+                    key={`${member.id}-${action.label}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={action.label}
+                    disabled={action.disabled}
+                    onPress={() => {
+                      setMenuOpen(false)
+                      action.onPress()
+                    }}
+                    style={[
+                      styles.menuItem,
+                      index > 0 && styles.menuItemWithDivider,
+                      action.disabled && styles.menuItemDisabled,
+                    ]}
+                  >
+                    <Icon
+                      name={action.icon}
+                      size={15}
+                      color={action.tone === "danger" ? uiColors.danger : uiColors.textStrong}
+                    />
+                    <Text style={[styles.menuText, action.tone === "danger" && styles.menuTextDanger]}>{action.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
             ) : null}
-            {member.role !== "총무" && onDelete ? <Button label="삭제" variant="danger" onPress={onDelete} style={styles.actionButton} /> : null}
           </View>
         ) : null}
       </View>
@@ -71,13 +145,6 @@ export const MemberRow = memo(function MemberRow({
       </View>
       {roleNote ? <Text style={styles.roleNote}>{roleNote}</Text> : null}
       {reminderNote ? <Text style={styles.reminderNote}>{reminderNote}</Text> : null}
-      {reminderActions && reminderActions.length > 0 ? (
-        <View style={styles.reminderActions}>
-          {reminderActions.map((action) => (
-            <Button key={action.label} label={action.label} variant="ghost" onPress={action.onPress} style={styles.reminderButton} />
-          ))}
-        </View>
-      ) : null}
     </View>
   )
 })
@@ -93,7 +160,7 @@ const styles = StyleSheet.create({
   },
   rowBetween: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 8,
   },
@@ -103,19 +170,9 @@ const styles = StyleSheet.create({
     gap: 10,
     flex: 1,
   },
-  actions: {
-    flexDirection: "row",
-    gap: 6,
-    flexWrap: "wrap",
-    justifyContent: "flex-end",
-  },
-  actionButton: {
-    minWidth: 58,
-    paddingVertical: 7,
-  },
-  actionButtonWide: {
-    minWidth: 86,
-    paddingVertical: 7,
+  memberIdentityText: {
+    gap: 2,
+    flex: 1,
   },
   avatar: {
     width: 32,
@@ -144,14 +201,56 @@ const styles = StyleSheet.create({
     color: uiColors.textMuted,
     fontSize: 12,
   },
-  reminderActions: {
-    flexDirection: "row",
-    gap: 8,
-    flexWrap: "wrap",
+  menuWrap: {
+    position: "relative",
   },
-  reminderButton: {
-    minWidth: 82,
-    paddingVertical: 7,
+  menuButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  menuButtonActive: {
+    borderColor: uiColors.primaryBorder,
+    backgroundColor: uiColors.primarySoft,
+  },
+  menuPanel: {
+    position: "absolute",
+    top: 40,
+    right: 0,
+    minWidth: 152,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surface,
+    overflow: "hidden",
+    zIndex: 10,
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  menuItemWithDivider: {
+    borderTopWidth: 1,
+    borderTopColor: uiColors.border,
+  },
+  menuItemDisabled: {
+    opacity: 0.5,
+  },
+  menuText: {
+    color: uiColors.textStrong,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  menuTextDanger: {
+    color: uiColors.danger,
   },
   reminderNote: {
     color: uiColors.primary,

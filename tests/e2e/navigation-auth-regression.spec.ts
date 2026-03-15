@@ -124,7 +124,7 @@ test("8) 게시판 글과 댓글 작성이 동작한다", async ({ page }) => {
   await expect(page.getByText("e2e 공지")).toBeVisible()
 
   await page.getByPlaceholder("댓글을 남겨보세요.").first().fill("e2e 댓글 확인")
-  await page.getByRole("button", { name: "댓글 등록" }).first().click()
+  await page.getByLabel("댓글 전송").first().click()
   await expect(page.getByText("e2e 댓글 확인")).toBeVisible()
 })
 
@@ -142,7 +142,8 @@ test("9) 리마인드 전송 후 알림센터에서 확인할 수 있다", async
   await loginAsTestUser(page)
   await openFirstAccountDetail(page)
   await page.getByText("멤버", { exact: true }).last().click()
-  await page.getByRole("button", { name: "납부 안내" }).first().click()
+  await page.getByLabel("멤버 메뉴 열기").nth(2).click()
+  await page.getByRole("button", { name: "납부 안내" }).click()
   await expect(page.getByText("납부 안내 전송")).toBeVisible()
 
   await page.getByLabel("목록으로 이동").click()
@@ -222,6 +223,17 @@ test("10-4) 멤버 검색과 역할 필터가 함께 동작한다", async ({ pag
 
   await expect(page.getByText("이승우")).toBeVisible()
   await expect(page.getByText("박소연")).toHaveCount(0)
+})
+
+test("10-5) 통계 추이를 누르면 툴팁으로 월별 금액을 볼 수 있다", async ({ page }) => {
+  await loginAsTestUser(page)
+  await openFirstAccountDetail(page)
+  await page.getByText("통계", { exact: true }).last().click()
+
+  await page.getByLabel("2026년 3월 추이 보기").click()
+
+  await expect(page.getByText("입금 100,000원")).toBeVisible()
+  await expect(page.getByText("출금 47,500원")).toBeVisible()
 })
 
 test("11) 목록에서 새 모임통장 개설 화면 진입", async ({ page }) => {

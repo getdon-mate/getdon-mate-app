@@ -79,6 +79,7 @@ const studyBoardPosts: BoardPost[] = [
     createdAt: "2026-03-04T09:00:00.000Z",
     authorUserId: "u1",
     authorName: "김지현",
+    likedByUserIds: ["u1", "u2"],
     comments: [
       {
         id: "comment1",
@@ -103,6 +104,7 @@ const studyBoardPosts: BoardPost[] = [
     createdAt: "2026-03-03T12:00:00.000Z",
     authorUserId: "u1",
     authorName: "김지현",
+    likedByUserIds: [],
     comments: [],
   },
 ]
@@ -116,6 +118,7 @@ const hikingBoardPosts: BoardPost[] = [
     createdAt: "2026-03-02T07:30:00.000Z",
     authorUserId: "u1",
     authorName: "김지현",
+    likedByUserIds: ["u1"],
     comments: [],
   },
 ]

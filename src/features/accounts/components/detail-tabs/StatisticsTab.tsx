@@ -27,6 +27,8 @@ export function StatisticsTab({ account }: { account: GroupAccount }) {
   const summary = getStatisticsSummary(account)
   const [selectedMonth, setSelectedMonth] = useState<"all" | string>("all")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [activeTrendMonth, setActiveTrendMonth] = useState<string | null>(null)
+  const [activeBreakdownCategory, setActiveBreakdownCategory] = useState<string | null>(null)
   const visibleTrend = useMemo(
     () => (selectedMonth === "all" ? trend : trend.filter((item) => item.month === selectedMonth)),
     [selectedMonth, trend]
@@ -38,6 +40,14 @@ export function StatisticsTab({ account }: { account: GroupAccount }) {
     [breakdown, selectedCategory]
   )
   const spotlightCategory = focusedCategory ?? breakdown[0] ?? null
+  const activeTrendPoint = useMemo(
+    () => visibleTrend.find((item) => item.month === activeTrendMonth) ?? null,
+    [activeTrendMonth, visibleTrend]
+  )
+  const activeBreakdownPoint = useMemo(
+    () => breakdown.find((item) => item.category === activeBreakdownCategory) ?? null,
+    [activeBreakdownCategory, breakdown]
+  )
   const summaryCards = [
     { label: "순유입", value: formatKRW(summary.net) },
     { label: "총 출금", value: formatKRW(summary.expense) },
@@ -77,8 +87,24 @@ export function StatisticsTab({ account }: { account: GroupAccount }) {
             <Text style={styles.selectedPeriodLabel}>
               선택 기간 · {selectedMonth === "all" ? "전체" : formatMonth(selectedMonth)}
             </Text>
+            {activeTrendPoint ? (
+              <View style={styles.tooltipCard}>
+                <Text style={styles.tooltipTitle}>{formatMonth(activeTrendPoint.month)}</Text>
+                <Text style={styles.tooltipValue}>입금 {formatKRW(activeTrendPoint.income)}</Text>
+                <Text style={styles.tooltipValue}>출금 {formatKRW(activeTrendPoint.expense)}</Text>
+                <Text style={styles.tooltipMeta}>순변동 {formatKRW(activeTrendPoint.income - activeTrendPoint.expense)}</Text>
+              </View>
+            ) : null}
             {visibleTrend.map((point) => (
-              <View key={point.month} style={styles.trendRow}>
+              <Pressable
+                key={point.month}
+                style={styles.trendRow}
+                accessibilityRole="button"
+                accessibilityLabel={`${formatMonth(point.month)} 추이 보기`}
+                onPress={() => setActiveTrendMonth(point.month)}
+                onHoverIn={() => setActiveTrendMonth(point.month)}
+                onHoverOut={() => setActiveTrendMonth((prev) => (prev === point.month ? null : prev))}
+              >
                 <Text style={styles.rowLabel}>{getTrendRowLabel(point.month)}</Text>
                 <View style={styles.barTrack}>
                   <View style={[styles.incomeBar, { width: `${(point.income / maxAmount) * 100}%` }]} />
@@ -86,7 +112,7 @@ export function StatisticsTab({ account }: { account: GroupAccount }) {
                 <View style={styles.barTrack}>
                   <View style={[styles.expenseBar, { width: `${(point.expense / maxAmount) * 100}%` }]} />
                 </View>
-              </View>
+              </Pressable>
             ))}
             <View style={styles.legendRow}>
               <Text style={styles.legendText}>파랑: 입금</Text>
@@ -112,12 +138,30 @@ export function StatisticsTab({ account }: { account: GroupAccount }) {
             ) : (
               <Text style={styles.breakdownHint}>카테고리를 누르면 비중을 더 자세히 볼 수 있습니다.</Text>
             )}
+            {activeBreakdownPoint ? (
+              <View style={styles.tooltipCard}>
+                <Text style={styles.tooltipTitle}>{activeBreakdownPoint.category}</Text>
+                <Text style={styles.tooltipValue}>지출 {formatKRW(activeBreakdownPoint.amount)}</Text>
+                <Text style={styles.tooltipMeta}>비중 {activeBreakdownPoint.share}%</Text>
+              </View>
+            ) : null}
             {breakdown.map((item, index) => {
               const palette = breakdownPalette[index % breakdownPalette.length]
               const active = selectedCategory === item.category
 
               return (
-                <Pressable key={item.category} style={[styles.breakdownRow, active && styles.breakdownRowActive]} onPress={() => setSelectedCategory(item.category)}>
+                <Pressable
+                  key={item.category}
+                  style={[styles.breakdownRow, active && styles.breakdownRowActive]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${item.category} 비중 보기`}
+                  onPress={() => {
+                    setSelectedCategory(item.category)
+                    setActiveBreakdownCategory(item.category)
+                  }}
+                  onHoverIn={() => setActiveBreakdownCategory(item.category)}
+                  onHoverOut={() => setActiveBreakdownCategory((prev) => (prev === item.category ? null : prev))}
+                >
                   <View style={styles.breakdownLabelWrap}>
                     <Text style={[styles.rowLabel, { color: palette.text }]}>{item.category}</Text>
                     <Text style={styles.breakdownMeta}>{formatKRW(item.amount)}</Text>
@@ -187,6 +231,29 @@ const styles = StyleSheet.create({
     color: uiColors.textStrong,
     fontSize: 18,
     fontWeight: "800",
+  },
+  tooltipCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: uiColors.borderStrong,
+    backgroundColor: uiColors.surface,
+    padding: 12,
+    gap: 3,
+  },
+  tooltipTitle: {
+    color: uiColors.textStrong,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  tooltipValue: {
+    color: uiColors.textStrong,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  tooltipMeta: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    fontWeight: "600",
   },
   trendRow: {
     gap: 6,

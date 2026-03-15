@@ -30,6 +30,9 @@ const mockUpdateBoardPost = jest.fn(async () => undefined)
 const mockDeleteBoardPost = jest.fn(async () => undefined)
 const mockUpdateBoardComment = jest.fn(async () => undefined)
 const mockDeleteBoardComment = jest.fn(async () => undefined)
+const mockToggleBoardPostLike = jest.fn(async () => undefined)
+const mockUpdateMember = jest.fn(async () => undefined)
+const mockDeleteMember = jest.fn(async () => undefined)
 const mockShowToast = jest.fn()
 const mockConfirm = jest.fn(async () => true)
 const mockConfirmDanger = jest.fn(async () => true)
@@ -50,8 +53,8 @@ jest.mock("@shared/ui/primitives/Icon", () => ({
 jest.mock("@core/providers/AppProvider", () => ({
   useApp: () => ({
     createMember: mockCreateMember,
-    updateMember: jest.fn(async () => undefined),
-    deleteMember: jest.fn(async () => undefined),
+    updateMember: mockUpdateMember,
+    deleteMember: mockDeleteMember,
     delegateManager: mockDelegateManager,
     updateAutoTransfer: jest.fn(async () => undefined),
     updateAccount: jest.fn(async () => undefined),
@@ -72,6 +75,7 @@ jest.mock("@core/providers/AppProvider", () => ({
     deleteBoardPost: mockDeleteBoardPost,
     updateBoardComment: mockUpdateBoardComment,
     deleteBoardComment: mockDeleteBoardComment,
+    toggleBoardPostLike: mockToggleBoardPostLike,
     isMutating: mockIsMutating,
   }),
   useAppAuth: () => ({
@@ -104,6 +108,9 @@ describe("account management tabs", () => {
     mockDeleteBoardPost.mockClear()
     mockUpdateBoardComment.mockClear()
     mockDeleteBoardComment.mockClear()
+    mockToggleBoardPostLike.mockClear()
+    mockUpdateMember.mockClear()
+    mockDeleteMember.mockClear()
     mockShowToast.mockClear()
     mockConfirm.mockClear()
     mockConfirmDanger.mockClear()
@@ -150,9 +157,11 @@ describe("account management tabs", () => {
       ),
     }
 
-    const { getAllByText } = render(<MembersTab account={account} />)
+    const { getAllByLabelText, getByRole } = render(<MembersTab account={account} />)
 
-    expect(getAllByText("총무 위임").length).toBeGreaterThan(0)
+    fireEvent.press(getAllByLabelText("멤버 메뉴 열기")[0])
+
+    expect(getByRole("button", { name: "총무 위임" })).toBeTruthy()
   })
 
   test("transaction filters stay collapsed until the filter icon is pressed", () => {
@@ -244,9 +253,10 @@ describe("account management tabs", () => {
   })
 
   test("members tab can send a transfer request for unpaid members", async () => {
-    const { getAllByText } = render(<MembersTab account={defaultAccounts[0]} />)
+    const { getAllByLabelText, getByRole } = render(<MembersTab account={defaultAccounts[0]} />)
 
-    fireEvent.press(getAllByText("송금 요청")[0])
+    fireEvent.press(getAllByLabelText("멤버 메뉴 열기")[2])
+    fireEvent.press(getByRole("button", { name: "송금 요청" }))
 
     expect(mockSendTransferRequest).toHaveBeenCalledWith("acc1", "m3", "2026-03")
     await waitFor(() =>
@@ -263,6 +273,28 @@ describe("account management tabs", () => {
     const { getByText } = render(<MembersTab account={defaultAccounts[0]} />)
 
     expect(getByText(/최근 안내/)).toBeTruthy()
+  })
+
+  test("members tab opens add flow in a modal instead of showing the add form inline", () => {
+    const { queryByText, getByRole, getByText } = render(<MembersTab account={defaultAccounts[0]} />)
+
+    expect(queryByText("새 멤버 추가")).toBeNull()
+    expect(queryByText("멤버 수정")).toBeNull()
+
+    fireEvent.press(getByRole("button", { name: "멤버 추가" }))
+
+    expect(getByText("새 멤버 추가")).toBeTruthy()
+  })
+
+  test("members tab collapses card actions into an overflow menu", () => {
+    const { getAllByLabelText, getByRole, queryByRole } = render(<MembersTab account={defaultAccounts[0]} />)
+
+    expect(queryByRole("button", { name: "총무 위임" })).toBeNull()
+
+    fireEvent.press(getAllByLabelText("멤버 메뉴 열기")[1])
+
+    expect(getByRole("button", { name: "수정" })).toBeTruthy()
+    expect(getByRole("button", { name: "총무 위임" })).toBeTruthy()
   })
 
   test("calendar tab can move between months and focus matching events", () => {
@@ -289,6 +321,13 @@ describe("account management tabs", () => {
     expect(getByLabelText("이전 달 보기").props.accessibilityState).toEqual(expect.objectContaining({ disabled: true }))
     fireEvent.press(getByLabelText("이전 달 보기"))
     expect(getByText("2026년 2월")).toBeTruthy()
+  })
+
+  test("calendar tab keeps empty days on the same fixed cell height as days with schedules", () => {
+    const { getByLabelText } = render(<CalendarTab account={defaultAccounts[0]} />)
+
+    expect(getByLabelText("2026-03-01 일정 수 0건")).toBeTruthy()
+    expect(getByLabelText("2026-03-02 일정 수 1건")).toBeTruthy()
   })
 
   test("calendar tab exposes quick entry actions for schedule-related work", () => {
@@ -336,6 +375,21 @@ describe("account management tabs", () => {
     expect(getByDisplayValue("마감일 전까지 회비를 확인해주세요. 필요한 내용은 댓글로 남겨주세요.")).toBeTruthy()
   })
 
+  test("board tab uses an inline send action for comments instead of a large submit button", () => {
+    const { getAllByLabelText, queryByRole } = render(<BoardTab account={defaultAccounts[0]} />)
+
+    expect(getAllByLabelText("댓글 전송").length).toBeGreaterThan(0)
+    expect(queryByRole("button", { name: "댓글 등록" })).toBeNull()
+  })
+
+  test("board tab can toggle likes on a post", () => {
+    const { getAllByLabelText } = render(<BoardTab account={defaultAccounts[0]} />)
+
+    fireEvent.press(getAllByLabelText("게시글 좋아요")[0])
+
+    expect(mockToggleBoardPostLike).toHaveBeenCalledWith("acc1", "post1")
+  })
+
   test("statistics tab empty state uses shorter operational copy", () => {
     const emptyStatsAccount = {
       ...defaultAccounts[0],
@@ -357,6 +411,16 @@ describe("account management tabs", () => {
 
     expect(getByText("선택 기간 · 2026년 2월")).toBeTruthy()
     expect(queryByText("2026년 3월")).toBeNull()
+  })
+
+  test("statistics tab shows a tooltip when a trend row is pressed", () => {
+    const { getByLabelText, getAllByText } = render(<StatisticsTab account={defaultAccounts[0]} />)
+
+    fireEvent.press(getByLabelText("2026년 3월 추이 보기"))
+
+    expect(getAllByText("2026년 3월").length).toBeGreaterThan(0)
+    expect(getAllByText("입금 100,000원").length).toBeGreaterThan(0)
+    expect(getAllByText("출금 47,500원").length).toBeGreaterThan(0)
   })
 
   test("statistics tab can focus a single category from the breakdown rows", () => {
@@ -398,6 +462,8 @@ describe("account management tabs", () => {
   test("board tab shows author controls, profile badges, and comment dividers", () => {
     const { getByLabelText, getByTestId } = render(<BoardTab account={defaultAccounts[0]} />)
 
+    fireEvent.press(getByLabelText("이번 주 스터디 장소 안내 게시글 메뉴 열기"))
+
     expect(getByLabelText("이번 주 스터디 장소 안내 게시글 수정")).toBeTruthy()
     expect(getByLabelText("이번 주 스터디 장소 안내 게시글 삭제")).toBeTruthy()
     expect(getByLabelText("김지현 댓글 수정")).toBeTruthy()
@@ -423,9 +489,10 @@ describe("account management tabs", () => {
   })
 
   test("members tab uses explicit confirmation copy for manager delegation", async () => {
-    const { getAllByText } = render(<MembersTab account={defaultAccounts[0]} />)
+    const { getAllByLabelText, getByRole } = render(<MembersTab account={defaultAccounts[0]} />)
 
-    fireEvent.press(getAllByText("총무 위임")[0])
+    fireEvent.press(getAllByLabelText("멤버 메뉴 열기")[1])
+    fireEvent.press(getByRole("button", { name: "총무 위임" }))
 
     await waitFor(() =>
       expect(mockConfirm).toHaveBeenCalledWith(
@@ -467,11 +534,13 @@ describe("account management tabs", () => {
   })
 
   test("members tab validates phone number format before submit", async () => {
-    const { getByDisplayValue, getByRole, getByText, getByPlaceholderText } = render(<MembersTab account={defaultAccounts[0]} />)
+    const { getByDisplayValue, getByRole, getAllByRole, getByText, getByPlaceholderText } = render(<MembersTab account={defaultAccounts[0]} />)
+
+    fireEvent.press(getByRole("button", { name: "멤버 추가" }))
 
     fireEvent.changeText(getByPlaceholderText("멤버 이름"), "새 멤버")
     fireEvent.changeText(getByPlaceholderText("010-0000-0000"), "010")
-    fireEvent.press(getByRole("button", { name: "멤버 추가" }))
+    fireEvent.press(getAllByRole("button", { name: "멤버 추가" }).at(-1)!)
 
     expect(getByText("연락처 형식을 확인해주세요.")).toBeTruthy()
     expect(mockCreateMember).not.toHaveBeenCalled()

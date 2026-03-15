@@ -82,6 +82,7 @@ export interface BoardPost {
   createdAt: string
   authorUserId?: string
   authorName: string
+  likedByUserIds: string[]
   comments: BoardComment[]
 }
 

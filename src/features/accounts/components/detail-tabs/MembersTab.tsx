@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react"
-import { StyleSheet, Text, View } from "react-native"
+import { Modal, Pressable, StyleSheet, Text, View } from "react-native"
 import { useApp, useAppAuth } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validatePhoneNumber } from "@shared/lib/validation"
-import { ActionChip, Button, InputField, uiColors } from "@shared/ui"
+import { ActionChip, Button, Icon, InputField, uiColors, uiRadius } from "@shared/ui"
 import { getMemberPaymentRate } from "../../model/member-utils"
 import { getLatestReminderForMember } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"
@@ -13,7 +13,6 @@ import { SectionCard } from "../SectionCard"
 import { SectionHeader } from "../SectionHeader"
 
 type MemberSort = "name" | "payment-rate"
-
 type RoleFilter = "all" | "총무" | "멤버"
 
 export function MembersTab({ account }: { account: GroupAccount }) {
@@ -30,6 +29,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
   const [sortBy, setSortBy] = useState<MemberSort>("payment-rate")
   const [submitting, setSubmitting] = useState(false)
   const [delegatingId, setDelegatingId] = useState<string | null>(null)
+  const [addModalOpen, setAddModalOpen] = useState(false)
 
   const avgRate =
     account.members.reduce((sum, member) => sum + getMemberPaymentRate(account.duesRecords, member.id), 0) /
@@ -90,6 +90,16 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     setPhoneError(undefined)
   }
 
+  function handleOpenAddModal() {
+    resetForm()
+    setAddModalOpen(true)
+  }
+
+  function handleCloseAddModal() {
+    setAddModalOpen(false)
+    resetForm()
+  }
+
   async function handleSubmit() {
     if (submitting) return
     const nextNameError = requireText(name, "멤버 이름을 입력해주세요.") ?? undefined
@@ -119,7 +129,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
 
       await createMember(account.id, payload)
       showToast({ tone: "success", title: "추가 완료", message: "새 멤버를 등록했습니다." })
-      resetForm()
+      handleCloseAddModal()
     } finally {
       setSubmitting(false)
     }
@@ -221,47 +231,49 @@ export function MembersTab({ account }: { account: GroupAccount }) {
             <ActionChip label="납부율순" active={sortBy === "payment-rate"} onPress={() => setSortBy("payment-rate")} />
             <ActionChip label="이름순" active={sortBy === "name"} onPress={() => setSortBy("name")} />
           </View>
+          <Button label="멤버 추가" onPress={handleOpenAddModal} style={styles.addButton} />
         </View>
       </SectionCard>
 
-      <SectionCard>
-        <Text style={styles.sectionTitle}>{editingMember ? "멤버 수정" : "멤버 추가"}</Text>
-        <View style={styles.formStack}>
-          <InputField
-            value={name}
-            onChangeText={(value) => {
-              setName(value)
-              if (nameError) setNameError(undefined)
-            }}
-            label="이름"
-            placeholder="멤버 이름"
-            editable={!submitting}
-            error={nameError}
-          />
-          <InputField
-            value={phone}
-            onChangeText={(value) => {
-              setPhone(value)
-              if (phoneError) setPhoneError(undefined)
-            }}
-            label="연락처"
-            placeholder="010-0000-0000"
-            editable={!submitting}
-            error={phoneError}
-          />
-          <Text style={styles.formHint}>총무만 위임할 수 있고, 현재 총무는 삭제할 수 없습니다.</Text>
-          <View style={styles.actionRow}>
-            {editingMember ? <Button label="편집 취소" variant="ghost" onPress={resetForm} style={styles.actionButton} disabled={submitting} /> : null}
-            <Button
-              label={submitting ? "처리 중..." : editingMember ? "멤버 수정" : "멤버 추가"}
-              variant="primary"
-              onPress={() => void handleSubmit()}
-              style={styles.actionButton}
-              disabled={submitting}
+      {editingMember ? (
+        <SectionCard>
+          <Text style={styles.sectionTitle}>멤버 수정</Text>
+          <View style={styles.formStack}>
+            <InputField
+              value={name}
+              onChangeText={(value) => {
+                setName(value)
+                if (nameError) setNameError(undefined)
+              }}
+              label="이름"
+              placeholder="멤버 이름"
+              editable={!submitting}
+              error={nameError}
             />
+            <InputField
+              value={phone}
+              onChangeText={(value) => {
+                setPhone(value)
+                if (phoneError) setPhoneError(undefined)
+              }}
+              label="연락처"
+              placeholder="010-0000-0000"
+              editable={!submitting}
+              error={phoneError}
+            />
+            <View style={styles.actionRow}>
+              <Button label="취소" variant="ghost" onPress={resetForm} style={styles.actionButton} disabled={submitting} />
+              <Button
+                label={submitting ? "처리 중..." : "멤버 수정"}
+                variant="primary"
+                onPress={() => void handleSubmit()}
+                style={styles.actionButton}
+                disabled={submitting}
+              />
+            </View>
           </View>
-        </View>
-      </SectionCard>
+        </SectionCard>
+      ) : null}
 
       {visibleMembers.length > 0 ? (
         <SectionCard>
@@ -292,12 +304,14 @@ export function MembersTab({ account }: { account: GroupAccount }) {
                       ? [
                           {
                             label: "납부 안내",
+                            icon: "megaphone" as const,
                             onPress: () => {
                               void handleReminder(member.id, member.name, "payment-reminder")
                             },
                           },
                           {
                             label: "송금 요청",
+                            icon: "transfer" as const,
                             onPress: () => {
                               void handleReminder(member.id, member.name, "transfer-request")
                             },
@@ -332,6 +346,53 @@ export function MembersTab({ account }: { account: GroupAccount }) {
           }}
         />
       )}
+
+      <Modal transparent animationType="fade" visible={addModalOpen} onRequestClose={handleCloseAddModal}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.sectionTitle}>새 멤버 추가</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel="멤버 추가 닫기" onPress={handleCloseAddModal} style={styles.closeButton}>
+                <Icon name="close" size={16} color={uiColors.textStrong} />
+              </Pressable>
+            </View>
+            <View style={styles.formStack}>
+              <InputField
+                value={name}
+                onChangeText={(value) => {
+                  setName(value)
+                  if (nameError) setNameError(undefined)
+                }}
+                label="이름"
+                placeholder="멤버 이름"
+                editable={!submitting}
+                error={nameError}
+              />
+              <InputField
+                value={phone}
+                onChangeText={(value) => {
+                  setPhone(value)
+                  if (phoneError) setPhoneError(undefined)
+                }}
+                label="연락처"
+                placeholder="010-0000-0000"
+                editable={!submitting}
+                error={phoneError}
+              />
+              <View style={styles.actionRow}>
+                <Button label="취소" variant="ghost" onPress={handleCloseAddModal} style={styles.actionButton} disabled={submitting} />
+                <Button
+                  label={submitting ? "처리 중..." : "멤버 추가"}
+                  variant="primary"
+                  onPress={() => void handleSubmit()}
+                  style={styles.actionButton}
+                  disabled={submitting}
+                />
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -351,6 +412,10 @@ const styles = StyleSheet.create({
   formStack: {
     gap: 8,
     marginTop: 10,
+  },
+  addButton: {
+    alignSelf: "flex-start",
+    marginTop: 4,
   },
   filterRow: {
     flexDirection: "row",
@@ -379,9 +444,33 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: uiColors.text,
   },
-  formHint: {
-    color: uiColors.textMuted,
-    fontSize: 12,
-    lineHeight: 17,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: uiColors.overlayStrong,
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  modalCard: {
+    borderRadius: uiRadius.lg,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surface,
+    padding: 16,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: uiColors.surfaceMuted,
   },
 })

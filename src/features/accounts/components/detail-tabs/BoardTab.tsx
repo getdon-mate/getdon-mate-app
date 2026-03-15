@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react"
-import { Pressable, StyleSheet, Text, View } from "react-native"
+import { Pressable, Share, StyleSheet, Text, TextInput, View } from "react-native"
 import { useApp, useAppAuth } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
+import { copyText } from "@shared/lib/clipboard"
 import { formatActivityTimestamp } from "@shared/lib/format"
 import { requireText } from "@shared/lib/validation"
 import { ActionChip, Button, Icon, InputField, ToggleSwitch, uiColors, uiRadius } from "@shared/ui"
@@ -94,29 +95,67 @@ function CommentItem({
           ) : null}
         </View>
         {isEditing ? (
-          <View style={styles.commentEditStack}>
-            <InputField
-              value={draft}
-              onChangeText={onChangeDraft}
-              label="댓글 수정"
-              placeholder="댓글을 정리해보세요."
-              containerStyle={styles.compactField}
-              inputStyle={styles.compactInput}
-            />
-            <View style={styles.commentEditActions}>
-              <Button label="취소" variant="ghost" onPress={onCancelEdit} style={styles.commentSecondaryButton} />
-              <Button
-                label={isMutating ? "저장 중..." : "댓글 저장"}
-                onPress={onSubmit}
-                style={styles.commentPrimaryButton}
-                disabled={!draft.trim() || isMutating}
-              />
-            </View>
-          </View>
+          <CommentComposer
+            value={draft}
+            onChangeText={onChangeDraft}
+            placeholder="댓글을 정리해보세요."
+            isEditing
+            isMutating={isMutating}
+            onCancel={onCancelEdit}
+            onSubmit={onSubmit}
+          />
         ) : (
           <Text style={styles.commentBody}>{comment.body}</Text>
         )}
       </View>
+    </View>
+  )
+}
+
+function CommentComposer({
+  value,
+  placeholder,
+  isEditing,
+  isMutating,
+  onChangeText,
+  onCancel,
+  onSubmit,
+}: {
+  value: string
+  placeholder: string
+  isEditing: boolean
+  isMutating: boolean
+  onChangeText: (value: string) => void
+  onCancel?: () => void
+  onSubmit: () => void
+}) {
+  return (
+    <View style={styles.commentComposer}>
+      <Text style={styles.commentComposerLabel}>{isEditing ? "댓글 수정" : "댓글"}</Text>
+      <View style={styles.commentComposerRow}>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          accessibilityLabel={isEditing ? "댓글 수정" : "댓글"}
+          placeholder={placeholder}
+          placeholderTextColor={uiColors.textSoft}
+          style={styles.commentComposerInput}
+        />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="댓글 전송"
+          disabled={!value.trim() || isMutating}
+          onPress={onSubmit}
+          style={[styles.commentSendButton, (!value.trim() || isMutating) && styles.commentSendButtonDisabled]}
+        >
+          <Icon name="send" size={16} color={!value.trim() || isMutating ? uiColors.textSoft : uiColors.primary} />
+        </Pressable>
+      </View>
+      {isEditing && onCancel ? (
+        <Pressable accessibilityRole="button" accessibilityLabel="댓글 수정 취소" onPress={onCancel} style={styles.commentCancelButton}>
+          <Text style={styles.commentCancelText}>취소</Text>
+        </Pressable>
+      ) : null}
     </View>
   )
 }
@@ -132,6 +171,9 @@ function PostCard({
   onSubmitComment,
   onStartEditPost,
   onDeletePost,
+  onToggleLike,
+  onCopyLink,
+  onSharePost,
   onStartEditComment,
   onCancelEditComment,
   onDeleteComment,
@@ -146,12 +188,17 @@ function PostCard({
   onSubmitComment: () => void
   onStartEditPost: () => void
   onDeletePost: () => void
+  onToggleLike: () => void
+  onCopyLink: () => void
+  onSharePost: () => void
   onStartEditComment: (comment: BoardComment) => void
   onCancelEditComment: () => void
   onDeleteComment: (commentId: string) => void
 }) {
   const ownPost = post.authorUserId != null && post.authorUserId === currentUserId
   const profile = getProfileMeta(account, post.authorName, post.authorUserId)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const liked = currentUserId != null && post.likedByUserIds.includes(currentUserId)
 
   return (
     <SectionCard key={post.id}>
@@ -171,19 +218,64 @@ function PostCard({
           </View>
         </View>
         {ownPost ? (
-          <View style={styles.inlineActions}>
-            <Pressable onPress={onStartEditPost} accessibilityRole="button" accessibilityLabel={`${post.title} 게시글 수정`} style={styles.inlineIconButton}>
-              <Icon name="edit" size={15} color={uiColors.textMuted} />
+          <View style={styles.postMenuWrap}>
+            <Pressable
+              onPress={() => setMenuOpen((prev) => !prev)}
+              accessibilityRole="button"
+              accessibilityLabel={`${post.title} 게시글 메뉴 열기`}
+              style={[styles.inlineIconButton, menuOpen && styles.inlineIconButtonActive]}
+            >
+              <Icon name="ellipsis" size={15} color={uiColors.textStrong} />
             </Pressable>
-            <Pressable onPress={onDeletePost} accessibilityRole="button" accessibilityLabel={`${post.title} 게시글 삭제`} style={styles.inlineIconButton}>
-              <Icon name="trash" size={15} color={uiColors.danger} />
-            </Pressable>
+            {menuOpen ? (
+              <View style={styles.postMenuPanel}>
+                <Pressable
+                  onPress={() => {
+                    setMenuOpen(false)
+                    onStartEditPost()
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${post.title} 게시글 수정`}
+                  style={styles.postMenuItem}
+                >
+                  <Icon name="edit" size={14} color={uiColors.textStrong} />
+                  <Text style={styles.postMenuText}>수정</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setMenuOpen(false)
+                    onDeletePost()
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${post.title} 게시글 삭제`}
+                  style={[styles.postMenuItem, styles.postMenuItemDanger]}
+                >
+                  <Icon name="trash" size={14} color={uiColors.danger} />
+                  <Text style={styles.postMenuTextDanger}>삭제</Text>
+                </Pressable>
+              </View>
+            ) : null}
           </View>
         ) : null}
       </View>
 
       <View style={styles.postBodyPanel}>
         <Text style={styles.postBody}>{post.body}</Text>
+      </View>
+
+      <View style={styles.postActionsRow}>
+        <Pressable accessibilityRole="button" accessibilityLabel="게시글 좋아요" onPress={onToggleLike} style={styles.postActionChip}>
+          <Icon name={liked ? "heart" : "heartOutline"} size={15} color={liked ? uiColors.danger : uiColors.textStrong} />
+          <Text style={[styles.postActionText, liked && styles.postActionTextActive]}>좋아요 {post.likedByUserIds.length}</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="게시글 링크 복사" onPress={onCopyLink} style={styles.postActionChip}>
+          <Icon name="copy" size={15} color={uiColors.textStrong} />
+          <Text style={styles.postActionText}>링크 복사</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="게시글 공유" onPress={onSharePost} style={styles.postActionChip}>
+          <Icon name="share" size={15} color={uiColors.textStrong} />
+          <Text style={styles.postActionText}>공유</Text>
+        </Pressable>
       </View>
 
       <View style={styles.commentList}>
@@ -206,33 +298,23 @@ function PostCard({
         ))}
       </View>
 
-      <View style={styles.commentComposer}>
-        <InputField
-          value={commentDraft}
-          onChangeText={onChangeCommentDraft}
-          label={editingCommentId ? "댓글 수정" : "댓글"}
-          placeholder={editingCommentId ? "댓글을 정리해보세요." : "댓글을 남겨보세요."}
-          containerStyle={styles.compactField}
-          inputStyle={styles.compactInput}
-        />
-        <View style={styles.commentComposerActions}>
-          {editingCommentId ? <Button label="취소" variant="ghost" onPress={onCancelEditComment} style={styles.commentSecondaryButton} /> : null}
-          <Button
-            label={isMutating ? "등록 중..." : editingCommentId ? "댓글 저장" : "댓글 등록"}
-            variant="ghost"
-            onPress={onSubmitComment}
-            style={styles.commentPrimaryButton}
-            disabled={!commentDraft.trim() || isMutating}
-          />
-        </View>
-      </View>
+      <CommentComposer
+        value={commentDraft}
+        onChangeText={onChangeCommentDraft}
+        placeholder={editingCommentId ? "댓글을 정리해보세요." : "댓글을 남겨보세요."}
+        isEditing={editingCommentId !== null}
+        isMutating={isMutating}
+        onCancel={editingCommentId ? onCancelEditComment : undefined}
+        onSubmit={onSubmitComment}
+      />
     </SectionCard>
   )
 }
 
 export function BoardTab({ account }: { account: GroupAccount }) {
   const { currentUser } = useAppAuth()
-  const { createBoardPost, addBoardComment, updateBoardPost, deleteBoardPost, updateBoardComment, deleteBoardComment, isMutating } = useApp()
+  const { createBoardPost, addBoardComment, updateBoardPost, deleteBoardPost, updateBoardComment, deleteBoardComment, toggleBoardPostLike, isMutating } =
+    useApp()
   const { showAlert, showToast, confirmDanger } = useFeedback()
   const [composerOpen, setComposerOpen] = useState(account.boardPosts.length === 0)
   const [editingPostId, setEditingPostId] = useState<string | null>(null)
@@ -262,6 +344,10 @@ export function BoardTab({ account }: { account: GroupAccount }) {
     setTitle(template.title)
     setBody(template.body)
     setPinned(template.pinned)
+  }
+
+  function buildPostShareLink(post: BoardPost) {
+    return `https://getdon-mate.app/accounts/${account.id}/board/${post.id}`
   }
 
   async function handleCreateOrUpdatePost() {
@@ -355,6 +441,29 @@ export function BoardTab({ account }: { account: GroupAccount }) {
     showToast({ tone: "success", title: "삭제 완료", message: "댓글을 삭제했습니다." })
   }
 
+  async function handleToggleLike(post: BoardPost) {
+    await toggleBoardPostLike(account.id, post.id)
+  }
+
+  async function handleCopyPostLink(post: BoardPost) {
+    const copied = await copyText(buildPostShareLink(post))
+    if (!copied) {
+      showAlert({ title: "복사 실패", message: "링크를 복사하지 못했습니다.", tone: "danger" })
+      return
+    }
+
+    showToast({ tone: "success", title: "링크 복사", message: "게시글 링크를 복사했어요." })
+  }
+
+  async function handleSharePost(post: BoardPost) {
+    await Share.share({
+      message: `${post.title}\n${buildPostShareLink(post)}`,
+      url: buildPostShareLink(post),
+      title: post.title,
+    })
+    showToast({ tone: "success", title: "공유 준비", message: "공유할 내용을 열었습니다." })
+  }
+
   return (
     <View style={styles.stack}>
       <SectionCard>
@@ -428,6 +537,9 @@ export function BoardTab({ account }: { account: GroupAccount }) {
               onSubmitComment={() => void handleSubmitComment(post.id)}
               onStartEditPost={() => handleStartEditPost(post)}
               onDeletePost={() => void handleDeletePost(post)}
+              onToggleLike={() => void handleToggleLike(post)}
+              onCopyLink={() => void handleCopyPostLink(post)}
+              onSharePost={() => void handleSharePost(post)}
               onStartEditComment={(comment) => handleStartEditComment(post.id, comment)}
               onCancelEditComment={() => handleCancelEditComment(post.id)}
               onDeleteComment={(commentId) => void handleDeleteComment(post.id, commentId)}
@@ -447,6 +559,9 @@ export function BoardTab({ account }: { account: GroupAccount }) {
               onSubmitComment={() => void handleSubmitComment(post.id)}
               onStartEditPost={() => handleStartEditPost(post)}
               onDeletePost={() => void handleDeletePost(post)}
+              onToggleLike={() => void handleToggleLike(post)}
+              onCopyLink={() => void handleCopyPostLink(post)}
+              onSharePost={() => void handleSharePost(post)}
               onStartEditComment={(comment) => handleStartEditComment(post.id, comment)}
               onCancelEditComment={() => handleCancelEditComment(post.id)}
               onDeleteComment={(commentId) => void handleDeleteComment(post.id, commentId)}
@@ -598,8 +713,73 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  inlineIconButtonActive: {
+    borderColor: uiColors.primaryBorder,
+    backgroundColor: uiColors.primarySoft,
+  },
+  postMenuWrap: {
+    position: "relative",
+  },
+  postMenuPanel: {
+    position: "absolute",
+    top: 34,
+    right: 0,
+    minWidth: 104,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surface,
+    overflow: "hidden",
+    zIndex: 20,
+  },
+  postMenuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  postMenuItemDanger: {
+    borderTopWidth: 1,
+    borderTopColor: uiColors.border,
+  },
+  postMenuText: {
+    color: uiColors.textStrong,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  postMenuTextDanger: {
+    color: uiColors.danger,
+    fontSize: 13,
+    fontWeight: "700",
+  },
   commentList: {
     marginTop: 12,
+  },
+  postActionsRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+    marginTop: 10,
+  },
+  postActionChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surface,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  postActionText: {
+    color: uiColors.textStrong,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  postActionTextActive: {
+    color: uiColors.danger,
   },
   commentRow: {
     flexDirection: "row",
@@ -649,9 +829,52 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
   },
+  commentComposerLabel: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
+  },
   commentComposer: {
     gap: 8,
     marginTop: 10,
+  },
+  commentComposerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    borderRadius: uiRadius.md,
+    backgroundColor: uiColors.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  commentComposerInput: {
+    flex: 1,
+    minHeight: 36,
+    fontSize: 14,
+    color: uiColors.textStrong,
+    paddingVertical: 6,
+  },
+  commentSendButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: uiColors.primarySoft,
+  },
+  commentSendButtonDisabled: {
+    backgroundColor: uiColors.surfaceMuted,
+  },
+  commentCancelButton: {
+    alignSelf: "flex-end",
+    paddingHorizontal: 2,
+  },
+  commentCancelText: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
   },
   commentComposerActions: {
     flexDirection: "row",

@@ -161,6 +161,7 @@ interface AppAccountsContextType {
   deleteBoardPost: (accountId: string, postId: string) => Promise<void>
   updateBoardComment: (accountId: string, postId: string, commentId: string, data: UpdateBoardCommentInput) => Promise<void>
   deleteBoardComment: (accountId: string, postId: string, commentId: string) => Promise<void>
+  toggleBoardPostLike: (accountId: string, postId: string) => Promise<void>
   resetDemoData: () => void
 }
 
@@ -220,6 +221,7 @@ function cloneAccounts(source: GroupAccount[]): GroupAccount[] {
     reminders: account.reminders.map((item) => ({ ...item })),
     boardPosts: account.boardPosts.map((post) => ({
       ...post,
+      likedByUserIds: [...(post.likedByUserIds ?? [])],
       comments: post.comments.map((comment) => ({ ...comment })),
     })),
   }))
@@ -350,6 +352,7 @@ function createBoardPost(data: CreateBoardPostInput, authorId: string, authorNam
     createdAt: new Date().toISOString(),
     authorUserId: authorId,
     authorName,
+    likedByUserIds: [],
     comments: [],
   }
 }
@@ -1250,6 +1253,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [currentUser, runBusy]
   )
 
+  const toggleBoardPostLike = useCallback(
+    async (accountId: string, postId: string) => {
+      if (!currentUser) return
+
+      await runBusy(async () => {
+        setAccounts((prev) =>
+          prev.map((account) =>
+            account.id === accountId
+              ? {
+                  ...account,
+                  boardPosts: account.boardPosts.map((post) => {
+                    if (post.id !== postId) return post
+                    const hasLiked = post.likedByUserIds.includes(currentUser.id)
+                    return {
+                      ...post,
+                      likedByUserIds: hasLiked
+                        ? post.likedByUserIds.filter((userId) => userId !== currentUser.id)
+                        : [...post.likedByUserIds, currentUser.id],
+                    }
+                  }),
+                }
+              : account
+          )
+        )
+      })
+    },
+    [currentUser, runBusy]
+  )
+
   const updateNotificationPreferences = useCallback(async (next: NotificationPreferences) => {
     setNotificationPreferences(next)
   }, [])
@@ -1381,6 +1413,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       deleteBoardPost,
       updateBoardComment,
       deleteBoardComment,
+      toggleBoardPostLike,
       resetDemoData,
     }),
     [
@@ -1413,6 +1446,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateOneTimeDues,
       deleteBoardComment,
       deleteBoardPost,
+      toggleBoardPostLike,
       updateTransaction,
     ]
   )
