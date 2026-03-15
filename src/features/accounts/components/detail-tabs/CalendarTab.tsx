@@ -139,34 +139,8 @@ export function CalendarTab({
       </SectionCard>
 
       <SectionCard>
-        <SectionHeader title="일정 추가 바로가기" description="필요한 화면으로 이동합니다." />
-        <View style={styles.quickActionRow}>
-          <Button
-            label="회비 일정"
-            variant="secondary"
-            onPress={() => onOpenQuickAction?.("dues")}
-            accessibilityLabel="회비 일정 열기"
-            style={styles.quickActionButton}
-          />
-          <Button
-            label="거래 일정"
-            variant="ghost"
-            onPress={() => onOpenQuickAction?.("transactions")}
-            accessibilityLabel="거래 일정 열기"
-            style={styles.quickActionButton}
-          />
-          <Button
-            label="공지 일정"
-            variant="ghost"
-            onPress={() => onOpenQuickAction?.("board")}
-            accessibilityLabel="공지 일정 열기"
-            style={styles.quickActionButton}
-          />
-        </View>
-      </SectionCard>
-
-      <SectionCard>
         <SectionHeader title="선택한 날짜 일정" />
+        <Text style={styles.selectedDateHeading}>{formatDate(selectedDate)} 일정</Text>
         <Text style={styles.selectedDateLabel}>{formatDate(selectedDate)}</Text>
         <Text style={styles.selectedCountLabel}>선택 일정 {focusedEvents.length}건</Text>
         {focusedEvents.length > 0 ? (
@@ -197,6 +171,33 @@ export function CalendarTab({
         ) : (
           <EmptyStateCard title="선택한 날짜 일정이 없습니다." description="다른 날짜를 눌러 일정을 확인해보세요." />
         )}
+      </SectionCard>
+
+      <SectionCard>
+        <SectionHeader title="일정 추가 바로가기" description="필요한 화면으로 이동합니다." />
+        <View style={styles.quickActionRow}>
+          <Button
+            label="회비 일정"
+            variant="secondary"
+            onPress={() => onOpenQuickAction?.("dues")}
+            accessibilityLabel="회비 일정 열기"
+            style={styles.quickActionButton}
+          />
+          <Button
+            label="거래 일정"
+            variant="ghost"
+            onPress={() => onOpenQuickAction?.("transactions")}
+            accessibilityLabel="거래 일정 열기"
+            style={styles.quickActionButton}
+          />
+          <Button
+            label="공지 일정"
+            variant="ghost"
+            onPress={() => onOpenQuickAction?.("board")}
+            accessibilityLabel="공지 일정 열기"
+            style={styles.quickActionButton}
+          />
+        </View>
       </SectionCard>
     </View>
   )
@@ -283,10 +284,17 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   selectedDateLabel: {
-    marginTop: 10,
+    marginTop: 4,
     color: uiColors.textMuted,
     fontSize: 12,
     fontWeight: "700",
+  },
+  selectedDateHeading: {
+    marginTop: 10,
+    color: uiColors.textStrong,
+    fontSize: 17,
+    fontWeight: "800",
+    letterSpacing: -0.2,
   },
   selectedCountLabel: {
     marginTop: 4,

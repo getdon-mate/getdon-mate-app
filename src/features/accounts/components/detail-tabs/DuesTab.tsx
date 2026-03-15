@@ -62,6 +62,10 @@ export function DuesTab({
   return (
     <View style={styles.stack}>
       <SectionCard>
+        <View style={styles.summaryIntro}>
+          <Text style={styles.summaryTitle}>이번 달 납부 현황</Text>
+          <Text style={styles.summaryDescription}>미납 안내가 필요한 멤버를 먼저 확인할 수 있습니다.</Text>
+        </View>
         <View style={styles.rowBetween}>
           <Pressable
             disabled={monthIndex >= availableMonths.length - 1}
@@ -96,11 +100,11 @@ export function DuesTab({
 
         <View style={styles.summaryPillRow}>
           <View style={styles.summaryPill}>
-            <Text style={styles.summaryPillLabel}>완납</Text>
+            <Text style={styles.summaryPillLabel}>완납 멤버</Text>
             <Text style={styles.summaryPillValue}>{paid}</Text>
           </View>
           <View style={styles.summaryPill}>
-            <Text style={styles.summaryPillLabel}>미납</Text>
+            <Text style={styles.summaryPillLabel}>확인 필요</Text>
             <Text style={styles.summaryPillValue}>{unpaid}</Text>
           </View>
           <View style={styles.summaryPill}>
@@ -217,6 +221,19 @@ const styles = StyleSheet.create({
   stack: {
     gap: 14,
   },
+  summaryIntro: {
+    gap: 4,
+  },
+  summaryTitle: {
+    color: uiColors.textStrong,
+    fontSize: 17,
+    fontWeight: "800",
+  },
+  summaryDescription: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
+  },
   stackCompact: {
     gap: 10,
     marginTop: 10,
@@ -230,10 +247,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#111827",
+    color: uiColors.textStrong,
   },
   metricText: {
-    color: "#111827",
+    color: uiColors.textStrong,
     fontSize: 14,
     fontWeight: "700",
   },
@@ -251,26 +268,26 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 10,
     paddingVertical: 10,
-    backgroundColor: "#f8fafc",
+    backgroundColor: uiColors.surfaceMuted,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: uiColors.border,
     gap: 2,
     alignItems: "center",
   },
   summaryPillLabel: {
-    color: "#6b7280",
+    color: uiColors.textSoft,
     fontSize: 11,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   summaryPillValue: {
-    color: "#111827",
+    color: uiColors.textStrong,
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   progressTrack: {
     height: 10,
     borderRadius: 999,
-    backgroundColor: "#e5e7eb",
+    backgroundColor: uiColors.border,
     overflow: "hidden",
   },
   bulkActionRow: {
@@ -280,14 +297,14 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: "100%",
-    backgroundColor: "#3b82f6",
+    backgroundColor: uiColors.primary,
     borderRadius: 999,
   },
   arrowButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#f3f4f6",
+    backgroundColor: uiColors.surfaceMuted,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -308,7 +325,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    color: "#ffffff",
+    color: uiColors.surface,
     textAlign: "center",
     textAlignVertical: "center",
     fontSize: 11,
@@ -317,7 +334,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   memberName: {
-    color: "#111827",
+    color: uiColors.textStrong,
     fontSize: 14,
     fontWeight: "700",
   },
@@ -327,11 +344,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   memberMeta: {
-    color: "#6b7280",
+    color: uiColors.textMuted,
     fontSize: 12,
   },
   reminderMeta: {
-    color: "#2563eb",
+    color: uiColors.primary,
     fontSize: 11,
     fontWeight: "700",
   },

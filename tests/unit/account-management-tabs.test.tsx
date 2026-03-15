@@ -187,6 +187,7 @@ describe("account management tabs", () => {
       <DuesTab account={defaultAccounts[0]} selectedMonth="2026-03" onSelectMonth={jest.fn()} />
     )
 
+    expect(getByText("이번 달 납부 현황")).toBeTruthy()
     expect(getByText("최근 안내 · 3월 7일 납부 안내")).toBeTruthy()
   })
 
@@ -301,6 +302,8 @@ describe("account management tabs", () => {
   test("statistics tab can focus a single category from the breakdown rows", () => {
     const { getByText } = render(<StatisticsTab account={defaultAccounts[0]} />)
 
+    expect(getByText("가장 큰 지출 · 장소")).toBeTruthy()
+
     fireEvent.press(getByText("장소"))
 
     expect(getByText("선택 카테고리 · 장소")).toBeTruthy()
@@ -312,6 +315,7 @@ describe("account management tabs", () => {
 
     fireEvent.press(getByLabelText("2026-03-04 일정 보기"))
 
+    expect(getByText("3월 4일 일정")).toBeTruthy()
     expect(getByText("선택 일정 2건")).toBeTruthy()
   })
 

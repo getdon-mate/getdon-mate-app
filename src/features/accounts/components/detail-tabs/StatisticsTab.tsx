@@ -37,22 +37,27 @@ export function StatisticsTab({ account }: { account: GroupAccount }) {
     () => breakdown.find((item) => item.category === selectedCategory) ?? null,
     [breakdown, selectedCategory]
   )
+  const spotlightCategory = focusedCategory ?? breakdown[0] ?? null
+  const summaryCards = [
+    { label: "순유입", value: formatKRW(summary.net) },
+    { label: "총 출금", value: formatKRW(summary.expense) },
+    { label: "미납 인원", value: `${summary.unpaidCount}명` },
+  ]
 
   return (
     <View style={styles.stack}>
-      <View style={styles.summaryRow}>
-        <SectionCard>
-          <Text style={styles.summaryLabel}>순유입</Text>
-          <Text style={styles.summaryValue}>{formatKRW(summary.net)}</Text>
-        </SectionCard>
-        <SectionCard>
-          <Text style={styles.summaryLabel}>총 출금</Text>
-          <Text style={styles.summaryValue}>{formatKRW(summary.expense)}</Text>
-        </SectionCard>
-        <SectionCard>
-          <Text style={styles.summaryLabel}>미납 인원</Text>
-          <Text style={styles.summaryValue}>{summary.unpaidCount}명</Text>
-        </SectionCard>
+      <View style={styles.summaryBlock}>
+        <Text style={styles.summaryEyebrow}>운영 요약</Text>
+        <View style={styles.summaryRow}>
+          {summaryCards.map((card) => (
+            <View key={card.label} style={styles.summaryCardWrap}>
+              <SectionCard>
+                <Text style={styles.summaryLabel}>{card.label}</Text>
+                <Text style={styles.summaryValue}>{card.value}</Text>
+              </SectionCard>
+            </View>
+          ))}
+        </View>
       </View>
       <SectionCard>
         <SectionHeader title="월별 추이" />
@@ -97,10 +102,12 @@ export function StatisticsTab({ account }: { account: GroupAccount }) {
         <SectionHeader title="출금 카테고리 비중" />
         {breakdown.length > 0 ? (
           <View style={styles.chartStack}>
-            {focusedCategory ? (
+            {spotlightCategory ? (
               <View style={styles.focusCard}>
-                <Text style={styles.focusTitle}>선택 카테고리 · {focusedCategory.category}</Text>
-                <Text style={styles.focusMeta}>해당 카테고리 지출 {focusedCategory.share}%</Text>
+                <Text style={styles.focusTitle}>
+                  {focusedCategory ? "선택 카테고리" : "가장 큰 지출"} · {spotlightCategory.category}
+                </Text>
+                <Text style={styles.focusMeta}>해당 카테고리 지출 {spotlightCategory.share}%</Text>
               </View>
             ) : (
               <Text style={styles.breakdownHint}>카테고리를 누르면 비중을 더 자세히 볼 수 있습니다.</Text>
@@ -143,13 +150,28 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 8,
   },
+  summaryBlock: {
+    gap: 8,
+  },
+  summaryEyebrow: {
+    color: uiColors.textSoft,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.3,
+  },
   filterRow: {
     flexDirection: "row",
     gap: 8,
     flexWrap: "wrap",
   },
   summaryRow: {
+    flexDirection: "row",
     gap: 8,
+    flexWrap: "wrap",
+  },
+  summaryCardWrap: {
+    flex: 1,
+    minWidth: 108,
   },
   selectedPeriodLabel: {
     color: uiColors.textMuted,

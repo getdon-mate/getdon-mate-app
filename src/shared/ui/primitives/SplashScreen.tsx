@@ -5,8 +5,8 @@ export function SplashScreen() {
   return (
     <View style={styles.screen}>
       <Text style={styles.wordmark}>getdon mate</Text>
-      <Text style={styles.caption}>시작 준비 중</Text>
-      <Text style={styles.description}>모임통장과 알림 상태를 맞추고 있어요.</Text>
+      <Text style={styles.caption}>지금 준비 중</Text>
+      <Text style={styles.description}>회비와 일정 흐름을 정리하고 있습니다.</Text>
       <View style={styles.loadingRow}>
         <View style={styles.loadingDot} />
         <View style={styles.loadingDot} />
@@ -26,33 +26,33 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     color: uiColors.textStrong,
-    fontSize: 36,
+    fontSize: 38,
     fontWeight: "800",
-    letterSpacing: -1.2,
+    letterSpacing: -1.4,
   },
   caption: {
     marginTop: uiSpacing.sm,
     color: uiColors.textSoft,
-    fontSize: 13,
-    fontWeight: "700",
-    letterSpacing: 0.2,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
   description: {
     marginTop: uiSpacing.sm,
     color: uiColors.textMuted,
     fontSize: 13,
-    lineHeight: 20,
+    lineHeight: 19,
     textAlign: "center",
   },
   loadingRow: {
     marginTop: uiSpacing.xl,
     flexDirection: "row",
-    gap: uiSpacing.sm,
+    gap: uiSpacing.xs,
   },
   loadingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: uiColors.textSoft,
   },
 })
