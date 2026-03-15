@@ -94,15 +94,6 @@ export function AccountListScreen() {
             <Text style={[styles.sectionTitle, compact && styles.sectionTitleCompact]}>모임통장</Text>
             <Text style={styles.sectionSubtitle}>정산이 필요한 모임부터 {accounts.length}개를 보여줍니다.</Text>
           </View>
-          <Pressable
-            style={[styles.headerIconButton, isRefreshingAccounts && styles.headerIconButtonDisabled]}
-            onPress={() => void handleRefresh()}
-            accessibilityRole="button"
-            accessibilityLabel="모임통장 목록 새로고침"
-            disabled={isRefreshingAccounts}
-          >
-            <Icon name="refresh" size={18} color={uiColors.text} />
-          </Pressable>
         </View>
         <View style={styles.searchStack}>
           <InputField
@@ -113,9 +104,20 @@ export function AccountListScreen() {
             accessibilityLabel="모임통장 검색"
             containerStyle={styles.searchField}
           />
-          <View style={styles.filterRow}>
-            <ActionChip label="전체" active={filter === "all"} onPress={() => setFilter("all")} />
-            <ActionChip label="미납 2명+" active={filter === "attention"} onPress={() => setFilter("attention")} />
+          <View testID="account-list-filter-actions" style={styles.filterActionsRow}>
+            <View style={styles.filterRow}>
+              <ActionChip label="전체" active={filter === "all"} onPress={() => setFilter("all")} />
+              <ActionChip label="미납 2명+" active={filter === "attention"} onPress={() => setFilter("attention")} />
+            </View>
+            <Pressable
+              style={[styles.headerIconButton, isRefreshingAccounts && styles.headerIconButtonDisabled]}
+              onPress={() => void handleRefresh()}
+              accessibilityRole="button"
+              accessibilityLabel="모임통장 목록 새로고침"
+              disabled={isRefreshingAccounts}
+            >
+              <Icon name="refresh" size={18} color={uiColors.text} />
+            </Pressable>
           </View>
         </View>
 
@@ -217,10 +219,18 @@ const styles = StyleSheet.create({
   searchField: {
     gap: 4,
   },
+  filterActionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    flexWrap: "wrap",
+  },
   filterRow: {
     flexDirection: "row",
     gap: 8,
     flexWrap: "wrap",
+    flex: 1,
   },
   headerIconButton: {
     width: 40,

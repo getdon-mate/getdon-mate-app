@@ -146,6 +146,17 @@ describe("home global management split", () => {
     )
   })
 
+  test("account list keeps filter chips and refresh action on one horizontal row", () => {
+    const { getByTestId, getByText, getByLabelText } = render(<AccountListScreen />)
+
+    const actionRow = getByTestId("account-list-filter-actions")
+
+    expect(actionRow.props.style).toEqual(expect.objectContaining({ flexDirection: "row", alignItems: "center" }))
+    expect(getByText("전체")).toBeTruthy()
+    expect(getByText("미납 2명+")).toBeTruthy()
+    expect(getByLabelText("모임통장 목록 새로고침")).toBeTruthy()
+  })
+
   test("masked preference is reflected on the home account cards", () => {
     mockMaskAmounts = true
     const { getAllByTestId } = render(<AccountListScreen />)
