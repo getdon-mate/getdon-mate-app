@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native"
 import { useEffect, useMemo, useState } from "react"
 import { formatDate } from "@shared/lib/format"
-import { Icon, uiColors } from "@shared/ui"
+import { Button, Icon, uiColors } from "@shared/ui"
 import { getCalendarEvents, getCalendarEventsForDate } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
@@ -16,6 +16,28 @@ function getDatesForMonth(referenceMonth: string) {
 
 function getToneLabel(tone: "dues" | "transaction" | "notice") {
   return tone === "dues" ? "회비" : tone === "transaction" ? "거래" : "공지"
+}
+
+function getToneStyles(tone: "dues" | "transaction" | "notice") {
+  if (tone === "dues") {
+    return {
+      borderColor: uiColors.primaryBorder,
+      backgroundColor: uiColors.primarySoft,
+      color: uiColors.primary,
+    }
+  }
+  if (tone === "transaction") {
+    return {
+      borderColor: uiColors.warningBorder,
+      backgroundColor: uiColors.warningSoft,
+      color: uiColors.warning,
+    }
+  }
+  return {
+    borderColor: uiColors.accentBorder,
+    backgroundColor: uiColors.accentSoft,
+    color: uiColors.textStrong,
+  }
 }
 
 function shiftMonth(referenceMonth: string, offset: number) {
@@ -33,7 +55,13 @@ function getInitialDateForMonth(events: ReturnType<typeof getCalendarEvents>, mo
   return events.find((event) => event.date.startsWith(month))?.date ?? `${month}-01`
 }
 
-export function CalendarTab({ account }: { account: GroupAccount }) {
+export function CalendarTab({
+  account,
+  onOpenQuickAction,
+}: {
+  account: GroupAccount
+  onOpenQuickAction?: (target: "dues" | "transactions" | "board") => void
+}) {
   const { width } = useWindowDimensions()
   const compact = width < 390
   const events = getCalendarEvents(account)
@@ -59,7 +87,7 @@ export function CalendarTab({ account }: { account: GroupAccount }) {
   return (
     <View style={styles.stack}>
       <SectionCard>
-        <SectionHeader title="월간 일정" />
+        <SectionHeader title="월간 일정" description="회비, 거래, 공지를 한 화면에서 확인합니다." />
         <View style={styles.monthRow}>
           <Pressable
             style={styles.monthButton}
@@ -79,6 +107,17 @@ export function CalendarTab({ account }: { account: GroupAccount }) {
             <Icon name="chevronRight" size={16} color={uiColors.textStrong} />
           </Pressable>
         </View>
+        {visibleMonth !== initialMonth ? (
+          <Button
+            label="이번 달"
+            variant="ghost"
+            onPress={() => {
+              setVisibleMonth(initialMonth)
+              setSelectedDate(getInitialDateForMonth(events, initialMonth))
+            }}
+            style={styles.resetMonthButton}
+          />
+        ) : null}
         <View style={styles.grid}>
           {dates.map((date) => {
             const count = events.filter((event) => event.date === date).length
@@ -100,18 +139,60 @@ export function CalendarTab({ account }: { account: GroupAccount }) {
       </SectionCard>
 
       <SectionCard>
+        <SectionHeader title="일정 추가 바로가기" description="일정 성격에 맞는 화면으로 바로 이동합니다." />
+        <View style={styles.quickActionRow}>
+          <Button
+            label="회비 일정"
+            variant="secondary"
+            onPress={() => onOpenQuickAction?.("dues")}
+            accessibilityLabel="회비 일정 열기"
+            style={styles.quickActionButton}
+          />
+          <Button
+            label="거래 일정"
+            variant="ghost"
+            onPress={() => onOpenQuickAction?.("transactions")}
+            accessibilityLabel="거래 일정 열기"
+            style={styles.quickActionButton}
+          />
+          <Button
+            label="공지 일정"
+            variant="ghost"
+            onPress={() => onOpenQuickAction?.("board")}
+            accessibilityLabel="공지 일정 열기"
+            style={styles.quickActionButton}
+          />
+        </View>
+      </SectionCard>
+
+      <SectionCard>
         <SectionHeader title="선택한 날짜 일정" />
         <Text style={styles.selectedDateLabel}>{formatDate(selectedDate)}</Text>
         <Text style={styles.selectedCountLabel}>선택 일정 {focusedEvents.length}건</Text>
         {focusedEvents.length > 0 ? (
           <View style={styles.list}>
-            {focusedEvents.map((event) => (
-              <Pressable key={event.id} style={[styles.eventCard, compact && styles.eventCardCompact]}>
-                <Text style={styles.eventTone}>{getToneLabel(event.tone)}</Text>
-                <Text style={styles.eventTitle}>{event.title}</Text>
-                <Text style={styles.eventMeta}>{formatDate(event.date)}</Text>
-              </Pressable>
-            ))}
+            {focusedEvents.map((event) => {
+              const toneStyle = getToneStyles(event.tone)
+
+              return (
+                <Pressable key={event.id} style={[styles.eventCard, compact && styles.eventCardCompact]}>
+                  <Text
+                    style={[
+                      styles.eventTone,
+                      {
+                        borderColor: toneStyle.borderColor,
+                        backgroundColor: toneStyle.backgroundColor,
+                        color: toneStyle.color,
+                      },
+                    ]}
+                  >
+                    {getToneLabel(event.tone)}
+                  </Text>
+                  <Text style={styles.eventTitle}>{event.title}</Text>
+                  <Text style={styles.eventMeta}>{formatDate(event.date)}</Text>
+                </Pressable>
+              )
+            })}
           </View>
         ) : (
           <EmptyStateCard title="선택한 날짜 일정이 없습니다." description="다른 날짜를 눌러 일정을 확인해보세요." />
@@ -146,11 +227,24 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "800",
   },
+  resetMonthButton: {
+    alignSelf: "flex-start",
+    marginTop: 8,
+  },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
     marginTop: 12,
+  },
+  quickActionRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+    marginTop: 10,
+  },
+  quickActionButton: {
+    minWidth: 104,
   },
   dayCell: {
     width: "12.5%",

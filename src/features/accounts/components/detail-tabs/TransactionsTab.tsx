@@ -32,7 +32,7 @@ export function TransactionsTab({
   initialType?: TransactionType
   composerSignal?: number
 }) {
-  const { createTransaction, updateTransaction, deleteTransaction } = useApp()
+  const { createTransaction, updateTransaction, deleteTransaction, isMutating } = useApp()
   const { showAlert, showToast, confirm } = useFeedback()
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all")
   const [sortOrder, setSortOrder] = useState<SortOrder>("latest")
@@ -58,6 +58,17 @@ export function TransactionsTab({
   const categories = useMemo(() => {
     const unique = new Set(account.transactions.map((tx) => tx.category.trim()).filter(Boolean))
     return ["all", ...Array.from(unique)]
+  }, [account.transactions])
+
+  const recentCategories = useMemo(() => {
+    const unique = new Set<string>()
+    for (const tx of account.transactions) {
+      const trimmed = tx.category.trim()
+      if (!trimmed || unique.has(trimmed)) continue
+      unique.add(trimmed)
+      if (unique.size === 4) break
+    }
+    return Array.from(unique)
   }, [account.transactions])
 
   const filtered = useMemo(() => {
@@ -129,13 +140,13 @@ export function TransactionsTab({
 
     if (isEditing && editingId) {
       await updateTransaction(account.id, editingId, payload)
-      showToast({ tone: "success", title: "수정 완료", message: "거래내역을 수정했습니다." })
+      showToast({ tone: "success", title: "수정 완료", message: `${payload.description} 거래를 수정했습니다.` })
       resetComposer(payload.type)
       return
     }
 
     await createTransaction(account.id, payload)
-    showToast({ tone: "success", title: "등록 완료", message: "거래내역을 추가했습니다." })
+    showToast({ tone: "success", title: "등록 완료", message: `${payload.description} 거래를 추가했습니다.` })
     resetComposer(payload.type)
   }
 
@@ -151,7 +162,7 @@ export function TransactionsTab({
   async function handleDelete(transaction: Transaction) {
     const confirmed = await confirm({
       title: "거래 삭제",
-      message: "선택한 거래내역을 삭제합니다.",
+      message: `${transaction.description} 거래를 삭제합니다.`,
       confirmLabel: "삭제",
       confirmTone: "danger",
     })
@@ -161,7 +172,7 @@ export function TransactionsTab({
     if (editingId === transaction.id) {
       resetComposer(draftType)
     }
-    showToast({ tone: "success", title: "삭제 완료", message: "거래내역을 제거했습니다." })
+    showToast({ tone: "success", title: "삭제 완료", message: `${transaction.description} 거래를 제거했습니다.` })
   }
 
   return (
@@ -221,12 +232,31 @@ export function TransactionsTab({
             inputStyle={styles.compactInput}
           />
         </View>
+        {recentCategories.length > 0 ? (
+          <View style={styles.recentCategoryWrap}>
+            <Text style={styles.recentCategoryLabel}>최근 카테고리</Text>
+            <View style={styles.recentCategoryRow}>
+              {recentCategories.map((item) => (
+                <ActionChip key={item} label={item} onPress={() => setCategory(item)} />
+              ))}
+            </View>
+          </View>
+        ) : null}
         <View style={styles.formActionRow}>
-          {isEditing ? <Button label="편집 취소" variant="ghost" onPress={() => resetComposer(initialType)} style={styles.formActionButton} /> : null}
+          {isEditing ? (
+            <Button
+              label="편집 취소"
+              variant="ghost"
+              onPress={() => resetComposer(initialType)}
+              style={styles.formActionButton}
+              disabled={isMutating}
+            />
+          ) : null}
           <Button
-            label={isEditing ? "거래 수정" : draftType === "income" ? "입금 등록" : "출금 등록"}
+            label={isMutating ? "저장 중..." : isEditing ? "거래 수정" : draftType === "income" ? "입금 등록" : "출금 등록"}
             onPress={() => void handleSubmit()}
             style={styles.formActionButton}
+            disabled={isMutating}
           />
         </View>
       </SectionCard>
@@ -291,11 +321,11 @@ export function TransactionsTab({
             </View>
           </View>
         ) : (
-          <Text style={styles.filterSummary}>필터를 열어 검색, 유형, 카테고리를 좁혀볼 수 있습니다.</Text>
+          <Text style={styles.filterSummary}>필터를 열어 검색, 유형, 카테고리를 빠르게 좁혀볼 수 있습니다.</Text>
         )}
         {hasActiveFilter ? (
           <Text style={styles.activeFilterSummary}>
-            활성 필터 · {query ? "검색 적용" : "검색 없음"} · {filter === "all" ? "전체" : filter === "income" ? "입금" : "출금"} · {sortOrder === "latest" ? "최신순" : "오래된순"}
+            활성 필터 · {query ? "검색 적용" : "검색 없음"} · {filter === "all" ? "전체" : filter === "income" ? "입금" : "출금"} · {categoryFilter === "all" ? "카테고리 전체" : categoryFilter} · {sortOrder === "latest" ? "최신순" : "오래된순"}
           </Text>
         ) : null}
       </SectionCard>
@@ -309,14 +339,21 @@ export function TransactionsTab({
                 <View key={tx.id} style={styles.transactionCard}>
                   <TransactionRow account={account} tx={tx} />
                   <View style={styles.inlineActions}>
-                    <Button label="수정" variant="ghost" onPress={() => handleEdit(tx)} style={styles.inlineActionButton} />
                     <Button
-                      label="삭제"
+                      label="수정"
+                      variant="ghost"
+                      onPress={() => handleEdit(tx)}
+                      style={styles.inlineActionButton}
+                      disabled={isMutating}
+                    />
+                    <Button
+                      label={isMutating ? "처리 중..." : "삭제"}
                       variant="danger"
                       onPress={() => {
                         void handleDelete(tx)
                       }}
                       style={styles.inlineActionButton}
+                      disabled={isMutating}
                     />
                   </View>
                 </View>
@@ -369,6 +406,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 11,
     fontSize: 14,
+  },
+  recentCategoryWrap: {
+    gap: 6,
+    marginTop: 8,
+  },
+  recentCategoryLabel: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  recentCategoryRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
   },
   formActionRow: {
     flexDirection: "row",

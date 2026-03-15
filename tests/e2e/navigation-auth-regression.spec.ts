@@ -105,6 +105,15 @@ test("8) 게시판 글과 댓글 작성이 동작한다", async ({ page }) => {
   await expect(page.getByText("e2e 댓글 확인")).toBeVisible()
 })
 
+test("8-1) 게시판 템플릿으로 공지 초안을 빠르게 채울 수 있다", async ({ page }) => {
+  await loginAsTestUser(page)
+  await openFirstAccountDetail(page)
+  await page.getByText("게시판", { exact: true }).last().click()
+
+  await page.getByRole("button", { name: "회비 안내" }).click()
+  await expect(page.getByPlaceholder("예: 이번 주 모임 장소 안내")).toHaveValue("이번 달 회비 안내")
+})
+
 test("9) 리마인드 전송 후 알림센터에서 확인할 수 있다", async ({ page }) => {
   await loginAsTestUser(page)
   await openFirstAccountDetail(page)
@@ -135,6 +144,30 @@ test("10) 캘린더에서 날짜를 선택하면 해당 일정 중심으로 볼 
   await expect(page.getByText("선택한 날짜 일정")).toBeVisible()
   await page.getByLabel("이전 달 보기").click()
   await expect(page.getByText("2026년 2월")).toBeVisible()
+})
+
+test("10-1) 캘린더 바로가기에서 공지 일정 작성 화면으로 이동할 수 있다", async ({ page }) => {
+  await loginAsTestUser(page)
+  await openFirstAccountDetail(page)
+  await page.getByText("일정", { exact: true }).last().click()
+  await page.getByRole("button", { name: "공지 일정" }).click()
+  await expect(page.getByText("공지 작성")).toBeVisible()
+})
+
+test("10-2) 거래 수정 후 삭제까지 이어서 진행할 수 있다", async ({ page }) => {
+  await loginAsTestUser(page)
+  await openFirstAccountDetail(page)
+  await page.getByText("거래", { exact: true }).last().click()
+
+  await page.getByRole("button", { name: "수정" }).first().click()
+  await page.getByPlaceholder("예: 회비 입금, 모임 식비").fill("e2e 거래 수정")
+  await page.getByRole("button", { name: "거래 수정" }).click()
+  await expect(page.getByText("e2e 거래 수정 거래를 수정했습니다.")).toBeVisible()
+  await expect(page.getByText("e2e 거래 수정").first()).toBeVisible()
+
+  await page.getByRole("button", { name: "삭제" }).first().click()
+  await page.getByRole("button", { name: "삭제" }).last().click()
+  await expect(page.getByText("e2e 거래 수정 거래를 제거했습니다.")).toBeVisible()
 })
 
 test("11) 목록에서 새 모임통장 개설 화면 진입", async ({ page }) => {

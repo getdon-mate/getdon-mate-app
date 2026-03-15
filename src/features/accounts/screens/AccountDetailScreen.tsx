@@ -168,7 +168,7 @@ export function AccountDetailScreen() {
           ) : null}
           {tab === "members" ? <MembersTab account={account} /> : null}
           {tab === "statistics" ? <StatisticsTab account={account} /> : null}
-          {tab === "calendar" ? <CalendarTab account={account} /> : null}
+          {tab === "calendar" ? <CalendarTab account={account} onOpenQuickAction={setTab} /> : null}
           {tab === "board" ? <BoardTab account={account} /> : null}
           {tab === "settings" ? <SettingsTab account={account} /> : null}
         </View>

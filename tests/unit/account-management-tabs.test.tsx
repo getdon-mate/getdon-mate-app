@@ -19,8 +19,14 @@ const mockCurrentUser = {
 const mockSendPaymentReminder = jest.fn(async () => undefined)
 const mockSendTransferRequest = jest.fn(async () => undefined)
 const mockDelegateManager = jest.fn(async () => undefined)
+const mockCreateTransaction = jest.fn(async () => undefined)
+const mockUpdateTransaction = jest.fn(async () => undefined)
+const mockDeleteTransaction = jest.fn(async () => undefined)
+const mockCreateBoardPost = jest.fn(async () => undefined)
+const mockAddBoardComment = jest.fn(async () => undefined)
 const mockShowToast = jest.fn()
 const mockConfirm = jest.fn(async () => true)
+const mockOpenCalendarQuickAction = jest.fn()
 
 jest.mock("@react-navigation/native", () => ({
   useNavigation: () => ({
@@ -47,8 +53,14 @@ jest.mock("@core/providers/AppProvider", () => ({
     deleteOneTimeDues: jest.fn(async () => undefined),
     toggleOneTimeDuesRecord: jest.fn(async () => undefined),
     deleteAccount: jest.fn(async () => undefined),
+    createTransaction: mockCreateTransaction,
+    updateTransaction: mockUpdateTransaction,
+    deleteTransaction: mockDeleteTransaction,
     sendPaymentReminder: mockSendPaymentReminder,
     sendTransferRequest: mockSendTransferRequest,
+    createBoardPost: mockCreateBoardPost,
+    addBoardComment: mockAddBoardComment,
+    isMutating: false,
   }),
   useAppAuth: () => ({
     currentUser: mockCurrentUser,
@@ -70,8 +82,14 @@ describe("account management tabs", () => {
     mockSendPaymentReminder.mockClear()
     mockSendTransferRequest.mockClear()
     mockDelegateManager.mockClear()
+    mockCreateTransaction.mockClear()
+    mockUpdateTransaction.mockClear()
+    mockDeleteTransaction.mockClear()
+    mockCreateBoardPost.mockClear()
+    mockAddBoardComment.mockClear()
     mockShowToast.mockClear()
     mockConfirm.mockClear()
+    mockOpenCalendarQuickAction.mockClear()
   })
 
   test("detail tab bar exposes statistics calendar and board tabs", () => {
@@ -176,6 +194,16 @@ describe("account management tabs", () => {
     expect(getAllByText("개발자 스터디 모임 2026-02 회비 완료").length).toBeGreaterThan(0)
   })
 
+  test("calendar tab exposes quick entry actions for schedule-related work", () => {
+    const { getByRole } = render(
+      <CalendarTab account={defaultAccounts[0]} onOpenQuickAction={mockOpenCalendarQuickAction} />
+    )
+
+    fireEvent.press(getByRole("button", { name: "공지 일정 열기" }))
+
+    expect(mockOpenCalendarQuickAction).toHaveBeenCalledWith("board")
+  })
+
   test("board tab empty state uses shorter posting copy", () => {
     const emptyBoardAccount = {
       ...defaultAccounts[0],
@@ -186,6 +214,15 @@ describe("account management tabs", () => {
 
     expect(getByText("첫 공지를 남겨보세요.")).toBeTruthy()
     expect(getByText("운영 소식은 짧게 바로 올릴 수 있습니다.")).toBeTruthy()
+  })
+
+  test("board tab can apply a notice template into the composer", () => {
+    const { getByText, getByDisplayValue } = render(<BoardTab account={defaultAccounts[0]} />)
+
+    fireEvent.press(getByText("회비 안내"))
+
+    expect(getByDisplayValue("이번 달 회비 안내")).toBeTruthy()
+    expect(getByDisplayValue("마감일 전까지 회비를 확인해주세요. 필요한 내용은 댓글로 남겨주세요.")).toBeTruthy()
   })
 
   test("statistics tab empty state uses shorter operational copy", () => {
@@ -209,6 +246,15 @@ describe("account management tabs", () => {
 
     expect(getByText("선택 기간 · 2026년 2월")).toBeTruthy()
     expect(queryByText("2026년 3월")).toBeNull()
+  })
+
+  test("statistics tab can focus a single category from the breakdown rows", () => {
+    const { getByText } = render(<StatisticsTab account={defaultAccounts[0]} />)
+
+    fireEvent.press(getByText("장소"))
+
+    expect(getByText("선택 카테고리 · 장소")).toBeTruthy()
+    expect(getByText("해당 카테고리 지출 53%")).toBeTruthy()
   })
 
   test("calendar tab summarizes the selected date event count", () => {
@@ -264,5 +310,29 @@ describe("account management tabs", () => {
     expect(getByText("조건에 맞는 거래가 없습니다.")).toBeTruthy()
     expect(getByText("검색어나 필터를 조정하면 다시 거래를 볼 수 있습니다.")).toBeTruthy()
     expect(getByText("필터 초기화")).toBeTruthy()
+  })
+
+  test("transactions tab can apply recent category suggestions to the composer", () => {
+    const { getByText, getByDisplayValue } = render(<TransactionsTab account={defaultAccounts[0]} />)
+
+    fireEvent.press(getByText("간식"))
+
+    expect(getByDisplayValue("간식")).toBeTruthy()
+  })
+
+  test("transactions tab uses specific delete feedback copy", async () => {
+    const { getAllByText } = render(<TransactionsTab account={defaultAccounts[0]} />)
+
+    fireEvent.press(getAllByText("삭제")[0])
+
+    await waitFor(() => expect(mockDeleteTransaction).toHaveBeenCalledWith("acc1", "t1"))
+    await waitFor(() =>
+      expect(mockShowToast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "삭제 완료",
+          message: "3월 회비 거래를 제거했습니다.",
+        })
+      )
+    )
   })
 })

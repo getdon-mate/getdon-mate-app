@@ -4,15 +4,36 @@ import { useApp, useAppAuth } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { formatDate } from "@shared/lib/format"
 import { requireText } from "@shared/lib/validation"
-import { Button, InputField, ToggleSwitch, uiColors } from "@shared/ui"
+import { ActionChip, Button, InputField, ToggleSwitch, uiColors } from "@shared/ui"
 import type { GroupAccount } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
 import { SectionCard } from "../SectionCard"
 import { SectionHeader } from "../SectionHeader"
 
+const boardTemplates = [
+  {
+    label: "회비 안내",
+    title: "이번 달 회비 안내",
+    body: "마감일 전까지 회비를 확인해주세요. 필요한 내용은 댓글로 남겨주세요.",
+    pinned: true,
+  },
+  {
+    label: "장소 변경",
+    title: "모임 장소 변경 안내",
+    body: "이번 모임 장소가 변경됐습니다. 상세 위치는 본문에 바로 업데이트했습니다.",
+    pinned: true,
+  },
+  {
+    label: "정산 공유",
+    title: "이번 주 정산 공유",
+    body: "지출과 잔액을 정리했습니다. 확인 후 필요한 의견을 댓글로 남겨주세요.",
+    pinned: false,
+  },
+] as const
+
 export function BoardTab({ account }: { account: GroupAccount }) {
   const { currentUser } = useAppAuth()
-  const { createBoardPost, addBoardComment } = useApp()
+  const { createBoardPost, addBoardComment, isMutating } = useApp()
   const { showAlert, showToast } = useFeedback()
   const [title, setTitle] = useState("")
   const [body, setBody] = useState("")
@@ -23,6 +44,14 @@ export function BoardTab({ account }: { account: GroupAccount }) {
     () => [...account.boardPosts].sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.createdAt.localeCompare(a.createdAt)),
     [account.boardPosts]
   )
+  const pinnedPosts = sortedPosts.filter((post) => post.pinned)
+  const recentPosts = sortedPosts.filter((post) => !post.pinned)
+
+  function applyTemplate(template: (typeof boardTemplates)[number]) {
+    setTitle(template.title)
+    setBody(template.body)
+    setPinned(template.pinned)
+  }
 
   async function handleCreatePost() {
     const error = requireText(title, "제목을 입력해주세요.") ?? requireText(body, "내용을 입력해주세요.")
@@ -56,6 +85,11 @@ export function BoardTab({ account }: { account: GroupAccount }) {
       <SectionCard>
         <SectionHeader title="공지 작성" description="운영 메모와 공지를 바로 남깁니다." />
         <View style={styles.formStack}>
+          <View style={styles.templateRow}>
+            {boardTemplates.map((template) => (
+              <ActionChip key={template.label} label={template.label} onPress={() => applyTemplate(template)} />
+            ))}
+          </View>
           <InputField
             value={title}
             onChangeText={setTitle}
@@ -78,50 +112,100 @@ export function BoardTab({ account }: { account: GroupAccount }) {
             <ToggleSwitch value={pinned} onPress={() => setPinned((prev) => !prev)} />
           </View>
           <Button
-            label={currentUser ? "게시하기" : "로그인 후 게시"}
+            label={!currentUser ? "로그인 후 게시" : isMutating ? "게시 중..." : "게시하기"}
             onPress={() => void handleCreatePost()}
-            disabled={!currentUser}
+            disabled={!currentUser || !title.trim() || !body.trim() || isMutating}
             style={styles.submitButton}
           />
         </View>
       </SectionCard>
 
       {sortedPosts.length > 0 ? (
-        sortedPosts.map((post) => (
-          <SectionCard key={post.id}>
-            <View style={styles.postHeader}>
-              <View style={styles.postTitleWrap}>
-                <View style={styles.postTitleRow}>
-                  {post.pinned ? <Text style={styles.noticeBadge}>공지</Text> : null}
-                  <Text style={styles.postTitle}>{post.title}</Text>
+        <>
+          {pinnedPosts.length > 0 ? <Text style={styles.sectionLabel}>고정 공지</Text> : null}
+          {pinnedPosts.map((post) => (
+            <SectionCard key={post.id}>
+              <View style={styles.postHeader}>
+                <View style={styles.postTitleWrap}>
+                  <View style={styles.postTitleRow}>
+                    <Text style={styles.noticeBadge}>공지</Text>
+                    <Text style={styles.postTitle}>{post.title}</Text>
+                  </View>
+                  <Text style={styles.postMeta}>
+                    {post.authorName} · {formatDate(post.createdAt.slice(0, 10))}
+                  </Text>
                 </View>
-                <Text style={styles.postMeta}>
-                  {post.authorName} · {formatDate(post.createdAt.slice(0, 10))}
-                </Text>
               </View>
-            </View>
-            <Text style={styles.postBody}>{post.body}</Text>
-            <View style={styles.commentList}>
-              {post.comments.map((comment) => (
-                <View key={comment.id} style={styles.commentCard}>
-                  <Text style={styles.commentAuthor}>{comment.authorName}</Text>
-                  <Text style={styles.commentBody}>{comment.body}</Text>
+              <Text style={styles.postBody}>{post.body}</Text>
+              <View style={styles.commentList}>
+                {post.comments.map((comment) => (
+                  <View key={comment.id} style={styles.commentCard}>
+                    <Text style={styles.commentAuthor}>{comment.authorName}</Text>
+                    <Text style={styles.commentBody}>{comment.body}</Text>
+                  </View>
+                ))}
+              </View>
+              <View style={styles.commentComposer}>
+                <InputField
+                  value={commentDrafts[post.id] ?? ""}
+                  onChangeText={(value) => setCommentDrafts((prev) => ({ ...prev, [post.id]: value }))}
+                  label="댓글"
+                  placeholder="댓글을 남겨보세요."
+                  containerStyle={styles.compactField}
+                  inputStyle={styles.compactInput}
+                />
+                <Button
+                  label={isMutating ? "등록 중..." : "댓글 등록"}
+                  variant="ghost"
+                  onPress={() => void handleAddComment(post.id)}
+                  style={styles.commentButton}
+                  disabled={!currentUser || !(commentDrafts[post.id] ?? "").trim() || isMutating}
+                />
+              </View>
+            </SectionCard>
+          ))}
+          {recentPosts.length > 0 ? <Text style={styles.sectionLabel}>최근 글</Text> : null}
+          {recentPosts.map((post) => (
+            <SectionCard key={post.id}>
+              <View style={styles.postHeader}>
+                <View style={styles.postTitleWrap}>
+                  <View style={styles.postTitleRow}>
+                    <Text style={styles.postTitle}>{post.title}</Text>
+                  </View>
+                  <Text style={styles.postMeta}>
+                    {post.authorName} · {formatDate(post.createdAt.slice(0, 10))}
+                  </Text>
                 </View>
-              ))}
-            </View>
-            <View style={styles.commentComposer}>
-              <InputField
-                value={commentDrafts[post.id] ?? ""}
-                onChangeText={(value) => setCommentDrafts((prev) => ({ ...prev, [post.id]: value }))}
-                label="댓글"
-                placeholder="댓글을 남겨보세요."
-                containerStyle={styles.compactField}
-                inputStyle={styles.compactInput}
-              />
-              <Button label="댓글 등록" variant="ghost" onPress={() => void handleAddComment(post.id)} style={styles.commentButton} />
-            </View>
-          </SectionCard>
-        ))
+              </View>
+              <Text style={styles.postBody}>{post.body}</Text>
+              <View style={styles.commentList}>
+                {post.comments.map((comment) => (
+                  <View key={comment.id} style={styles.commentCard}>
+                    <Text style={styles.commentAuthor}>{comment.authorName}</Text>
+                    <Text style={styles.commentBody}>{comment.body}</Text>
+                  </View>
+                ))}
+              </View>
+              <View style={styles.commentComposer}>
+                <InputField
+                  value={commentDrafts[post.id] ?? ""}
+                  onChangeText={(value) => setCommentDrafts((prev) => ({ ...prev, [post.id]: value }))}
+                  label="댓글"
+                  placeholder="댓글을 남겨보세요."
+                  containerStyle={styles.compactField}
+                  inputStyle={styles.compactInput}
+                />
+                <Button
+                  label={isMutating ? "등록 중..." : "댓글 등록"}
+                  variant="ghost"
+                  onPress={() => void handleAddComment(post.id)}
+                  style={styles.commentButton}
+                  disabled={!currentUser || !(commentDrafts[post.id] ?? "").trim() || isMutating}
+                />
+              </View>
+            </SectionCard>
+          ))}
+        </>
       ) : (
         <EmptyStateCard title="첫 공지를 남겨보세요." description="운영 소식은 짧게 바로 올릴 수 있습니다." />
       )}
@@ -136,6 +220,11 @@ const styles = StyleSheet.create({
   formStack: {
     gap: 8,
     marginTop: 10,
+  },
+  templateRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
   },
   compactField: {
     gap: 4,
@@ -161,6 +250,12 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     minHeight: 42,
+  },
+  sectionLabel: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
+    paddingHorizontal: 4,
   },
   postHeader: {
     flexDirection: "row",

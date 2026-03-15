@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { StyleSheet, Text, View, useWindowDimensions } from "react-native"
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native"
 import { formatKRW, formatMonth } from "@shared/lib/format"
 import { ActionChip, uiColors } from "@shared/ui"
 import { getExpenseCategoryBreakdown, getMonthlyTransactionTrend, getStatisticsSummary } from "../../model/selectors"
@@ -12,6 +12,13 @@ function getTrendRowLabel(month: string) {
   return `${Number(month.split("-")[1])}월`
 }
 
+const breakdownPalette = [
+  { track: uiColors.primarySoft, fill: uiColors.primary, chip: uiColors.primarySoft, text: uiColors.primary },
+  { track: uiColors.warningSoft, fill: uiColors.warning, chip: uiColors.warningSoft, text: uiColors.warning },
+  { track: uiColors.accentSoft, fill: uiColors.textStrong, chip: uiColors.accentSoft, text: uiColors.textStrong },
+  { track: uiColors.successSoft, fill: uiColors.success, chip: uiColors.successSoft, text: uiColors.success },
+] as const
+
 export function StatisticsTab({ account }: { account: GroupAccount }) {
   const { width } = useWindowDimensions()
   const compact = width < 390
@@ -19,12 +26,17 @@ export function StatisticsTab({ account }: { account: GroupAccount }) {
   const breakdown = getExpenseCategoryBreakdown(account)
   const summary = getStatisticsSummary(account)
   const [selectedMonth, setSelectedMonth] = useState<"all" | string>("all")
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const visibleTrend = useMemo(
     () => (selectedMonth === "all" ? trend : trend.filter((item) => item.month === selectedMonth)),
     [selectedMonth, trend]
   )
   const periodOptions = selectedMonth === "all" ? trend : visibleTrend
   const maxAmount = Math.max(...visibleTrend.flatMap((item) => [item.income, item.expense]), 1)
+  const focusedCategory = useMemo(
+    () => breakdown.find((item) => item.category === selectedCategory) ?? null,
+    [breakdown, selectedCategory]
+  )
 
   return (
     <View style={styles.stack}>
@@ -85,18 +97,31 @@ export function StatisticsTab({ account }: { account: GroupAccount }) {
         <SectionHeader title="출금 카테고리 비중" />
         {breakdown.length > 0 ? (
           <View style={styles.chartStack}>
-            {breakdown.map((item) => (
-              <View key={item.category} style={styles.breakdownRow}>
-                <View style={styles.breakdownLabelWrap}>
-                  <Text style={styles.rowLabel}>{item.category}</Text>
-                  <Text style={styles.breakdownMeta}>{formatKRW(item.amount)}</Text>
-                </View>
-                <View style={styles.breakdownTrack}>
-                  <View style={[styles.breakdownFill, { width: `${item.share}%` }]} />
-                </View>
-                <Text style={styles.breakdownMeta}>{item.share}%</Text>
+            {focusedCategory ? (
+              <View style={styles.focusCard}>
+                <Text style={styles.focusTitle}>선택 카테고리 · {focusedCategory.category}</Text>
+                <Text style={styles.focusMeta}>해당 카테고리 지출 {focusedCategory.share}%</Text>
               </View>
-            ))}
+            ) : (
+              <Text style={styles.breakdownHint}>카테고리를 누르면 비중을 더 자세히 볼 수 있습니다.</Text>
+            )}
+            {breakdown.map((item, index) => {
+              const palette = breakdownPalette[index % breakdownPalette.length]
+              const active = selectedCategory === item.category
+
+              return (
+                <Pressable key={item.category} style={[styles.breakdownRow, active && styles.breakdownRowActive]} onPress={() => setSelectedCategory(item.category)}>
+                  <View style={styles.breakdownLabelWrap}>
+                    <Text style={[styles.rowLabel, { color: palette.text }]}>{item.category}</Text>
+                    <Text style={styles.breakdownMeta}>{formatKRW(item.amount)}</Text>
+                  </View>
+                  <View style={[styles.breakdownTrack, { backgroundColor: palette.track }]}>
+                    <View style={[styles.breakdownFill, { width: `${item.share}%`, backgroundColor: palette.fill }]} />
+                  </View>
+                  <Text style={styles.breakdownMeta}>{item.share}%</Text>
+                </Pressable>
+              )
+            })}
           </View>
         ) : (
           <EmptyStateCard title="출금 내역이 아직 없습니다." description="지출이 생기면 비중을 바로 보여줍니다." />
@@ -174,8 +199,36 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
+  focusCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: uiColors.primaryBorder,
+    backgroundColor: uiColors.primarySoft,
+    padding: 12,
+    gap: 4,
+  },
+  focusTitle: {
+    color: uiColors.textStrong,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  focusMeta: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  breakdownHint: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
+  },
   breakdownRow: {
     gap: 6,
+    borderRadius: 14,
+    padding: 10,
+  },
+  breakdownRowActive: {
+    backgroundColor: uiColors.surfaceMuted,
   },
   breakdownLabelWrap: {
     flexDirection: "row",
