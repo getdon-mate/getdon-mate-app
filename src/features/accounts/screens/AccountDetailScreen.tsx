@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from "react"
 import { useNavigation, useRoute } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from "react-native"
-import * as Clipboard from "expo-clipboard"
 import { ROUTES } from "@core/navigation/routes"
 import type { RootStackParamList } from "@core/navigation/types"
 import { useAppAccounts, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
+import { copyText } from "@shared/lib/clipboard"
 import { uiColors } from "@shared/ui"
 import { buildAccountInviteLink } from "@shared/lib/invite"
 import { availableMonths } from "../model/fixtures"
@@ -102,13 +102,13 @@ export function AccountDetailScreen() {
 
   async function handleCopyInvite() {
     if (!account) return
-    try {
-      const inviteLink = buildAccountInviteLink(account)
-      await Clipboard.setStringAsync(inviteLink)
+    const inviteLink = buildAccountInviteLink(account)
+    const copied = await copyText(inviteLink)
+    if (copied) {
       showToast({ tone: "success", title: "링크 복사 완료", message: "초대 링크를 복사했습니다." })
-    } catch {
-      showAlert({ title: "복사 실패", message: "초대 링크를 복사하지 못했습니다.", tone: "danger" })
+      return
     }
+    showAlert({ title: "복사 실패", message: "초대 링크를 복사하지 못했습니다.", tone: "danger" })
   }
 
   async function handleShareInvite() {

@@ -74,7 +74,7 @@ export function AppSettingsScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <PageHeader title="앱 설정" subtitle="앱 전체 설정과 계정 액션을 관리합니다." />
+      <PageHeader title="앱 설정" subtitle="앱 전체 관리와 계정 액션을 한곳에서 정리합니다." />
 
       <Card style={styles.summaryCard}>
         <View style={styles.summaryTop}>
@@ -84,15 +84,13 @@ export function AppSettingsScreen() {
           <Badge label="Global" tone="primary" />
         </View>
         <View style={styles.summaryText}>
-          <Text style={styles.summaryTitle}>앱 전체 관리</Text>
-          <Text style={styles.summaryBody}>
-            알림, 계정 관리, 로그아웃과 탈퇴 같은 전역 액션은 여기에서만 다룹니다.
-          </Text>
+          <Text style={styles.summaryTitle}>전역 설정 허브</Text>
+          <Text style={styles.summaryBody}>알림, 계정, 보안 액션을 여기에서만 정리합니다.</Text>
         </View>
       </Card>
 
       <Card style={styles.card}>
-        <Text style={styles.sectionTitle}>빠른 설정</Text>
+        <Text style={styles.sectionTitle}>빠른 이동</Text>
         <SettingsActionRow
           label="마이페이지"
           caption="이름과 이메일을 확인하고 수정합니다."
@@ -108,7 +106,7 @@ export function AppSettingsScreen() {
       </Card>
 
       <Card style={styles.card}>
-        <Text style={styles.sectionTitle}>계정</Text>
+        <Text style={styles.sectionTitle}>계정 액션</Text>
         <View style={styles.accountStrip}>
           <View style={styles.accountAvatar}>
             <Text style={styles.accountAvatarText}>{(currentUser?.name ?? "사").slice(0, 1)}</Text>
@@ -119,7 +117,7 @@ export function AppSettingsScreen() {
           </View>
         </View>
         <Text style={styles.sectionDescription}>
-          로그아웃과 회원 탈퇴는 앱 전체 설정에서만 관리합니다.
+          세션 종료와 탈퇴는 여기에서만 다룹니다.
         </Text>
         <View style={styles.dangerGroup}>
           <SettingsActionRow

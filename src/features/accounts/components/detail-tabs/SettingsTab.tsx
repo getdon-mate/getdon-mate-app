@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
+import { copyText } from "@shared/lib/clipboard"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
 import { requireText, validateDayOfMonth, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
 import { ActionChip, Button, Icon, InputField, NumericInputField, RadioButton, ToggleSwitch, uiColors, uiRadius, uiSpacing } from "@shared/ui"
@@ -225,24 +226,16 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
   }
 
   async function handleCopyAccountNumber() {
-    try {
-      const clipboard = globalThis.navigator?.clipboard
-      if (!clipboard?.writeText) {
-        showAlert({
-          title: "복사 불가",
-          message: "현재 환경에서는 자동 복사를 지원하지 않습니다.",
-        })
-        return
-      }
-      await clipboard.writeText(account.accountNumber)
+    const copied = await copyText(account.accountNumber)
+    if (copied) {
       showToast({ tone: "success", title: "복사 완료", message: "계좌번호를 복사했습니다." })
-    } catch {
-      showAlert({
-        title: "복사 실패",
-        message: "브라우저 권한 때문에 자동 복사에 실패했습니다.",
-        tone: "danger",
-      })
+      return
     }
+    showAlert({
+      title: "복사 실패",
+      message: "권한이나 기기 설정 때문에 자동 복사를 완료하지 못했습니다.",
+      tone: "danger",
+    })
   }
 
   return (

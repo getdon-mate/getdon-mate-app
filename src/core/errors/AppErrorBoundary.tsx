@@ -8,6 +8,10 @@ interface State {
   message: string
 }
 
+function canUseBrowserReload() {
+  return typeof globalThis !== "undefined" && !!globalThis.location?.reload
+}
+
 export class AppErrorBoundary extends Component<{ children: ReactNode }, State> {
   state: State = {
     hasError: false,
@@ -37,7 +41,7 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
   }
 
   private handleReload = () => {
-    if (typeof globalThis !== "undefined" && "location" in globalThis) {
+    if (canUseBrowserReload()) {
       globalThis.location.reload()
       return
     }
@@ -49,17 +53,22 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
       return this.props.children
     }
 
+    const canReload = canUseBrowserReload()
+
     return (
       <View style={styles.wrap}>
         <View style={styles.card}>
-          <Text style={styles.title}>앱 실행 중 오류가 발생했습니다.</Text>
+          <Text style={styles.title}>화면을 불러오는 중 문제가 생겼습니다.</Text>
           <Text style={styles.message}>{this.state.message}</Text>
+          <Text style={styles.helpText}>
+            {canReload ? "브라우저를 다시 불러오면 대부분 바로 복구됩니다." : "앱 상태를 초기화한 뒤 현재 화면을 다시 열어보세요."}
+          </Text>
           <View style={styles.actions}>
             <Pressable style={[styles.button, styles.buttonGhost]} onPress={this.handleRetry}>
-              <Text style={styles.buttonGhostText}>화면 다시 불러오기</Text>
+              <Text style={styles.buttonGhostText}>화면 다시 시도</Text>
             </Pressable>
             <Pressable style={[styles.button, styles.buttonPrimary]} onPress={this.handleReload}>
-              <Text style={styles.buttonPrimaryText}>앱 새로고침</Text>
+              <Text style={styles.buttonPrimaryText}>{canReload ? "브라우저 새로고침" : "앱 상태 초기화"}</Text>
             </Pressable>
           </View>
         </View>
@@ -92,6 +101,11 @@ const styles = StyleSheet.create({
     color: uiColors.textMuted,
     fontSize: 14,
     lineHeight: 20,
+  },
+  helpText: {
+    color: uiColors.textSoft,
+    fontSize: 13,
+    lineHeight: 19,
   },
   actions: {
     flexDirection: "row",
