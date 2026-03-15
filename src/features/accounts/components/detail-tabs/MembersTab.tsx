@@ -61,11 +61,14 @@ export function MembersTab({ account }: { account: GroupAccount }) {
 
   const visibleMembers = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
+    const digitQuery = query.replace(/\D/g, "")
     return [...account.members]
       .filter((member) => {
         if (roleFilter !== "all" && member.role !== roleFilter) return false
         if (!query) return true
-        return member.name.toLowerCase().includes(query) || member.phone.replace(/\D/g, "").includes(query.replace(/\D/g, ""))
+        const nameMatch = member.name.toLowerCase().includes(query)
+        const phoneMatch = digitQuery.length > 0 && member.phone.replace(/\D/g, "").includes(digitQuery)
+        return nameMatch || phoneMatch
       })
       .sort((a, b) => {
         if (sortBy === "name") {
@@ -192,7 +195,13 @@ export function MembersTab({ account }: { account: GroupAccount }) {
       <SectionCard>
         <SectionHeader title="멤버 검색/정렬" />
         <View style={styles.formStack}>
-          <InputField value={searchQuery} onChangeText={setSearchQuery} label="검색" placeholder="이름 또는 연락처" />
+          <InputField
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            label="검색"
+            placeholder="이름 또는 연락처"
+            accessibilityLabel="멤버 검색"
+          />
           <View style={styles.filterRow}>
             <ActionChip label="전체" active={roleFilter === "all"} onPress={() => setRoleFilter("all")} />
             <ActionChip label="총무" active={roleFilter === "총무"} onPress={() => setRoleFilter("총무")} />
@@ -281,7 +290,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
           </View>
         </SectionCard>
       ) : (
-        <EmptyStateCard title="조건에 맞는 멤버가 없습니다." description="필터를 바꾸거나 새로운 멤버를 추가해보세요." />
+        <EmptyStateCard title="조건에 맞는 멤버가 없습니다." description="필터를 바꾸거나 멤버를 추가해보세요." />
       )}
     </View>
   )

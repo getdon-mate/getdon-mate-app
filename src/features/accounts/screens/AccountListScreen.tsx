@@ -28,6 +28,7 @@ export function AccountListScreen() {
   const currentMonth = getCurrentMonthKey()
   const { width } = useWindowDimensions()
   const isWide = width >= 960
+  const compact = width < 390
 
   const initials = useMemo(() => currentUser?.name.slice(-2) ?? "??", [currentUser])
 
@@ -61,7 +62,7 @@ export function AccountListScreen() {
 
         <View style={styles.sectionHeader}>
           <View style={styles.sectionHeaderCopy}>
-            <Text style={styles.sectionTitle}>모임통장</Text>
+            <Text style={[styles.sectionTitle, compact && styles.sectionTitleCompact]}>모임통장</Text>
             <Text style={styles.sectionSubtitle}>내 모임통장 {accounts.length}개</Text>
           </View>
           <Pressable
@@ -96,7 +97,7 @@ export function AccountListScreen() {
         ) : (
           <EmptyStateCard
             title="아직 모임통장이 없습니다."
-            description="새 모임통장을 개설해 회비와 거래 관리를 시작해보세요."
+            description="새 모임통장을 열고 회비 관리를 시작하세요."
           />
         )}
 
@@ -145,6 +146,9 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     color: uiColors.text,
+  },
+  sectionTitleCompact: {
+    fontSize: 18,
   },
   sectionSubtitle: {
     fontSize: 12,

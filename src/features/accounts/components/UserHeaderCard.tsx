@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from "react-native"
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native"
 import { Icon, uiColors } from "@shared/ui"
 import type { AppUser } from "../model/types"
 
@@ -21,20 +21,23 @@ export function UserHeaderCard({
   onOpenMyPage: () => void
   onOpenAppSettings: () => void
 }) {
+  const { width } = useWindowDimensions()
+  const compact = width < 390
+
   return (
-    <View style={styles.headerCard}>
-      <View style={styles.profileBadge}>
-        <Text style={styles.profileBadgeText}>{initials}</Text>
+    <View style={[styles.headerCard, compact && styles.headerCardCompact]}>
+      <View style={[styles.profileBadge, compact && styles.profileBadgeCompact]}>
+        <Text style={[styles.profileBadgeText, compact && styles.profileBadgeTextCompact]}>{initials}</Text>
       </View>
       <View style={styles.headerInfo}>
-        <Text style={styles.headerName}>{user?.name ?? "게스트"}</Text>
+        <Text style={[styles.headerName, compact && styles.headerNameCompact]}>{user?.name ?? "게스트"}</Text>
         <Text style={styles.headerEmail}>내 모임통장</Text>
       </View>
-      <View style={styles.actionGroup}>
-        <Pressable style={styles.iconButton} onPress={onToggleMaskAmounts} accessibilityRole="button" accessibilityLabel="금액 표시 전환">
+      <View style={[styles.actionGroup, compact && styles.actionGroupCompact]}>
+        <Pressable style={[styles.iconButton, compact && styles.iconButtonCompact]} onPress={onToggleMaskAmounts} accessibilityRole="button" accessibilityLabel="금액 표시 전환">
           <Icon name={maskAmounts ? "eyeOff" : "eye"} size={16} color={uiColors.textStrong} />
         </Pressable>
-        <Pressable style={styles.iconButton} onPress={onOpenNotifications} accessibilityRole="button" accessibilityLabel="알림 목록 열기">
+        <Pressable style={[styles.iconButton, compact && styles.iconButtonCompact]} onPress={onOpenNotifications} accessibilityRole="button" accessibilityLabel="알림 목록 열기">
           <Icon name="bell" size={16} color={uiColors.textStrong} />
           {unreadNotificationCount ? (
             <View style={styles.notificationBadge} testID="notification-badge">
@@ -42,10 +45,10 @@ export function UserHeaderCard({
             </View>
           ) : null}
         </Pressable>
-        <Pressable style={styles.iconButton} onPress={onOpenMyPage} accessibilityRole="button" accessibilityLabel="마이페이지 열기">
+        <Pressable style={[styles.iconButton, compact && styles.iconButtonCompact]} onPress={onOpenMyPage} accessibilityRole="button" accessibilityLabel="마이페이지 열기">
           <Icon name="user" size={16} color={uiColors.textStrong} />
         </Pressable>
-        <Pressable style={styles.iconButton} onPress={onOpenAppSettings} accessibilityRole="button" accessibilityLabel="앱 설정 열기">
+        <Pressable style={[styles.iconButton, compact && styles.iconButtonCompact]} onPress={onOpenAppSettings} accessibilityRole="button" accessibilityLabel="앱 설정 열기">
           <Icon name="settings" size={16} color={uiColors.textStrong} />
         </Pressable>
       </View>
@@ -65,6 +68,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
+  headerCardCompact: {
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 10,
+  },
   profileBadge: {
     width: 44,
     height: 44,
@@ -73,10 +82,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  profileBadgeCompact: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
   profileBadgeText: {
     color: uiColors.primary,
     fontSize: 14,
     fontWeight: "700",
+  },
+  profileBadgeTextCompact: {
+    fontSize: 13,
   },
   headerInfo: {
     flex: 1,
@@ -86,6 +103,9 @@ const styles = StyleSheet.create({
     color: uiColors.text,
     fontWeight: "700",
     fontSize: 19,
+  },
+  headerNameCompact: {
+    fontSize: 17,
   },
   headerEmail: {
     color: uiColors.textMuted,
@@ -99,6 +119,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: uiColors.surfaceMuted,
     position: "relative",
+  },
+  iconButtonCompact: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
   },
   notificationBadge: {
     minWidth: 18,
@@ -121,5 +146,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+  },
+  actionGroupCompact: {
+    gap: 6,
   },
 })
