@@ -1,0 +1,87 @@
+import { fireEvent, render } from "@testing-library/react-native"
+import { NotificationListScreen } from "@features/auth/screens/NotificationListScreen"
+
+const mockGoBack = jest.fn()
+const mockMarkAll = jest.fn(async () => undefined)
+const mockClear = jest.fn(async () => undefined)
+const mockRestore = jest.fn(async () => undefined)
+const mockRead = jest.fn(async () => undefined)
+
+const notifications = [
+  {
+    id: "notice-reminder",
+    title: "납부 안내를 보냈어요",
+    body: "박소연님에게 2026-03 회비 납부 안내를 전송했습니다.",
+    time: "방금 전",
+    unread: true,
+  },
+  {
+    id: "notice-board",
+    title: "모임 공지가 등록됐어요",
+    body: "이번 주 장소 변경 공지를 확인해보세요.",
+    time: "10분 전",
+    unread: false,
+  },
+  {
+    id: "notice-transaction",
+    title: "생활비 통장에 입금이 반영됐어요",
+    body: "김토스님이 50,000원을 채웠습니다.",
+    time: "어제",
+    unread: true,
+  },
+]
+
+jest.mock("@react-navigation/native", () => ({
+  useNavigation: () => ({
+    goBack: mockGoBack,
+  }),
+}))
+
+jest.mock("@shared/ui/primitives/Icon", () => ({
+  Icon: ({ name }: { name: string }) => name,
+}))
+
+jest.mock("@core/providers/AppProvider", () => ({
+  useAppRuntime: () => ({
+    notifications,
+    unreadNotificationCount: 2,
+    markAllNotificationsRead: mockMarkAll,
+    clearNotifications: mockClear,
+    restoreNotifications: mockRestore,
+    markNotificationRead: mockRead,
+  }),
+}))
+
+describe("NotificationListScreen", () => {
+  beforeEach(() => {
+    mockGoBack.mockClear()
+    mockMarkAll.mockClear()
+    mockClear.mockClear()
+    mockRestore.mockClear()
+    mockRead.mockClear()
+  })
+
+  test("renders filter chips and narrows to reminder notifications", () => {
+    const { getByText, getByLabelText, queryByText } = render(<NotificationListScreen />)
+
+    expect(getByText("전체")).toBeTruthy()
+    expect(getByText("읽지 않음")).toBeTruthy()
+    expect(getByLabelText("알림 필터 안내")).toBeTruthy()
+    expect(getByLabelText("알림 필터 공지")).toBeTruthy()
+
+    fireEvent.press(getByLabelText("알림 필터 안내"))
+
+    expect(getByText("납부 안내를 보냈어요")).toBeTruthy()
+    expect(queryByText("모임 공지가 등록됐어요")).toBeNull()
+    expect(queryByText("생활비 통장에 입금이 반영됐어요")).toBeNull()
+  })
+
+  test("unread filter hides read notifications", () => {
+    const { getByText, getByLabelText, queryByText } = render(<NotificationListScreen />)
+
+    fireEvent.press(getByLabelText("알림 필터 읽지 않음"))
+
+    expect(getByText("납부 안내를 보냈어요")).toBeTruthy()
+    expect(queryByText("모임 공지가 등록됐어요")).toBeNull()
+  })
+})

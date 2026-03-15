@@ -14,6 +14,10 @@ function getDatesForMonth(referenceMonth: string) {
   return Array.from({ length: days }, (_, index) => `${referenceMonth}-${String(index + 1).padStart(2, "0")}`)
 }
 
+function getToneLabel(tone: "dues" | "transaction" | "notice") {
+  return tone === "dues" ? "회비" : tone === "transaction" ? "거래" : "공지"
+}
+
 export function CalendarTab({ account }: { account: GroupAccount }) {
   const events = getCalendarEvents(account)
   const latestDate = events[events.length - 1]?.date ?? new Date().toISOString().slice(0, 10)
@@ -53,10 +57,12 @@ export function CalendarTab({ account }: { account: GroupAccount }) {
 
       <SectionCard>
         <SectionHeader title="선택한 날짜 일정" />
+        <Text style={styles.selectedDateLabel}>{formatDate(selectedDate)}</Text>
         {focusedEvents.length > 0 ? (
           <View style={styles.list}>
             {focusedEvents.map((event) => (
               <Pressable key={event.id} style={styles.eventCard}>
+                <Text style={styles.eventTone}>{getToneLabel(event.tone)}</Text>
                 <Text style={styles.eventTitle}>{event.title}</Text>
                 <Text style={styles.eventMeta}>{formatDate(event.date)}</Text>
               </Pressable>
@@ -116,6 +122,12 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 10,
   },
+  selectedDateLabel: {
+    marginTop: 10,
+    color: uiColors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
+  },
   eventCard: {
     borderRadius: 16,
     borderWidth: 1,
@@ -123,6 +135,19 @@ const styles = StyleSheet.create({
     backgroundColor: uiColors.surfaceMuted,
     padding: 14,
     gap: 4,
+  },
+  eventTone: {
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: uiColors.primaryBorder,
+    backgroundColor: uiColors.primarySoft,
+    color: uiColors.primary,
+    fontSize: 11,
+    fontWeight: "700",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    overflow: "hidden",
   },
   eventTitle: {
     color: uiColors.textStrong,
