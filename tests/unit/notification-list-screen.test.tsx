@@ -64,6 +64,7 @@ describe("NotificationListScreen", () => {
   test("renders filter chips and narrows to reminder notifications", () => {
     const { getByText, getByLabelText, queryByText } = render(<NotificationListScreen />)
 
+    expect(getByText("중요한 안내만 빠르게 확인하세요.")).toBeTruthy()
     expect(getByText("전체")).toBeTruthy()
     expect(getByText("읽지 않음")).toBeTruthy()
     expect(getByLabelText("알림 필터 안내")).toBeTruthy()

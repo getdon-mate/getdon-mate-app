@@ -50,7 +50,7 @@ export function NotificationListScreen() {
         </View>
         <View style={styles.headerCopy}>
           <PageHeader title="알림" subtitle={`새 알림 ${unreadNotificationCount}개`} />
-          <Text style={styles.headerHint}>필터로 필요한 알림만 빠르게 확인할 수 있습니다.</Text>
+          <Text style={styles.headerHint}>중요한 안내만 빠르게 확인하세요.</Text>
         </View>
         <View style={styles.filterRow}>
           <ActionChip label="전체" active={filter === "all"} onPress={() => setFilter("all")} accessibilityLabel="알림 필터 전체" />
@@ -62,8 +62,8 @@ export function NotificationListScreen() {
 
       {filteredNotifications.length === 0 ? (
         <EmptyStateCard
-          title="조건에 맞는 알림이 없습니다."
-          description="다른 필터를 선택하거나 샘플 알림을 복원해보세요."
+          title="표시할 알림이 없습니다."
+          description="필터를 바꾸거나 샘플 알림을 복원해보세요."
           actionLabel="샘플 알림 복원"
           onAction={() => void restoreNotifications()}
         />
@@ -79,9 +79,9 @@ export function NotificationListScreen() {
                 <Text style={styles.noticeTime}>{item.time}</Text>
               </View>
               <Text style={styles.noticeBody}>{item.body}</Text>
-                <View style={styles.noticeFooter}>
-                  {item.unread ? <View style={styles.unreadDot} /> : <Text style={styles.readLabel}>읽음 완료</Text>}
-                  {item.unread ? (
+              <View style={styles.noticeFooter}>
+                {item.unread ? <View style={styles.unreadDot} /> : <Text style={styles.readLabel}>읽음 완료</Text>}
+                {item.unread ? (
                   <Button label="읽음 처리" variant="secondary" onPress={() => void markNotificationRead(item.id)} style={[styles.readButton, compact && styles.readButtonCompact]} />
                 ) : null}
               </View>

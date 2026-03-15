@@ -1,5 +1,6 @@
 import { fireEvent, render } from "@testing-library/react-native"
 import { DetailTabBar } from "@features/accounts/components/detail/DetailTabBar"
+import { CalendarTab } from "@features/accounts/components/detail-tabs/CalendarTab"
 import { DuesTab } from "@features/accounts/components/detail-tabs/DuesTab"
 import { MembersTab } from "@features/accounts/components/detail-tabs/MembersTab"
 import { SettingsTab } from "@features/accounts/components/detail-tabs/SettingsTab"
@@ -128,5 +129,16 @@ describe("account management tabs", () => {
     const { getByText } = render(<MembersTab account={defaultAccounts[0]} />)
 
     expect(getByText(/최근 안내/)).toBeTruthy()
+  })
+
+  test("calendar tab can move between months and focus matching events", () => {
+    const { getAllByText, getByLabelText, getByText } = render(<CalendarTab account={defaultAccounts[0]} />)
+
+    expect(getByText("2026년 3월")).toBeTruthy()
+
+    fireEvent.press(getByLabelText("이전 달 보기"))
+
+    expect(getByText("2026년 2월")).toBeTruthy()
+    expect(getAllByText("개발자 스터디 모임 2026-02 회비 완료").length).toBeGreaterThan(0)
   })
 })

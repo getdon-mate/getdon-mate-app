@@ -118,6 +118,8 @@ test("10) 캘린더에서 날짜를 선택하면 해당 일정 중심으로 볼 
   await page.getByText("일정", { exact: true }).last().click()
   await page.getByLabel("2026-03-04 일정 보기").click()
   await expect(page.getByText("선택한 날짜 일정")).toBeVisible()
+  await page.getByLabel("이전 달 보기").click()
+  await expect(page.getByText("2026년 2월")).toBeVisible()
 })
 
 test("11) 목록에서 새 모임통장 개설 화면 진입", async ({ page }) => {
