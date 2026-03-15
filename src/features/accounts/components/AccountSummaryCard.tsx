@@ -1,5 +1,5 @@
 import { memo } from "react"
-import { Pressable, StyleSheet, Text, View } from "react-native"
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native"
 import { AmountMask, Icon, uiColors } from "@shared/ui"
 import { formatKRW } from "@shared/lib/format"
 import { getPaymentSummary } from "../model/selectors"
@@ -16,27 +16,39 @@ export const AccountSummaryCard = memo(function AccountSummaryCard({
   maskAmounts: boolean
   onPress: () => void
 }) {
+  const { width } = useWindowDimensions()
+  const compact = width < 390
   const { paid } = getPaymentSummary(account, currentMonth)
 
   return (
-    <Pressable style={styles.accountCard} onPress={onPress} accessibilityRole="button" accessibilityLabel={`${account.groupName} 상세 열기`}>
+    <Pressable
+      style={[styles.accountCard, compact && styles.accountCardCompact]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${account.groupName} 상세 열기`}
+    >
       <View style={styles.accountHeaderRow}>
         <View style={styles.identityWrap}>
-          <View style={styles.iconBubble}>
-            <Text style={styles.iconText}>{account.groupName.slice(0, 1)}</Text>
+          <View style={[styles.iconBubble, compact && styles.iconBubbleCompact]}>
+            <Text style={[styles.iconText, compact && styles.iconTextCompact]}>{account.groupName.slice(0, 1)}</Text>
           </View>
           <View style={styles.identityTextWrap}>
-            <Text style={styles.accountTitle}>{account.groupName}</Text>
-            <Text style={styles.accountMembers}>참여 멤버 {account.members.length}명</Text>
+            <Text style={[styles.accountTitle, compact && styles.accountTitleCompact]}>{account.groupName}</Text>
+            <Text style={[styles.accountMembers, compact && styles.accountMembersCompact]}>참여 멤버 {account.members.length}명</Text>
           </View>
         </View>
         <Icon name="chevronRight" size={22} color={uiColors.textSoft} />
       </View>
       <View style={styles.footerRow}>
-        <Text style={styles.accountMeta}>잔액</Text>
-        <AmountMask value={formatKRW(account.balance)} masked={maskAmounts} textStyle={styles.accountBalance} skeletonHeight={26} />
+        <Text style={[styles.accountMeta, compact && styles.accountMetaCompact]}>잔액</Text>
+        <AmountMask
+          value={formatKRW(account.balance)}
+          masked={maskAmounts}
+          textStyle={[styles.accountBalance, compact && styles.accountBalanceCompact]}
+          skeletonHeight={compact ? 22 : 26}
+        />
       </View>
-      <Text style={styles.accountSubMeta}>
+      <Text style={[styles.accountSubMeta, compact && styles.accountSubMetaCompact]}>
         {account.bankName} · {paid}/{account.members.length} 완납
       </Text>
     </Pressable>
@@ -58,6 +70,11 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     elevation: 2,
   },
+  accountCardCompact: {
+    borderRadius: 20,
+    padding: 15,
+    gap: 10,
+  },
   accountHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -78,10 +95,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  iconBubbleCompact: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+  },
   iconText: {
     color: uiColors.primary,
     fontSize: 18,
     fontWeight: "700",
+  },
+  iconTextCompact: {
+    fontSize: 16,
   },
   identityTextWrap: {
     gap: 2,
@@ -92,24 +117,39 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
   },
+  accountTitleCompact: {
+    fontSize: 16,
+  },
   accountMembers: {
     color: uiColors.textMuted,
     fontSize: 13,
     fontWeight: "500",
+  },
+  accountMembersCompact: {
+    fontSize: 12,
   },
   accountBalance: {
     color: uiColors.text,
     fontSize: 28,
     fontWeight: "800",
   },
+  accountBalanceCompact: {
+    fontSize: 24,
+  },
   accountMeta: {
     color: uiColors.textMuted,
     fontSize: 13,
     fontWeight: "600",
   },
+  accountMetaCompact: {
+    fontSize: 12,
+  },
   accountSubMeta: {
     color: uiColors.textMuted,
     fontSize: 13,
+  },
+  accountSubMetaCompact: {
+    fontSize: 12,
   },
   footerRow: {
     flexDirection: "row",

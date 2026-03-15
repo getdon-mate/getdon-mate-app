@@ -9,6 +9,7 @@ jest.mock("@shared/ui/primitives/Icon", () => ({
 
 const mockNavigate = jest.fn()
 const mockGoBack = jest.fn()
+let mockAccountsMode: "default" | "empty" = "default"
 
 jest.mock("@react-navigation/native", () => ({
   useNavigation: () => ({
@@ -25,7 +26,7 @@ jest.mock("@core/providers/AppProvider", () => ({
   useAppAccounts: () => {
     const { defaultAccounts } = require("@features/accounts/model/fixtures")
     return {
-      accounts: defaultAccounts,
+      accounts: mockAccountsMode === "empty" ? [] : defaultAccounts,
       selectAccount: jest.fn(),
       resetDemoData: jest.fn(),
     }
@@ -76,6 +77,7 @@ jest.mock("@core/providers/FeedbackProvider", () => ({
 
 describe("home global management split", () => {
   beforeEach(() => {
+    mockAccountsMode = "default"
     mockNavigate.mockClear()
     mockGoBack.mockClear()
   })
@@ -107,5 +109,13 @@ describe("home global management split", () => {
     expect(getByText("알림 설정")).toBeTruthy()
     expect(getByText("로그아웃")).toBeTruthy()
     expect(getByText("회원 탈퇴")).toBeTruthy()
+  })
+
+  test("account list empty state uses shorter setup copy", () => {
+    mockAccountsMode = "empty"
+    const { getByText } = render(<AccountListScreen />)
+
+    expect(getByText("아직 모임통장이 없습니다.")).toBeTruthy()
+    expect(getByText("새 모임통장을 열고 회비 관리를 시작하세요.")).toBeTruthy()
   })
 })

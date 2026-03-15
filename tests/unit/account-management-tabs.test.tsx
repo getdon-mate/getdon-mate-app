@@ -169,4 +169,13 @@ describe("account management tabs", () => {
     expect(getByText("출금 내역이 아직 없습니다.")).toBeTruthy()
     expect(getByText("지출이 생기면 비중을 바로 보여줍니다.")).toBeTruthy()
   })
+
+  test("members tab empty state uses shorter filter-reset copy", () => {
+    const { getByText, getByLabelText } = render(<MembersTab account={defaultAccounts[0]} />)
+
+    fireEvent.changeText(getByLabelText("멤버 검색"), "없는이름")
+
+    expect(getByText("조건에 맞는 멤버가 없습니다.")).toBeTruthy()
+    expect(getByText("필터를 바꾸거나 멤버를 추가해보세요.")).toBeTruthy()
+  })
 })
