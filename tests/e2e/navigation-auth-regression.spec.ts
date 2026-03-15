@@ -112,6 +112,15 @@ test("9) 리마인드 전송 후 알림센터에서 확인할 수 있다", async
   await expect(page.getByText("납부 안내를 보냈어요")).toBeVisible()
 })
 
+test("9-1) 알림을 비운 뒤 샘플 알림을 다시 복원할 수 있다", async ({ page }) => {
+  await loginAsTestUser(page)
+  await page.getByLabel("알림 목록 열기").click()
+  await page.getByRole("button", { name: "비우기" }).click()
+  await expect(page.getByText("표시할 알림이 없습니다.")).toBeVisible()
+  await page.getByRole("button", { name: "샘플 알림 복원" }).click()
+  await expect(page.getByText("회비 마감이 다가오고 있어요")).toBeVisible()
+})
+
 test("10) 캘린더에서 날짜를 선택하면 해당 일정 중심으로 볼 수 있다", async ({ page }) => {
   await loginAsTestUser(page)
   await openFirstAccountDetail(page)

@@ -25,6 +25,7 @@ export function NotificationListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const { width } = useWindowDimensions()
   const compact = width < 420
+  const narrow = width < 390
   const {
     notifications,
     unreadNotificationCount,
@@ -35,6 +36,8 @@ export function NotificationListScreen() {
   } = useAppRuntime()
   const [filter, setFilter] = useState<NotificationFilter>("all")
   const filteredNotifications = useMemo(() => filterNotifications(notifications, filter), [filter, notifications])
+  const hasNotifications = notifications.length > 0
+  const isFilteredEmpty = hasNotifications && filteredNotifications.length === 0
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -43,9 +46,21 @@ export function NotificationListScreen() {
           <Pressable style={styles.backButton} onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="이전 화면으로 이동">
             <Icon name="chevronLeft" size={20} color={uiColors.text} />
           </Pressable>
-          <View style={styles.headerActions}>
-            <Button label="모두 읽음" variant="ghost" onPress={() => void markAllNotificationsRead()} style={styles.headerActionButton} />
-            <Button label="비우기" variant="ghost" onPress={() => void clearNotifications()} style={styles.headerActionButton} />
+          <View style={[styles.headerActions, narrow && styles.headerActionsCompact]}>
+            <Button
+              label={narrow ? "읽음" : "모두 읽음"}
+              variant="ghost"
+              onPress={() => void markAllNotificationsRead()}
+              style={[styles.headerActionButton, narrow && styles.headerActionButtonCompact]}
+              disabled={unreadNotificationCount === 0}
+            />
+            <Button
+              label="비우기"
+              variant="ghost"
+              onPress={() => void clearNotifications()}
+              style={[styles.headerActionButton, narrow && styles.headerActionButtonCompact]}
+              disabled={!hasNotifications}
+            />
           </View>
         </View>
         <View style={styles.headerCopy}>
@@ -62,10 +77,12 @@ export function NotificationListScreen() {
 
       {filteredNotifications.length === 0 ? (
         <EmptyStateCard
-          title="표시할 알림이 없습니다."
-          description="필터를 바꾸거나 샘플 알림을 복원해보세요."
-          actionLabel="샘플 알림 복원"
-          onAction={() => void restoreNotifications()}
+          title={isFilteredEmpty ? "맞는 알림이 없습니다." : "표시할 알림이 없습니다."}
+          description={isFilteredEmpty ? "필터를 풀고 전체 알림으로 돌아가세요." : "샘플 알림을 다시 불러올 수 있습니다."}
+          actionLabel={isFilteredEmpty ? "전체 보기" : "샘플 알림 복원"}
+          onAction={isFilteredEmpty ? () => setFilter("all") : () => void restoreNotifications()}
+          secondaryActionLabel={isFilteredEmpty ? "샘플 알림 복원" : undefined}
+          onSecondaryAction={isFilteredEmpty ? () => void restoreNotifications() : undefined}
         />
       ) : (
         <View style={styles.list}>
@@ -114,10 +131,19 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: "row",
     gap: uiSpacing.sm,
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+  },
+  headerActionsCompact: {
+    gap: 6,
   },
   headerActionButton: {
     minWidth: 86,
     minHeight: 38,
+  },
+  headerActionButtonCompact: {
+    minWidth: 72,
+    minHeight: 34,
   },
   headerCopy: {
     gap: 6,
