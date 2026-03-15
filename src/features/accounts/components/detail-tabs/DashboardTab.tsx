@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { StyleSheet, Text, View } from "react-native"
 import { getCurrentMonthKey } from "@shared/lib/date"
-import { ActionChip, uiRecipes } from "@shared/ui"
+import { ActionChip, AmountMask, uiColors, uiRecipes } from "@shared/ui"
 import { formatKRW } from "@shared/lib/format"
 import { getMemberById } from "../../model/member-utils"
 import { getPaymentSummary, getRecentTransactions } from "../../model/selectors"
@@ -29,9 +29,16 @@ export function DashboardTab({
   return (
     <View style={styles.stack}>
       <SectionCard>
-        <Text style={styles.subtleText}>{account.bankName} {account.accountNumber}</Text>
-        <Text style={styles.balanceLabel}>현재 잔액</Text>
-        <Text style={styles.balanceText}>{showBalance ? formatKRW(account.balance) : "***,***원"}</Text>
+        <Text style={styles.subtleText}>{account.bankName} · {account.accountNumber}</Text>
+        <Text style={styles.balanceLabel}>잔액</Text>
+        <View style={styles.balanceWrap}>
+          <AmountMask value={formatKRW(account.balance)} masked={!showBalance} textStyle={styles.balanceText} skeletonHeight={28} />
+          {!showBalance ? (
+            <View pointerEvents="none" style={styles.maskOverlay}>
+              <Text style={styles.maskOverlayLabel}>필요할 때만 잔액을 확인하세요</Text>
+            </View>
+          ) : null}
+        </View>
         <ActionChip
           label={showBalance ? "잔액 숨기기" : "잔액 보기"}
           onPress={() => setShowBalance((prev) => !prev)}
@@ -81,7 +88,7 @@ export function DashboardTab({
       </SectionCard>
 
       <SectionCard>
-        <SectionHeader title="최근 거래내역" actionLabel="더보기" onAction={onOpenTransactions} />
+        <SectionHeader title="최근 거래" actionLabel="더보기" onAction={onOpenTransactions} />
         {recentTransactions.length > 0 ? (
           <View style={styles.stackCompact}>
             {recentTransactions.map((tx) => (
@@ -90,8 +97,8 @@ export function DashboardTab({
           </View>
         ) : (
           <EmptyStateCard
-            title="최근 거래내역이 없습니다."
-            description="입금이나 출금이 생기면 여기서 바로 볼 수 있습니다."
+            title="최근 거래가 없습니다."
+            description="거래를 추가하면 여기서 바로 확인할 수 있습니다."
             actionLabel="거래 열기"
             onAction={onOpenTransactions}
           />
@@ -122,6 +129,26 @@ const styles = StyleSheet.create({
     color: "#111827",
     fontSize: 30,
     fontWeight: "800",
+  },
+  balanceWrap: {
+    minHeight: 36,
+    justifyContent: "center",
+    position: "relative",
+  },
+  maskOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: "rgba(248, 250, 252, 0.84)",
+    alignItems: "flex-end",
+    justifyContent: "center",
+    paddingHorizontal: 10,
+  },
+  maskOverlayLabel: {
+    color: uiColors.textSoft,
+    fontSize: 11,
+    fontWeight: "600",
   },
   chipSelf: {
     alignSelf: "flex-start",

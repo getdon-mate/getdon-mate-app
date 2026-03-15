@@ -1,5 +1,6 @@
 import { fireEvent, render, waitFor } from "@testing-library/react-native"
 import { DetailTabBar } from "@features/accounts/components/detail/DetailTabBar"
+import { DashboardTab } from "@features/accounts/components/detail-tabs/DashboardTab"
 import { BoardTab } from "@features/accounts/components/detail-tabs/BoardTab"
 import { CalendarTab } from "@features/accounts/components/detail-tabs/CalendarTab"
 import { DuesTab } from "@features/accounts/components/detail-tabs/DuesTab"
@@ -157,6 +158,28 @@ describe("account management tabs", () => {
 
     expect(mockSendPaymentReminder).toHaveBeenCalledWith("acc1", "m3", "2026-03")
     expect(mockSendPaymentReminder).toHaveBeenCalledWith("acc1", "m4", "2026-03")
+  })
+
+  test("dues tab distinguishes empty month records from an account without members", () => {
+    const noRecordAccount = {
+      ...defaultAccounts[0],
+      duesRecords: defaultAccounts[0].duesRecords.filter((record) => record.month !== "2026-03"),
+    }
+    const noMemberAccount = {
+      ...defaultAccounts[0],
+      members: [],
+      duesRecords: [],
+    }
+
+    const { getByText, rerender } = render(
+      <DuesTab account={noRecordAccount} selectedMonth="2026-03" onSelectMonth={jest.fn()} />
+    )
+
+    expect(getByText("이 달의 회비 기록이 없습니다.")).toBeTruthy()
+
+    rerender(<DuesTab account={noMemberAccount} selectedMonth="2026-03" onSelectMonth={jest.fn()} />)
+
+    expect(getByText("먼저 멤버를 추가해보세요.")).toBeTruthy()
   })
 
   test("dues tab surfaces the latest reminder context for unpaid members", () => {
@@ -328,6 +351,36 @@ describe("account management tabs", () => {
     )
   })
 
+  test("members tab can narrow results by role and sort alphabetically", () => {
+    const { getByText, getByLabelText, queryByText } = render(<MembersTab account={defaultAccounts[0]} />)
+
+    fireEvent.press(getByText("총무"))
+    expect(getByText("김지현")).toBeTruthy()
+    expect(queryByText("이승우")).toBeNull()
+
+    fireEvent.press(getByText("전체"))
+    fireEvent.press(getByText("이름순"))
+    fireEvent.changeText(getByLabelText("멤버 검색"), "010-2345")
+
+    expect(getByText("이승우")).toBeTruthy()
+    expect(queryByText("박소연")).toBeNull()
+  })
+
+  test("dashboard tab recent transaction empty state routes back into the transaction tab", () => {
+    const noTransactionAccount = {
+      ...defaultAccounts[0],
+      transactions: [],
+    }
+    const onOpenTransactions = jest.fn()
+    const { getByText } = render(
+      <DashboardTab account={noTransactionAccount} onOpenDues={jest.fn()} onOpenTransactions={onOpenTransactions} />
+    )
+
+    fireEvent.press(getByText("거래 열기"))
+
+    expect(onOpenTransactions).toHaveBeenCalled()
+  })
+
   test("members tab validates phone number format before submit", async () => {
     const { getByDisplayValue, getByRole, getByText, getByPlaceholderText } = render(<MembersTab account={defaultAccounts[0]} />)
 
@@ -368,6 +421,16 @@ describe("account management tabs", () => {
 
     fireEvent.press(getByText("간식"))
 
+    expect(getByDisplayValue("간식")).toBeTruthy()
+  })
+
+  test("transactions tab can apply recent value suggestions to the composer", () => {
+    const { getByText, getByDisplayValue } = render(<TransactionsTab account={defaultAccounts[0]} initialType="expense" />)
+
+    fireEvent.press(getByText("간식 구매 · 12,500원"))
+
+    expect(getByDisplayValue("12500")).toBeTruthy()
+    expect(getByDisplayValue("간식 구매")).toBeTruthy()
     expect(getByDisplayValue("간식")).toBeTruthy()
   })
 

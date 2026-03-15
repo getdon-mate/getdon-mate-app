@@ -19,6 +19,9 @@ export const AccountSummaryCard = memo(function AccountSummaryCard({
   const { width } = useWindowDimensions()
   const compact = width < 390
   const { paid, unpaid } = getPaymentSummary(account, currentMonth)
+  const needsAttention = unpaid >= 2
+  const statusLabel = needsAttention ? "정산 필요" : "안정"
+  const detailLabel = unpaid > 0 ? `미납 ${unpaid}명` : "이번 달 회비 완료"
   const latestActivityDate =
     [...account.transactions.map((tx) => tx.date), ...account.boardPosts.map((post) => post.createdAt.slice(0, 10))]
       .sort((a, b) => b.localeCompare(a))[0] ?? null
@@ -55,12 +58,15 @@ export const AccountSummaryCard = memo(function AccountSummaryCard({
         {account.bankName} · {paid}/{account.members.length} 완납
       </Text>
       <View style={styles.badgeRow}>
-        <View style={[styles.statusBadge, unpaid > 0 ? styles.statusBadgeWarning : styles.statusBadgeStable]}>
-          <Text style={[styles.statusBadgeText, unpaid > 0 ? styles.statusBadgeTextWarning : styles.statusBadgeTextStable]}>
-            {unpaid > 0 ? `미납 ${unpaid}명` : "이번 달 완료"}
+        <View style={[styles.statusBadge, needsAttention ? styles.statusBadgeWarning : styles.statusBadgeStable]}>
+          <Text style={[styles.statusBadgeText, needsAttention ? styles.statusBadgeTextWarning : styles.statusBadgeTextStable]}>
+            {statusLabel}
           </Text>
         </View>
-        {latestActivityDate ? <Text style={styles.activityMeta}>최근 {formatDate(latestActivityDate)}</Text> : null}
+        <View style={styles.badgeMetaWrap}>
+          <Text style={styles.detailMeta}>{detailLabel}</Text>
+          {latestActivityDate ? <Text style={styles.activityMeta}>최근 {formatDate(latestActivityDate)}</Text> : null}
+        </View>
       </View>
     </Pressable>
   )
@@ -173,6 +179,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 10,
   },
+  badgeMetaWrap: {
+    alignItems: "flex-end",
+    gap: 2,
+  },
   statusBadge: {
     borderRadius: 999,
     paddingHorizontal: 10,
@@ -201,5 +211,10 @@ const styles = StyleSheet.create({
     color: uiColors.textMuted,
     fontSize: 12,
     fontWeight: "600",
+  },
+  detailMeta: {
+    color: uiColors.textMuted,
+    fontSize: 11,
+    fontWeight: "700",
   },
 })

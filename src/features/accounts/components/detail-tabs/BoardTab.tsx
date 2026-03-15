@@ -84,7 +84,7 @@ export function BoardTab({ account }: { account: GroupAccount }) {
   return (
     <View style={styles.stack}>
       <SectionCard>
-        <SectionHeader title="공지 작성" description="운영 메모와 공지를 바로 남깁니다." />
+        <SectionHeader title="공지 작성" description="운영 메모와 공지를 남깁니다." />
         <View style={styles.formStack}>
           <View style={styles.templateRow}>
             {boardTemplates.map((template) => (

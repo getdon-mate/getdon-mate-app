@@ -18,7 +18,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `CI=1 EXPO_NO_TELEMETRY=1 pnpm exec expo start --web --port ${port}`,
+    command: `sh -c "CI=1 EXPO_NO_TELEMETRY=1 pnpm run export:web >/tmp/getdon-mate-playwright-export.log && python3 -m http.server ${port} -d dist"`,
     url: `http://127.0.0.1:${port}`,
     timeout: 120000,
     reuseExistingServer: !process.env.CI,

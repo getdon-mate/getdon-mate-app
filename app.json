@@ -9,6 +9,15 @@
     "splash": {
       "backgroundColor": "#ffffff"
     },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#ffffff",
+          "resizeMode": "contain"
+        }
+      ]
+    ],
     "assetBundlePatterns": [
       "**/*"
     ],

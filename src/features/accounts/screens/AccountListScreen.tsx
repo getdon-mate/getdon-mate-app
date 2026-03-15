@@ -92,7 +92,7 @@ export function AccountListScreen() {
         <View style={styles.sectionHeader}>
           <View style={styles.sectionHeaderCopy}>
             <Text style={[styles.sectionTitle, compact && styles.sectionTitleCompact]}>모임통장</Text>
-            <Text style={styles.sectionSubtitle}>내 모임통장 {accounts.length}개</Text>
+            <Text style={styles.sectionSubtitle}>정산이 필요한 모임부터 {accounts.length}개를 보여줍니다.</Text>
           </View>
           <Pressable
             style={[styles.headerIconButton, isRefreshingAccounts && styles.headerIconButtonDisabled]}
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   contentWrap: {
-    gap: uiSpacing.lg,
+    gap: 14,
     width: "100%",
   },
   contentWrapWide: {

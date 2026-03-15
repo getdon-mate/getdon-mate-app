@@ -23,6 +23,7 @@ export function UserHeaderCard({
 }) {
   const { width } = useWindowDimensions()
   const compact = width < 390
+  const summaryCopy = unreadNotificationCount ? `읽지 않은 알림 ${unreadNotificationCount}건` : "모임통장 홈"
 
   return (
     <View style={[styles.headerCard, compact && styles.headerCardCompact]}>
@@ -31,7 +32,7 @@ export function UserHeaderCard({
       </View>
       <View style={styles.headerInfo}>
         <Text style={[styles.headerName, compact && styles.headerNameCompact]}>{user?.name ?? "게스트"}</Text>
-        <Text style={styles.headerEmail}>내 모임통장</Text>
+        <Text style={styles.headerEmail}>{summaryCopy}</Text>
       </View>
       <View style={[styles.actionGroup, compact && styles.actionGroupCompact]}>
         <Pressable style={[styles.iconButton, compact && styles.iconButtonCompact]} onPress={onToggleMaskAmounts} accessibilityRole="button" accessibilityLabel="금액 표시 전환">
@@ -62,17 +63,17 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: uiColors.border,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 15,
+    paddingVertical: 13,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
   headerCardCompact: {
     borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
   },
   profileBadge: {
     width: 44,
@@ -110,6 +111,7 @@ const styles = StyleSheet.create({
   headerEmail: {
     color: uiColors.textMuted,
     fontSize: 12,
+    fontWeight: "600",
   },
   iconButton: {
     width: 40,
@@ -121,9 +123,9 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   iconButtonCompact: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
   },
   notificationBadge: {
     minWidth: 18,

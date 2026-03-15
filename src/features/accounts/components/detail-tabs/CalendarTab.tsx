@@ -139,7 +139,7 @@ export function CalendarTab({
       </SectionCard>
 
       <SectionCard>
-        <SectionHeader title="일정 추가 바로가기" description="일정 성격에 맞는 화면으로 바로 이동합니다." />
+        <SectionHeader title="일정 추가 바로가기" description="필요한 화면으로 이동합니다." />
         <View style={styles.quickActionRow}>
           <Button
             label="회비 일정"

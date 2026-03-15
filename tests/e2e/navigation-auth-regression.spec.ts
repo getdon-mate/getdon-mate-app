@@ -3,13 +3,13 @@ import { expect, type Page, test } from "@playwright/test"
 async function loginAsTestUser(page: Page) {
   await page.goto("/")
   await page.getByRole("button", { name: "로그인" }).click()
-  await expect(page.getByText("내 모임통장 2개")).toBeVisible()
+  await expect(page.getByRole("button", { name: "개발자 스터디 모임 상세 열기" })).toBeVisible()
 }
 
 test("0) 둘러보기로도 목록 진입", async ({ page }) => {
   await page.goto("/")
   await page.getByRole("button", { name: "둘러보기" }).click()
-  await expect(page.getByText("내 모임통장 2개")).toBeVisible()
+  await expect(page.getByRole("button", { name: "개발자 스터디 모임 상세 열기" })).toBeVisible()
 })
 
 async function openFirstAccountDetail(page: Page) {
@@ -19,7 +19,7 @@ async function openFirstAccountDetail(page: Page) {
 
 test("1) 로그인 후 목록 진입", async ({ page }) => {
   await loginAsTestUser(page)
-  await expect(page.getByText("내 모임통장 2개")).toBeVisible()
+  await expect(page.getByText("주말 산악회")).toBeVisible()
 })
 
 test("1-1) 목록 검색과 필터로 모임통장을 좁혀볼 수 있다", async ({ page }) => {
@@ -190,6 +190,36 @@ test("10-2) 거래 수정 후 삭제까지 이어서 진행할 수 있다", asyn
   await page.getByRole("button", { name: "삭제" }).first().click()
   await page.getByRole("button", { name: "삭제" }).last().click()
   await expect(page.getByText("e2e 거래 수정 거래를 제거했습니다.")).toBeVisible()
+})
+
+test("10-3) 최근 거래값으로 거래 입력을 빠르게 채울 수 있다", async ({ page }) => {
+  await loginAsTestUser(page)
+  await openFirstAccountDetail(page)
+  await page.getByText("거래", { exact: true }).last().click()
+
+  await page.getByText("출금", { exact: true }).click()
+  await page.getByRole("button", { name: "간식 구매 · 12,500원" }).click()
+
+  await expect(page.getByPlaceholder("금액")).toHaveValue("12500")
+  await expect(page.getByPlaceholder("예: 회비 입금, 모임 식비")).toHaveValue("간식 구매")
+  await expect(page.getByPlaceholder("예: 회비, 식비")).toHaveValue("간식")
+})
+
+test("10-4) 멤버 검색과 역할 필터가 함께 동작한다", async ({ page }) => {
+  await loginAsTestUser(page)
+  await openFirstAccountDetail(page)
+  await page.getByText("멤버", { exact: true }).last().click()
+
+  await page.getByRole("button", { name: "총무", exact: true }).click()
+  await expect(page.getByText("멤버 목록 (1)")).toBeVisible()
+  await expect(page.getByText("이승우")).toHaveCount(0)
+
+  await page.getByRole("button", { name: "전체" }).click()
+  await page.getByRole("button", { name: "이름순" }).click()
+  await page.getByLabel("멤버 검색").fill("010-2345")
+
+  await expect(page.getByText("이승우")).toBeVisible()
+  await expect(page.getByText("박소연")).toHaveCount(0)
 })
 
 test("11) 목록에서 새 모임통장 개설 화면 진입", async ({ page }) => {

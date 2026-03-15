@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useDeferredValue, useEffect, useMemo, useState } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
@@ -47,6 +47,7 @@ export function TransactionsTab({
   const [date, setDate] = useState(getToday())
   const [category, setCategory] = useState(getCategoryLabel(initialType))
   const [editingId, setEditingId] = useState<string | null>(null)
+  const deferredSearchQuery = useDeferredValue(searchQuery)
 
   useEffect(() => {
     setDraftType(initialType)
@@ -54,7 +55,7 @@ export function TransactionsTab({
   }, [composerSignal, editingId, initialType])
 
   const isEditing = editingId !== null
-  const query = searchQuery.trim().toLowerCase()
+  const query = deferredSearchQuery.trim().toLowerCase()
 
   const categories = useMemo(() => {
     const unique = new Set(account.transactions.map((tx) => tx.category.trim()).filter(Boolean))
@@ -71,6 +72,19 @@ export function TransactionsTab({
     }
     return Array.from(unique)
   }, [account.transactions])
+  const recentDraftSuggestions = useMemo(() => {
+    const seen = new Set<string>()
+
+    return account.transactions
+      .filter((tx) => tx.type === draftType)
+      .filter((tx) => {
+        const key = `${tx.description}:${tx.category}:${tx.amount}`
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+      .slice(0, 3)
+  }, [account.transactions, draftType])
 
   const filtered = useMemo(() => {
     const byType =
@@ -179,7 +193,7 @@ export function TransactionsTab({
   return (
     <View style={styles.stack}>
       <SectionCard>
-        <SectionHeader title={isEditing ? "거래 수정" : "새 거래 등록"} description="입금과 출금을 바로 기록합니다." />
+        <SectionHeader title={isEditing ? "거래 수정" : "새 거래 등록"} description="입금과 출금을 기록합니다." />
         <View style={styles.formTypeRow}>
           {(["income", "expense"] as const).map((item) => {
             const active = draftType === item
@@ -239,6 +253,25 @@ export function TransactionsTab({
             <View style={styles.recentCategoryRow}>
               {recentCategories.map((item) => (
                 <ActionChip key={item} label={item} onPress={() => setCategory(item)} />
+              ))}
+            </View>
+          </View>
+        ) : null}
+        {recentDraftSuggestions.length > 0 ? (
+          <View style={styles.recentValueWrap}>
+            <Text style={styles.recentCategoryLabel}>최근 거래값</Text>
+            <View style={styles.recentValueRow}>
+              {recentDraftSuggestions.map((tx) => (
+                <ActionChip
+                  key={tx.id}
+                  label={`${tx.description} · ${formatKRW(tx.amount)}`}
+                  onPress={() => {
+                    setAmount(String(tx.amount))
+                    setDescription(tx.description)
+                    setCategory(tx.category)
+                    setDate(tx.date)
+                  }}
+                />
               ))}
             </View>
           </View>
@@ -423,6 +456,14 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   recentCategoryRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  recentValueWrap: {
+    gap: 6,
+  },
+  recentValueRow: {
     flexDirection: "row",
     gap: 8,
     flexWrap: "wrap",

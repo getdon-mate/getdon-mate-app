@@ -27,6 +27,11 @@ jest.mock("@react-navigation/native-stack", () => ({
   },
 }))
 
+jest.mock("expo-splash-screen", () => ({
+  preventAutoHideAsync: jest.fn(async () => undefined),
+  hideAsync: jest.fn(async () => undefined),
+}))
+
 jest.mock("@core/providers/AppProvider", () => ({
   useAppAuth: () => ({
     currentUser: mockState.currentUser,
@@ -80,8 +85,8 @@ describe("AppRouter", () => {
     const { getByText } = render(<AppRouter />)
 
     expect(getByText("getdon mate")).toBeTruthy()
-    expect(getByText("안전하게 준비 중")).toBeTruthy()
-    expect(getByText("최근 데이터와 화면 상태를 정리하고 있어요.")).toBeTruthy()
+    expect(getByText("시작 준비 중")).toBeTruthy()
+    expect(getByText("모임통장과 알림 상태를 맞추고 있어요.")).toBeTruthy()
   })
 
   test("renders busy overlay after bootstrap", () => {

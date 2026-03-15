@@ -129,7 +129,7 @@ export function AccountDetailScreen() {
     return (
       <View style={styles.emptyWrap}>
         <Text style={styles.emptyTitle}>선택된 모임이 없습니다.</Text>
-        <Text style={styles.emptyDescription}>목록에서 모임통장을 선택하면 상세 화면이 열립니다.</Text>
+        <Text style={styles.emptyDescription}>목록에서 모임통장을 다시 선택해주세요.</Text>
       </View>
     )
   }

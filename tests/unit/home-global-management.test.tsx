@@ -168,4 +168,11 @@ describe("home global management split", () => {
 
     expect(getByText("주말 산악회")).toBeTruthy()
   })
+
+  test("account list status badges distinguish attention and stable groups", () => {
+    const { getByText } = render(<AccountListScreen />)
+
+    expect(getByText("정산 필요")).toBeTruthy()
+    expect(getByText("안정")).toBeTruthy()
+  })
 })

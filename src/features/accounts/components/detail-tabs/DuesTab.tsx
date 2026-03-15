@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
-import { ActionChip, Icon } from "@shared/ui"
+import { ActionChip, Icon, uiColors } from "@shared/ui"
 import { availableMonths } from "../../model/fixtures"
 import { formatDate, formatMonth } from "@shared/lib/format"
 import { getMemberById } from "../../model/member-utils"
@@ -121,22 +121,50 @@ export function DuesTab({
 
       <SectionCard>
         <SectionHeader title="멤버별 납부 현황" />
-        {currentDues.length > 0 ? (
+        {account.members.length === 0 ? (
+          <EmptyStateCard
+            title="먼저 멤버를 추가해보세요."
+            description="멤버를 등록하면 월별 회비 현황과 미납 안내를 바로 시작할 수 있습니다."
+          />
+        ) : currentDues.length > 0 ? (
           <View style={styles.stackCompact}>
             {currentDues.map((record) => {
               const member = getMemberById(account.members, record.memberId)
               const latestReminder = getLatestReminderForMember(account, record.memberId)
+              const isPaid = record.status === "paid"
+              const isUnpaid = record.status === "unpaid"
               if (!member) return null
               return (
                 <View key={`${record.memberId}-${record.month}`} style={styles.memberRow}>
                   <View style={styles.memberIdentity}>
                     <Text style={[styles.avatar, { backgroundColor: member.color }]}>{member.initials}</Text>
                     <View>
-                      <Text style={styles.memberName}>{member.name}</Text>
+                      <View style={styles.memberHeaderRow}>
+                        <Text style={styles.memberName}>{member.name}</Text>
+                        <View
+                          style={[
+                            styles.statusPill,
+                            isPaid ? styles.statusPillPaid : isUnpaid ? styles.statusPillUnpaid : styles.statusPillExempt,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.statusPillText,
+                              isPaid ? styles.statusPillTextPaid : isUnpaid ? styles.statusPillTextUnpaid : styles.statusPillTextExempt,
+                            ]}
+                          >
+                            {isPaid ? "완납" : isUnpaid ? "미납" : "면제"}
+                          </Text>
+                        </View>
+                      </View>
                       <Text style={styles.memberMeta}>
-                        {record.status === "paid" && record.paidDate ? `${formatDate(record.paidDate)} 납부` : record.status === "unpaid" ? "미납" : "면제"}
+                        {isPaid && record.paidDate
+                          ? `${formatDate(record.paidDate)} 납부`
+                          : isUnpaid
+                            ? "이번 달 확인이 필요합니다."
+                            : "이번 달 면제로 처리됐습니다."}
                       </Text>
-                      {record.status === "unpaid" && latestReminder ? (
+                      {isUnpaid && latestReminder ? (
                         <Text style={styles.reminderMeta}>
                           최근 안내 · {formatDate(latestReminder.createdAt.slice(0, 10))} {latestReminder.type === "payment-reminder" ? "납부 안내" : "송금 요청"}
                         </Text>
@@ -293,6 +321,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
   },
+  memberHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   memberMeta: {
     color: "#6b7280",
     fontSize: 12,
@@ -307,5 +340,36 @@ const styles = StyleSheet.create({
     gap: 6,
     flexWrap: "wrap",
     justifyContent: "flex-end",
+  },
+  statusPill: {
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+  },
+  statusPillPaid: {
+    backgroundColor: uiColors.primarySoft,
+    borderColor: uiColors.primaryBorder,
+  },
+  statusPillUnpaid: {
+    backgroundColor: uiColors.warningSoft,
+    borderColor: uiColors.warningBorder,
+  },
+  statusPillExempt: {
+    backgroundColor: uiColors.surfaceMuted,
+    borderColor: uiColors.border,
+  },
+  statusPillText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  statusPillTextPaid: {
+    color: uiColors.primary,
+  },
+  statusPillTextUnpaid: {
+    color: uiColors.warning,
+  },
+  statusPillTextExempt: {
+    color: uiColors.textSoft,
   },
 })

@@ -1,4 +1,5 @@
-import { Text, type StyleProp, type TextStyle, View } from "react-native"
+import { useEffect, useRef } from "react"
+import { Animated, Text, type StyleProp, type TextStyle, View } from "react-native"
 import { SkeletonBlock } from "./SkeletonBlock"
 
 export function AmountMask({
@@ -14,14 +15,25 @@ export function AmountMask({
   skeletonHeight?: number
   testID?: string
 }) {
+  const opacity = useRef(new Animated.Value(1)).current
+
+  useEffect(() => {
+    opacity.setValue(0.4)
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 180,
+      useNativeDriver: true,
+    }).start()
+  }, [masked, opacity, value])
+
   if (masked) {
     const width = Math.max(72, Math.min(220, value.length * 13))
     return (
-      <View testID={testID}>
+      <Animated.View testID={testID} style={{ opacity }}>
         <SkeletonBlock width={width} height={skeletonHeight} />
-      </View>
+      </Animated.View>
     )
   }
 
-  return <Text style={textStyle}>{value}</Text>
+  return <Animated.Text style={[textStyle, { opacity }]}>{value}</Animated.Text>
 }

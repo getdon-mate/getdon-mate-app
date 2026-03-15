@@ -5,8 +5,8 @@ export function SplashScreen() {
   return (
     <View style={styles.screen}>
       <Text style={styles.wordmark}>getdon mate</Text>
-      <Text style={styles.caption}>안전하게 준비 중</Text>
-      <Text style={styles.description}>최근 데이터와 화면 상태를 정리하고 있어요.</Text>
+      <Text style={styles.caption}>시작 준비 중</Text>
+      <Text style={styles.description}>모임통장과 알림 상태를 맞추고 있어요.</Text>
       <View style={styles.loadingRow}>
         <View style={styles.loadingDot} />
         <View style={styles.loadingDot} />
@@ -33,9 +33,9 @@ const styles = StyleSheet.create({
   caption: {
     marginTop: uiSpacing.sm,
     color: uiColors.textSoft,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "700",
-    letterSpacing: 2.4,
+    letterSpacing: 0.2,
   },
   description: {
     marginTop: uiSpacing.sm,
