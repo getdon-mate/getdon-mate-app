@@ -67,9 +67,13 @@ export function CalendarTab({
   const events = getCalendarEvents(account)
   const latestDate = events[events.length - 1]?.date ?? new Date().toISOString().slice(0, 10)
   const initialMonth = latestDate.slice(0, 7)
+  const availableMonths = useMemo(() => [...new Set(events.map((event) => event.date.slice(0, 7)))].sort((a, b) => b.localeCompare(a)), [events])
   const [visibleMonth, setVisibleMonth] = useState(initialMonth)
   const [selectedDate, setSelectedDate] = useState(latestDate)
   const dates = useMemo(() => getDatesForMonth(visibleMonth), [visibleMonth])
+  const monthIndex = availableMonths.indexOf(visibleMonth)
+  const disablePreviousMonth = monthIndex < 0 || monthIndex >= availableMonths.length - 1
+  const disableNextMonth = monthIndex <= 0
 
   useEffect(() => {
     setVisibleMonth(initialMonth)
@@ -80,6 +84,7 @@ export function CalendarTab({
 
   function handleChangeMonth(offset: number) {
     const nextMonth = shiftMonth(visibleMonth, offset)
+    if (!availableMonths.includes(nextMonth)) return
     setVisibleMonth(nextMonth)
     setSelectedDate((prev) => (prev.startsWith(nextMonth) ? prev : getInitialDateForMonth(events, nextMonth)))
   }
@@ -90,21 +95,25 @@ export function CalendarTab({
         <SectionHeader title="월간 일정" description="회비, 거래, 공지를 한 화면에서 확인합니다." />
         <View style={styles.monthRow}>
           <Pressable
-            style={styles.monthButton}
+            style={[styles.monthButton, disablePreviousMonth && styles.monthButtonDisabled]}
             onPress={() => handleChangeMonth(-1)}
+            disabled={disablePreviousMonth}
             accessibilityRole="button"
             accessibilityLabel="이전 달 보기"
+            accessibilityState={{ disabled: disablePreviousMonth }}
           >
-            <Icon name="chevronLeft" size={16} color={uiColors.textStrong} />
+            <Icon name="chevronLeft" size={16} color={disablePreviousMonth ? uiColors.textSoft : uiColors.textStrong} />
           </Pressable>
           <Text style={styles.monthLabel}>{getMonthLabel(visibleMonth)}</Text>
           <Pressable
-            style={styles.monthButton}
+            style={[styles.monthButton, disableNextMonth && styles.monthButtonDisabled]}
             onPress={() => handleChangeMonth(1)}
+            disabled={disableNextMonth}
             accessibilityRole="button"
             accessibilityLabel="다음 달 보기"
+            accessibilityState={{ disabled: disableNextMonth }}
           >
-            <Icon name="chevronRight" size={16} color={uiColors.textStrong} />
+            <Icon name="chevronRight" size={16} color={disableNextMonth ? uiColors.textSoft : uiColors.textStrong} />
           </Pressable>
         </View>
         {visibleMonth !== initialMonth ? (
@@ -222,6 +231,11 @@ const styles = StyleSheet.create({
     backgroundColor: uiColors.surface,
     alignItems: "center",
     justifyContent: "center",
+  },
+  monthButtonDisabled: {
+    backgroundColor: uiColors.surfaceMuted,
+    borderColor: uiColors.border,
+    opacity: 0.45,
   },
   monthLabel: {
     color: uiColors.textStrong,

@@ -24,6 +24,8 @@ export function DuesTab({
   const { showToast } = useFeedback()
 
   const monthIndex = availableMonths.indexOf(selectedMonth)
+  const disablePreviousMonth = monthIndex >= availableMonths.length - 1
+  const disableNextMonth = monthIndex <= 0
   const { dues: currentDues, paid, unpaid, exempt, progress } = getPaymentSummary(account, selectedMonth)
   const unpaidRecords = currentDues.filter((record) => record.status === "unpaid")
 
@@ -68,23 +70,25 @@ export function DuesTab({
         </View>
         <View style={styles.rowBetween}>
           <Pressable
-            disabled={monthIndex >= availableMonths.length - 1}
+            disabled={disablePreviousMonth}
             onPress={() => onSelectMonth(availableMonths[monthIndex + 1])}
-            style={styles.arrowButton}
+            style={[styles.arrowButton, disablePreviousMonth && styles.arrowButtonDisabled]}
             accessibilityRole="button"
             accessibilityLabel="이전 달 보기"
+            accessibilityState={{ disabled: disablePreviousMonth }}
           >
-            <Icon name="chevronLeft" size={15} color="#334155" />
+            <Icon name="chevronLeft" size={15} color={disablePreviousMonth ? uiColors.textSoft : uiColors.textStrong} />
           </Pressable>
           <Text style={styles.sectionTitle}>{formatMonth(selectedMonth)}</Text>
           <Pressable
-            disabled={monthIndex <= 0}
+            disabled={disableNextMonth}
             onPress={() => onSelectMonth(availableMonths[monthIndex - 1])}
-            style={styles.arrowButton}
+            style={[styles.arrowButton, disableNextMonth && styles.arrowButtonDisabled]}
             accessibilityRole="button"
             accessibilityLabel="다음 달 보기"
+            accessibilityState={{ disabled: disableNextMonth }}
           >
-            <Icon name="chevronRight" size={15} color="#334155" />
+            <Icon name="chevronRight" size={15} color={disableNextMonth ? uiColors.textSoft : uiColors.textStrong} />
           </Pressable>
         </View>
         <View style={styles.monthChipRow}>
@@ -305,8 +309,15 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     backgroundColor: uiColors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: uiColors.border,
     alignItems: "center",
     justifyContent: "center",
+  },
+  arrowButtonDisabled: {
+    backgroundColor: uiColors.surface,
+    borderColor: uiColors.border,
+    opacity: 0.5,
   },
   memberRow: {
     flexDirection: "row",

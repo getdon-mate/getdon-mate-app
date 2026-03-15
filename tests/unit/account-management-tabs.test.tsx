@@ -212,6 +212,23 @@ describe("account management tabs", () => {
     expect(onSelectMonth).toHaveBeenCalledWith("2026-02")
   })
 
+  test("dues tab month arrows stop at the available month boundaries", () => {
+    const onSelectMonth = jest.fn()
+    const { getByLabelText, rerender } = render(
+      <DuesTab account={defaultAccounts[0]} selectedMonth="2026-03" onSelectMonth={onSelectMonth} />
+    )
+
+    expect(getByLabelText("다음 달 보기").props.accessibilityState).toEqual(expect.objectContaining({ disabled: true }))
+    fireEvent.press(getByLabelText("다음 달 보기"))
+    expect(onSelectMonth).not.toHaveBeenCalled()
+
+    rerender(<DuesTab account={defaultAccounts[0]} selectedMonth="2026-02" onSelectMonth={onSelectMonth} />)
+
+    expect(getByLabelText("이전 달 보기").props.accessibilityState).toEqual(expect.objectContaining({ disabled: true }))
+    fireEvent.press(getByLabelText("이전 달 보기"))
+    expect(onSelectMonth).not.toHaveBeenCalled()
+  })
+
   test("members tab can send a transfer request for unpaid members", async () => {
     const { getAllByText } = render(<MembersTab account={defaultAccounts[0]} />)
 
@@ -243,6 +260,21 @@ describe("account management tabs", () => {
 
     expect(getByText("2026년 2월")).toBeTruthy()
     expect(getAllByText("개발자 스터디 모임 2026-02 회비 완료").length).toBeGreaterThan(0)
+  })
+
+  test("calendar tab month arrows stop at the months that actually have events", () => {
+    const { getByLabelText, getByText } = render(<CalendarTab account={defaultAccounts[0]} />)
+
+    expect(getByLabelText("다음 달 보기").props.accessibilityState).toEqual(expect.objectContaining({ disabled: true }))
+    fireEvent.press(getByLabelText("다음 달 보기"))
+    expect(getByText("2026년 3월")).toBeTruthy()
+
+    fireEvent.press(getByLabelText("이전 달 보기"))
+    expect(getByText("2026년 2월")).toBeTruthy()
+
+    expect(getByLabelText("이전 달 보기").props.accessibilityState).toEqual(expect.objectContaining({ disabled: true }))
+    fireEvent.press(getByLabelText("이전 달 보기"))
+    expect(getByText("2026년 2월")).toBeTruthy()
   })
 
   test("calendar tab exposes quick entry actions for schedule-related work", () => {
