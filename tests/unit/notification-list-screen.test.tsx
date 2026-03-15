@@ -118,6 +118,14 @@ describe("NotificationListScreen", () => {
     expect(mockClear).toHaveBeenCalled()
   })
 
+  test("unread action uses a more specific accessibility label", () => {
+    const { getByRole } = render(<NotificationListScreen />)
+
+    fireEvent.press(getByRole("button", { name: "납부 안내를 보냈어요 읽음 처리" }))
+
+    expect(mockRead).toHaveBeenCalledWith("notice-reminder")
+  })
+
   test("filtered empty state offers a quick reset back to all notifications", () => {
     mockRuntimeNotifications = mockRuntimeNotifications.filter((item) => item.id !== "notice-board")
     const { getByLabelText, getByText, queryByText } = render(<NotificationListScreen />)

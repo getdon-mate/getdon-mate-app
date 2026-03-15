@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/react-native"
+import { fireEvent, render, waitFor } from "@testing-library/react-native"
 import { DetailTabBar } from "@features/accounts/components/detail/DetailTabBar"
 import { BoardTab } from "@features/accounts/components/detail-tabs/BoardTab"
 import { CalendarTab } from "@features/accounts/components/detail-tabs/CalendarTab"
@@ -18,6 +18,9 @@ const mockCurrentUser = {
 
 const mockSendPaymentReminder = jest.fn(async () => undefined)
 const mockSendTransferRequest = jest.fn(async () => undefined)
+const mockDelegateManager = jest.fn(async () => undefined)
+const mockShowToast = jest.fn()
+const mockConfirm = jest.fn(async () => true)
 
 jest.mock("@react-navigation/native", () => ({
   useNavigation: () => ({
@@ -35,6 +38,7 @@ jest.mock("@core/providers/AppProvider", () => ({
     createMember: jest.fn(async () => undefined),
     updateMember: jest.fn(async () => undefined),
     deleteMember: jest.fn(async () => undefined),
+    delegateManager: mockDelegateManager,
     updateAutoTransfer: jest.fn(async () => undefined),
     updateAccount: jest.fn(async () => undefined),
     createOneTimeDues: jest.fn(async () => undefined),
@@ -54,9 +58,9 @@ jest.mock("@core/providers/AppProvider", () => ({
 jest.mock("@core/providers/FeedbackProvider", () => ({
   useFeedback: () => ({
     showAlert: jest.fn(),
-    showToast: jest.fn(),
+    showToast: mockShowToast,
     showError: jest.fn(),
-    confirm: jest.fn(async () => true),
+    confirm: mockConfirm,
     confirmDanger: jest.fn(async () => true),
   }),
 }))
@@ -65,6 +69,9 @@ describe("account management tabs", () => {
   beforeEach(() => {
     mockSendPaymentReminder.mockClear()
     mockSendTransferRequest.mockClear()
+    mockDelegateManager.mockClear()
+    mockShowToast.mockClear()
+    mockConfirm.mockClear()
   })
 
   test("detail tab bar exposes statistics calendar and board tabs", () => {
@@ -127,12 +134,29 @@ describe("account management tabs", () => {
     expect(getByText("최근 안내 · 3월 7일 납부 안내")).toBeTruthy()
   })
 
-  test("members tab can send a transfer request for unpaid members", () => {
+  test("dues tab supports direct month switching from the month chips", () => {
+    const onSelectMonth = jest.fn()
+    const { getByText } = render(<DuesTab account={defaultAccounts[0]} selectedMonth="2026-03" onSelectMonth={onSelectMonth} />)
+
+    fireEvent.press(getByText("2월"))
+
+    expect(onSelectMonth).toHaveBeenCalledWith("2026-02")
+  })
+
+  test("members tab can send a transfer request for unpaid members", async () => {
     const { getAllByText } = render(<MembersTab account={defaultAccounts[0]} />)
 
     fireEvent.press(getAllByText("송금 요청")[0])
 
     expect(mockSendTransferRequest).toHaveBeenCalledWith("acc1", "m3", "2026-03")
+    await waitFor(() =>
+      expect(mockShowToast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "송금 요청 전송",
+          message: "박소연님께 바로 납부할 수 있도록 요청을 보냈습니다.",
+        })
+      )
+    )
   })
 
   test("members tab surfaces the latest reminder context for unpaid members", () => {
@@ -215,6 +239,20 @@ describe("account management tabs", () => {
     const { getByText } = render(<MembersTab account={defaultAccounts[0]} />)
 
     expect(getByText("현재 총무는 삭제할 수 없어요.")).toBeTruthy()
+  })
+
+  test("members tab uses explicit confirmation copy for manager delegation", async () => {
+    const { getAllByText } = render(<MembersTab account={defaultAccounts[0]} />)
+
+    fireEvent.press(getAllByText("총무 위임")[0])
+
+    await waitFor(() =>
+      expect(mockConfirm).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "총무 위임",
+        })
+      )
+    )
   })
 
   test("transactions tab distinguishes empty search results from an empty ledger", () => {

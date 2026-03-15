@@ -117,6 +117,7 @@ export function NotificationListScreen() {
                     label={unreadActionLabel}
                     variant="secondary"
                     onPress={() => void markNotificationRead(item.id)}
+                    accessibilityLabel={`${item.title} ${unreadActionLabel}`}
                     style={[styles.readButton, compact && styles.readButtonCompact, narrow && styles.readButtonNarrow]}
                   />
                 ) : null}

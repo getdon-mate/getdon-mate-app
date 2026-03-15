@@ -61,6 +61,16 @@ export function DuesTab({
             <Icon name="chevronRight" size={15} color="#334155" />
           </Pressable>
         </View>
+        <View style={styles.monthChipRow}>
+          {availableMonths.map((month) => (
+            <ActionChip
+              key={month}
+              label={`${Number(month.slice(-2))}월`}
+              active={month === selectedMonth}
+              onPress={() => onSelectMonth(month)}
+            />
+          ))}
+        </View>
 
         <View style={styles.summaryPillRow}>
           <View style={styles.summaryPill}>
@@ -174,6 +184,11 @@ const styles = StyleSheet.create({
   summaryPillRow: {
     flexDirection: "row",
     gap: 8,
+  },
+  monthChipRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
   },
   summaryPill: {
     flex: 1,
