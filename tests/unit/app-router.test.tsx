@@ -30,7 +30,7 @@ jest.mock("@react-navigation/native-stack", () => ({
 jest.mock("expo-splash-screen", () => ({
   preventAutoHideAsync: jest.fn(async () => undefined),
   hideAsync: jest.fn(async () => undefined),
-}))
+}), { virtual: true })
 
 jest.mock("@core/providers/AppProvider", () => ({
   useAppAuth: () => ({
