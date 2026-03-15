@@ -13,6 +13,7 @@ import {
 import { ROUTES } from "@core/navigation/routes"
 import type { RootStackParamList } from "@core/navigation/types"
 import { useAppAccounts, useAppAuth, useAppRuntime } from "@core/providers/AppProvider"
+import { useFeedback } from "@core/providers/FeedbackProvider"
 import { getCurrentMonthKey } from "@shared/lib/date"
 import { Button, Icon, uiColors, uiSpacing } from "@shared/ui"
 import { LoadingStateCard } from "../components/LoadingStateCard"
@@ -26,6 +27,7 @@ export function AccountListScreen() {
   const { currentUser } = useAppAuth()
   const { accounts, selectAccount } = useAppAccounts()
   const { isBootstrapping, isRefreshingAccounts, refreshAccounts, unreadNotificationCount, maskAmounts, toggleMaskAmounts } = useAppRuntime()
+  const { showToast } = useFeedback()
   const currentMonth = getCurrentMonthKey()
   const { width } = useWindowDimensions()
   const isWide = width >= 960
@@ -35,7 +37,12 @@ export function AccountListScreen() {
   const orderedAccounts = useMemo(() => getHomeAccounts(accounts), [accounts])
 
   async function handleRefresh() {
-    await refreshAccounts()
+    const source = await refreshAccounts()
+    showToast({
+      tone: source === "remote" ? "success" : "warning",
+      title: source === "remote" ? "목록 동기화 완료" : "데모 데이터 유지",
+      message: source === "remote" ? "모임통장 목록을 최신 상태로 불러왔습니다." : "현재는 데모 데이터로 목록을 유지하고 있습니다.",
+    })
   }
 
   return (
@@ -100,6 +107,8 @@ export function AccountListScreen() {
           <EmptyStateCard
             title="아직 모임통장이 없습니다."
             description="새 모임통장을 열고 회비 관리를 시작하세요."
+            actionLabel="모임통장 만들기"
+            onAction={() => navigation.navigate(ROUTES.AccountCreate)}
           />
         )}
 

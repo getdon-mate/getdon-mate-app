@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react-native"
+import { fireEvent, render, waitFor } from "@testing-library/react-native"
 import { AccountListScreen } from "@features/accounts/screens/AccountListScreen"
 import { SettingsTab } from "@features/accounts/components/detail-tabs/SettingsTab"
 import { AppSettingsScreen } from "@features/auth/screens/AppSettingsScreen"
@@ -9,7 +9,11 @@ jest.mock("@shared/ui/primitives/Icon", () => ({
 
 const mockNavigate = jest.fn()
 const mockGoBack = jest.fn()
+const mockShowToast = jest.fn()
+const mockRefreshAccounts = jest.fn(async () => "demo")
+const mockToggleMaskAmounts = jest.fn()
 let mockAccountsMode: "default" | "empty" = "default"
+let mockMaskAmounts = false
 
 jest.mock("@react-navigation/native", () => ({
   useNavigation: () => ({
@@ -36,9 +40,9 @@ jest.mock("@core/providers/AppProvider", () => ({
     dataSource: "demo",
     isRefreshingAccounts: false,
     isMutating: false,
-    maskAmounts: false,
-    toggleMaskAmounts: jest.fn(),
-    refreshAccounts: jest.fn(async () => "demo"),
+    maskAmounts: mockMaskAmounts,
+    toggleMaskAmounts: mockToggleMaskAmounts,
+    refreshAccounts: mockRefreshAccounts,
     unreadNotificationCount: 2,
     notificationPreferences: {
       duesReminder: true,
@@ -69,7 +73,7 @@ jest.mock("@core/providers/FeedbackProvider", () => ({
   useFeedback: () => ({
     confirmDanger: jest.fn(async () => true),
     confirm: jest.fn(async () => true),
-    showToast: jest.fn(),
+    showToast: mockShowToast,
     showAlert: jest.fn(),
     showError: jest.fn(),
   }),
@@ -78,8 +82,12 @@ jest.mock("@core/providers/FeedbackProvider", () => ({
 describe("home global management split", () => {
   beforeEach(() => {
     mockAccountsMode = "default"
+    mockMaskAmounts = false
     mockNavigate.mockClear()
     mockGoBack.mockClear()
+    mockShowToast.mockClear()
+    mockRefreshAccounts.mockClear()
+    mockToggleMaskAmounts.mockClear()
   })
 
   test("account list exposes global actions and removes demo reset button", () => {
@@ -113,11 +121,35 @@ describe("home global management split", () => {
     expect(getByText("회원 탈퇴")).toBeTruthy()
   })
 
-  test("account list empty state uses shorter setup copy", () => {
+  test("account list empty state uses shorter setup copy and a direct create CTA", () => {
     mockAccountsMode = "empty"
     const { getByText } = render(<AccountListScreen />)
 
     expect(getByText("아직 모임통장이 없습니다.")).toBeTruthy()
     expect(getByText("새 모임통장을 열고 회비 관리를 시작하세요.")).toBeTruthy()
+    fireEvent.press(getByText("모임통장 만들기"))
+
+    expect(mockNavigate).toHaveBeenCalledWith("AccountCreate")
+  })
+
+  test("account list refresh surfaces a sync toast", async () => {
+    const { getByLabelText } = render(<AccountListScreen />)
+
+    fireEvent.press(getByLabelText("모임통장 목록 새로고침"))
+
+    await waitFor(() => expect(mockRefreshAccounts).toHaveBeenCalledTimes(1))
+    expect(mockShowToast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tone: "warning",
+        title: "데모 데이터 유지",
+      })
+    )
+  })
+
+  test("masked preference is reflected on the home account cards", () => {
+    mockMaskAmounts = true
+    const { getAllByTestId } = render(<AccountListScreen />)
+
+    expect(getAllByTestId("masked-amount").length).toBeGreaterThan(0)
   })
 })
