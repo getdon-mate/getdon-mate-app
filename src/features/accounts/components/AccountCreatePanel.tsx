@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native"
-import { Button, Card, InputField, NumericInputField, uiColors } from "@shared/ui"
+import { Button, Card, DayOfMonthSelectField, InputField, NumericInputField, uiColors } from "@shared/ui"
 
 interface AccountCreatePanelProps {
   groupName: string
@@ -47,13 +47,7 @@ export function AccountCreatePanel({
         editable={!submitting}
         label="월 회비"
       />
-      <NumericInputField
-        value={dueDay}
-        onChangeText={onChangeDueDay}
-        placeholder="납부일 (1~28)"
-        editable={!submitting}
-        label="납부일"
-      />
+      <DayOfMonthSelectField value={dueDay} onChangeValue={onChangeDueDay} placeholder="납부일 선택" label="납부일" />
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 

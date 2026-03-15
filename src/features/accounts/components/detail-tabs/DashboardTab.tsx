@@ -1,7 +1,7 @@
 import { useState } from "react"
-import { StyleSheet, Text, View } from "react-native"
+import { Pressable, StyleSheet, Text, View } from "react-native"
 import { getCurrentMonthKey } from "@shared/lib/date"
-import { ActionChip, AmountMask, uiColors, uiRecipes } from "@shared/ui"
+import { ActionChip, AmountMask, Icon, uiColors, uiRecipes } from "@shared/ui"
 import { formatKRW } from "@shared/lib/format"
 import { getMemberById } from "../../model/member-utils"
 import { getPaymentSummary, getRecentTransactions } from "../../model/selectors"
@@ -15,10 +15,12 @@ export function DashboardTab({
   account,
   onOpenTransactions,
   onOpenDues,
+  onCopyAccountNumber,
 }: {
   account: GroupAccount
   onOpenTransactions: () => void
   onOpenDues: () => void
+  onCopyAccountNumber?: () => void
 }) {
   const [showBalance, setShowBalance] = useState(true)
 
@@ -29,7 +31,17 @@ export function DashboardTab({
   return (
     <View style={styles.stack}>
       <SectionCard>
-        <Text style={styles.subtleText}>{account.bankName} · {account.accountNumber}</Text>
+        <View style={styles.accountNumberRow}>
+          <Text style={styles.subtleText}>{account.bankName} · {account.accountNumber}</Text>
+          <Pressable
+            onPress={onCopyAccountNumber}
+            accessibilityRole="button"
+            accessibilityLabel="대시보드 계좌번호 복사"
+            style={styles.copyButton}
+          >
+            <Icon name="copy" size={14} color={uiColors.primary} />
+          </Pressable>
+        </View>
         <Text style={styles.balanceLabel}>잔액</Text>
         <View style={styles.balanceWrap}>
           <AmountMask value={formatKRW(account.balance)} masked={!showBalance} textStyle={styles.balanceText} skeletonHeight={28} />
@@ -119,6 +131,19 @@ const styles = StyleSheet.create({
   subtleText: {
     color: "#6b7280",
     fontSize: 12,
+  },
+  accountNumberRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  copyButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: uiColors.primarySoft,
   },
   balanceLabel: {
     color: "#6b7280",

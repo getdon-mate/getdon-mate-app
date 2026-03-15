@@ -200,7 +200,7 @@ test("10-3) 최근 거래값으로 거래 입력을 빠르게 채울 수 있다"
   await page.getByText("출금", { exact: true }).click()
   await page.getByRole("button", { name: "간식 구매 · 12,500원" }).click()
 
-  await expect(page.getByPlaceholder("금액")).toHaveValue("12500")
+  await expect(page.getByPlaceholder("금액")).toHaveValue("12,500")
   await expect(page.getByPlaceholder("예: 회비 입금, 모임 식비")).toHaveValue("간식 구매")
   await expect(page.getByPlaceholder("예: 회비, 식비")).toHaveValue("간식")
 })

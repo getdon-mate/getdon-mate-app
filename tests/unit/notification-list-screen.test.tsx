@@ -85,10 +85,13 @@ describe("NotificationListScreen", () => {
   })
 
   test("renders filter chips and narrows to reminder notifications", () => {
-    const { getAllByText, getByText, getByLabelText, queryByText } = render(<NotificationListScreen />)
+    const { getAllByText, getByText, getByLabelText, getByTestId, queryByText, queryByTestId } = render(<NotificationListScreen />)
 
     expect(getByText("중요한 안내만 빠르게 확인하세요.")).toBeTruthy()
     expect(getAllByText("읽음 완료").length).toBeGreaterThan(0)
+    expect(queryByTestId("notification-summary-row")).toBeNull()
+    expect(getByTestId("notification-filter-chip-all-count")).toBeTruthy()
+    expect(getByTestId("notification-filter-chip-unread-count")).toBeTruthy()
     expect(getByLabelText("알림 필터 전체")).toBeTruthy()
     expect(getByLabelText("알림 필터 읽지 않음")).toBeTruthy()
     expect(getByLabelText("알림 필터 안내")).toBeTruthy()

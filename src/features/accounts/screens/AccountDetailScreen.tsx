@@ -111,6 +111,16 @@ export function AccountDetailScreen() {
     showAlert({ title: "복사 실패", message: "초대 링크를 복사하지 못했습니다.", tone: "danger" })
   }
 
+  async function handleCopyAccountNumber() {
+    if (!account) return
+    const copied = await copyText(account.accountNumber)
+    if (copied) {
+      showToast({ tone: "success", title: "복사 완료", message: "계좌번호를 복사했어요." })
+      return
+    }
+    showAlert({ title: "복사 실패", message: "계좌번호를 복사하지 못했습니다.", tone: "danger" })
+  }
+
   async function handleShareInvite() {
     if (!account) return
     try {
@@ -160,7 +170,12 @@ export function AccountDetailScreen() {
               <LoadingStateCard />
             </>
           ) : tab === "dashboard" ? (
-            <DashboardTab account={account} onOpenDues={() => setTab("dues")} onOpenTransactions={() => setTab("transactions")} />
+            <DashboardTab
+              account={account}
+              onOpenDues={() => setTab("dues")}
+              onOpenTransactions={() => setTab("transactions")}
+              onCopyAccountNumber={() => void handleCopyAccountNumber()}
+            />
           ) : null}
           {tab === "dues" ? <DuesTab account={account} selectedMonth={selectedMonth} onSelectMonth={setSelectedMonth} /> : null}
           {tab === "transactions" ? (

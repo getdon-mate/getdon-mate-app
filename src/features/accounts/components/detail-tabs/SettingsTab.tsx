@@ -5,7 +5,7 @@ import { useFeedback } from "@core/providers/FeedbackProvider"
 import { copyText } from "@shared/lib/clipboard"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
 import { requireText, validateDayOfMonth, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
-import { ActionChip, Button, Icon, InputField, NumericInputField, RadioButton, ToggleSwitch, uiColors, uiRadius, uiSpacing } from "@shared/ui"
+import { ActionChip, Button, DayOfMonthSelectField, Icon, InputField, NumericInputField, RadioButton, ToggleSwitch, uiColors, uiRadius, uiSpacing } from "@shared/ui"
 import { formatKRW } from "@shared/lib/format"
 import { getMemberById } from "../../model/member-utils"
 import type { GroupAccount } from "../../model/types"
@@ -284,7 +284,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
             <InputField value={bankName} onChangeText={setBankName} label="은행명" placeholder="은행명" />
             <InputField value={accountNumber} onChangeText={setAccountNumber} label="계좌번호" placeholder="계좌번호" />
             <NumericInputField value={monthlyDues} onChangeText={setMonthlyDues} label="월 회비" placeholder="금액" />
-            <NumericInputField value={accountDueDay} onChangeText={setAccountDueDay} label="납부일" placeholder="1~28" />
+            <DayOfMonthSelectField value={accountDueDay} onChangeValue={setAccountDueDay} label="납부일" placeholder="납부일 선택" />
             <Button label="기본정보 저장" onPress={() => void handleSaveAccountInfo()} />
           </View>
         </View>
@@ -297,7 +297,7 @@ export function SettingsTab({ account }: { account: GroupAccount }) {
 
           {enabled ? (
             <View style={styles.formStack}>
-              <NumericInputField value={day} onChangeText={setDay} label="이체일" placeholder="1~28" />
+              <DayOfMonthSelectField value={day} onChangeValue={setDay} label="이체일" placeholder="이체일 선택" />
               <NumericInputField value={amount} onChangeText={setAmount} label="금액" placeholder="금액" />
               <InputField value={fromAccount} onChangeText={setFromAccount} label="출금 계좌" placeholder="출금 계좌" />
               {nextTransferPreview ? <Text style={styles.previewText}>{nextTransferPreview}</Text> : null}

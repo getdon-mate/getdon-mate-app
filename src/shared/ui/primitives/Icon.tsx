@@ -12,6 +12,8 @@ const iconNameMap = {
   minus: "remove",
   chevronLeft: "chevron-back",
   chevronRight: "chevron-forward",
+  chevronUp: "chevron-up",
+  chevronDown: "chevron-down",
   settings: "settings-outline",
   user: "person-circle-outline",
   bell: "notifications-outline",

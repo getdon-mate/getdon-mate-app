@@ -2,6 +2,12 @@ import type { StyleProp, TextInputProps, TextStyle, ViewStyle } from "react-nati
 import { onlyDigits } from "@shared/lib/validation"
 import { InputField } from "./InputField"
 
+function formatDigits(value: string) {
+  const digits = onlyDigits(value)
+  if (!digits) return ""
+  return new Intl.NumberFormat("ko-KR").format(Number(digits))
+}
+
 export function NumericInputField({
   onChangeText,
   label,
@@ -18,10 +24,11 @@ export function NumericInputField({
   return (
     <InputField
       {...props}
+      value={formatDigits(props.value ?? "")}
       label={label}
       error={error}
       containerStyle={containerStyle}
-      keyboardType="numeric"
+      keyboardType="number-pad"
       onChangeText={(value) => onChangeText?.(onlyDigits(value))}
     />
   )

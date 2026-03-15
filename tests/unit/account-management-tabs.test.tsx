@@ -116,6 +116,18 @@ describe("account management tabs", () => {
     expect(getByDisplayValue("3333-01-1234567")).toBeTruthy()
   })
 
+  test("settings uses select fields for due day and auto-transfer day", () => {
+    const { getByLabelText, getByText, getAllByText } = render(<SettingsTab account={defaultAccounts[0]} />)
+
+    expect(getByLabelText("납부일 선택")).toBeTruthy()
+    fireEvent.press(getByLabelText("납부일 선택"))
+    expect(getByText("28일")).toBeTruthy()
+
+    fireEvent.press(getByLabelText("자동이체 활성화"))
+    fireEvent.press(getByLabelText("이체일 선택"))
+    expect(getAllByText("1일").length).toBeGreaterThan(0)
+  })
+
   test("manager delegation visibility is based on linked userId, not display name", () => {
     const account = {
       ...defaultAccounts[0],
@@ -433,7 +445,7 @@ describe("account management tabs", () => {
 
     fireEvent.press(getByText("간식 구매 · 12,500원"))
 
-    expect(getByDisplayValue("12500")).toBeTruthy()
+    expect(getByDisplayValue("12,500")).toBeTruthy()
     expect(getByDisplayValue("간식 구매")).toBeTruthy()
     expect(getByDisplayValue("간식")).toBeTruthy()
   })

@@ -112,10 +112,11 @@ describe("home global management split", () => {
   })
 
   test("app settings screen owns global account actions", () => {
-    const { getByText } = render(<AppSettingsScreen />)
+    const { getByText, queryByText } = render(<AppSettingsScreen />)
 
-    expect(getByText("빠른 이동")).toBeTruthy()
-    expect(getByText("계정 액션")).toBeTruthy()
+    expect(queryByText("전역 설정 허브")).toBeNull()
+    expect(queryByText("빠른 이동")).toBeNull()
+    expect(queryByText("계정 액션")).toBeNull()
     expect(getByText("알림 설정")).toBeTruthy()
     expect(getByText("로그아웃")).toBeTruthy()
     expect(getByText("회원 탈퇴")).toBeTruthy()

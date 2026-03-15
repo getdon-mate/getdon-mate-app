@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native"
+import { useState } from "react"
 import { AmountMask, Icon, uiColors, uiRadius, uiSpacing } from "@shared/ui"
 import { formatKRW } from "@shared/lib/format"
 import type { GroupAccount, TransactionType } from "../../model/types"
@@ -20,6 +21,8 @@ export function AccountDetailHero({
 }) {
   const { width } = useWindowDimensions()
   const compact = width < 390
+  const [revealingBalance, setRevealingBalance] = useState(false)
+  const balanceMasked = maskAmounts && !revealingBalance
 
   return (
     <View style={[styles.heroCard, compact && styles.heroCardCompact]}>
@@ -30,9 +33,6 @@ export function AccountDetailHero({
           <Text style={styles.heroMeta}>모임원 {account.members.length}명</Text>
         </View>
         <View style={[styles.heroQuickActions, compact && styles.heroQuickActionsCompact]}>
-          <Pressable style={[styles.iconButton, compact && styles.iconButtonCompact]} onPress={onToggleMask} accessibilityRole="button" accessibilityLabel="금액 표시 전환">
-            <Icon name={maskAmounts ? "eyeOff" : "eye"} size={18} color={uiColors.textStrong} />
-          </Pressable>
           <Pressable style={[styles.iconButton, compact && styles.iconButtonCompact]} onPress={() => void onCopyInvite()} accessibilityRole="button" accessibilityLabel="초대 링크 복사">
             <Icon name="copy" size={18} color={uiColors.textStrong} />
           </Pressable>
@@ -42,19 +42,27 @@ export function AccountDetailHero({
         </View>
       </View>
       <Text style={styles.heroBalanceLabel}>총 잔액</Text>
-      <View style={styles.balanceWrap}>
+      <Pressable
+        style={styles.balanceWrap}
+        onPressIn={() => {
+          if (maskAmounts) setRevealingBalance(true)
+        }}
+        onPressOut={() => setRevealingBalance(false)}
+        accessibilityRole="button"
+        accessibilityLabel="잔액 길게 누르기"
+      >
         <AmountMask
           value={formatKRW(account.balance)}
-          masked={maskAmounts}
+          masked={balanceMasked}
           textStyle={[styles.heroBalanceText, compact && styles.heroBalanceTextCompact]}
           skeletonHeight={compact ? 26 : 30}
         />
-        {maskAmounts ? (
+        {balanceMasked ? (
           <View testID="masked-balance-overlay" pointerEvents="none" style={styles.maskOverlay}>
-            <Text style={styles.maskOverlayLabel}>잔액은 필요할 때만 확인하세요</Text>
+            <Text style={styles.maskOverlayLabel}>금액을 확인하려면 꾹 누르세요.</Text>
           </View>
         ) : null}
-      </View>
+      </Pressable>
       <View style={[styles.heroActionRow, compact && styles.heroActionRowCompact]}>
         <Pressable style={[styles.heroGhostButton, compact && styles.heroButtonCompact]} onPress={() => onPressAction("income")}>
           <Text style={styles.heroGhostButtonText}>채우기</Text>
@@ -151,7 +159,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(248, 250, 252, 0.82)",
     borderWidth: 1,
     borderColor: uiColors.border,
-    alignItems: "flex-end",
+    alignItems: "flex-start",
     justifyContent: "center",
     paddingHorizontal: 12,
   },

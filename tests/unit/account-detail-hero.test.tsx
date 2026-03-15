@@ -45,7 +45,7 @@ describe("AccountDetailHero", () => {
   })
 
   test("renders a masked balance skeleton when privacy mode is enabled", () => {
-    const { getByTestId, queryByText } = render(
+    const { getByLabelText, getByTestId, getByText, queryByText } = render(
       <AccountDetailHero
         account={defaultAccounts[0]}
         onPressAction={jest.fn()}
@@ -59,5 +59,13 @@ describe("AccountDetailHero", () => {
     expect(getByTestId("masked-amount")).toBeTruthy()
     expect(getByTestId("masked-balance-overlay")).toBeTruthy()
     expect(queryByText(/1,850,000/)).toBeNull()
+
+    expect(getByText("금액을 확인하려면 꾹 누르세요.")).toBeTruthy()
+
+    fireEvent(getByLabelText("잔액 길게 누르기"), "pressIn")
+    expect(getByText("1,850,000원")).toBeTruthy()
+
+    fireEvent(getByLabelText("잔액 길게 누르기"), "pressOut")
+    expect(queryByText("1,850,000원")).toBeNull()
   })
 })

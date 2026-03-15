@@ -22,6 +22,7 @@ export function InputField({
       {label ? <Text style={[styles.label, labelStyle]}>{label}</Text> : null}
       <TextInput
         {...props}
+        accessibilityLabel={props.accessibilityLabel ?? label}
         style={[styles.input, props.style, inputStyle]}
         placeholderTextColor={uiColors.textSoft}
       />

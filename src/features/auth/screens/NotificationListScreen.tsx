@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } fr
 import { useAppRuntime } from "@core/providers/AppProvider"
 import { EmptyStateCard } from "@features/accounts/components/EmptyStateCard"
 import type { RootStackParamList } from "@core/navigation/types"
-import { ActionChip, Button, Card, Icon, PageHeader, uiColors, uiRadius, uiSpacing } from "@shared/ui"
+import { Button, Card, Icon, PageHeader, uiColors, uiRadius, uiSpacing } from "@shared/ui"
 import { getNotificationCategory, type NotificationItem } from "@shared/lib/notification-state"
 
 type NotificationFilter = "all" | "unread" | "reminder" | "notice"
@@ -32,6 +32,45 @@ function getFilterSummary(filter: NotificationFilter) {
   return null
 }
 
+function getFilterCount(notifications: NotificationItem[], filter: NotificationFilter) {
+  if (filter === "all") return notifications.length
+  if (filter === "unread") return notifications.filter((item) => item.unread).length
+  return notifications.filter((item) => getNotificationCategory(item) === filter).length
+}
+
+function FilterChip({
+  label,
+  count,
+  active,
+  onPress,
+  accessibilityLabel,
+  testID,
+}: {
+  label: string
+  count: number
+  active: boolean
+  onPress: () => void
+  accessibilityLabel: string
+  testID: string
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ selected: active }}
+      style={[styles.filterChip, active && styles.filterChipActive]}
+    >
+      <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>{label}</Text>
+      {count > 0 ? (
+        <View style={styles.filterCountBadge} testID={testID}>
+          <Text style={styles.filterCountBadgeText}>{count > 99 ? "99+" : count}</Text>
+        </View>
+      ) : null}
+    </Pressable>
+  )
+}
+
 export function NotificationListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const { width } = useWindowDimensions()
@@ -51,7 +90,6 @@ export function NotificationListScreen() {
   const filterSummary = getFilterSummary(filter)
   const hasNotifications = notifications.length > 0
   const isFilteredEmpty = hasNotifications && filteredNotifications.length === 0
-  const readNotificationCount = notifications.length - unreadNotificationCount
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -81,25 +119,39 @@ export function NotificationListScreen() {
           <PageHeader title="알림" subtitle={`새 알림 ${unreadNotificationCount}개`} />
           <Text style={styles.headerHint}>중요한 안내만 빠르게 확인하세요.</Text>
         </View>
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryPill}>
-            <Text style={styles.summaryLabel}>전체</Text>
-            <Text style={styles.summaryValue}>{notifications.length}건</Text>
-          </View>
-          <View style={styles.summaryPill}>
-            <Text style={styles.summaryLabel}>읽지 않음</Text>
-            <Text style={styles.summaryValue}>{unreadNotificationCount}건</Text>
-          </View>
-          <View style={styles.summaryPill}>
-            <Text style={styles.summaryLabel}>읽음 완료</Text>
-            <Text style={styles.summaryValue}>{readNotificationCount}건</Text>
-          </View>
-        </View>
         <View style={styles.filterRow}>
-          <ActionChip label="전체" active={filter === "all"} onPress={() => setFilter("all")} accessibilityLabel="알림 필터 전체" />
-          <ActionChip label="읽지 않음" active={filter === "unread"} onPress={() => setFilter("unread")} accessibilityLabel="알림 필터 읽지 않음" />
-          <ActionChip label="안내" active={filter === "reminder"} onPress={() => setFilter("reminder")} accessibilityLabel="알림 필터 안내" />
-          <ActionChip label="공지" active={filter === "notice"} onPress={() => setFilter("notice")} accessibilityLabel="알림 필터 공지" />
+          <FilterChip
+            label="전체"
+            count={getFilterCount(notifications, "all")}
+            active={filter === "all"}
+            onPress={() => setFilter("all")}
+            accessibilityLabel="알림 필터 전체"
+            testID="notification-filter-chip-all-count"
+          />
+          <FilterChip
+            label="읽지 않음"
+            count={getFilterCount(notifications, "unread")}
+            active={filter === "unread"}
+            onPress={() => setFilter("unread")}
+            accessibilityLabel="알림 필터 읽지 않음"
+            testID="notification-filter-chip-unread-count"
+          />
+          <FilterChip
+            label="안내"
+            count={getFilterCount(notifications, "reminder")}
+            active={filter === "reminder"}
+            onPress={() => setFilter("reminder")}
+            accessibilityLabel="알림 필터 안내"
+            testID="notification-filter-chip-reminder-count"
+          />
+          <FilterChip
+            label="공지"
+            count={getFilterCount(notifications, "notice")}
+            active={filter === "notice"}
+            onPress={() => setFilter("notice")}
+            accessibilityLabel="알림 필터 공지"
+            testID="notification-filter-chip-notice-count"
+          />
         </View>
         {filterSummary ? <Text style={styles.filterSummary}>{filterSummary}</Text> : null}
       </View>
@@ -188,34 +240,49 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
   },
-  summaryRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  summaryPill: {
-    flex: 1,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: uiColors.border,
-    backgroundColor: uiColors.surfaceMuted,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    gap: 3,
-  },
-  summaryLabel: {
-    color: uiColors.textMuted,
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  summaryValue: {
-    color: uiColors.textStrong,
-    fontSize: 14,
-    fontWeight: "800",
-  },
   filterRow: {
     flexDirection: "row",
     gap: 8,
     flexWrap: "wrap",
+  },
+  filterChip: {
+    borderWidth: 1,
+    borderRadius: uiRadius.full,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surface,
+    paddingLeft: 12,
+    paddingRight: 10,
+    paddingVertical: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 6,
+  },
+  filterChipActive: {
+    backgroundColor: uiColors.primarySoft,
+    borderColor: uiColors.primaryBorder,
+  },
+  filterChipText: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  filterChipTextActive: {
+    color: uiColors.primary,
+  },
+  filterCountBadge: {
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 5,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: uiColors.danger,
+  },
+  filterCountBadgeText: {
+    color: uiColors.surface,
+    fontSize: 10,
+    fontWeight: "800",
   },
   filterSummary: {
     color: uiColors.textMuted,
