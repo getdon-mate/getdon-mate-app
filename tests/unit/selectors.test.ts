@@ -1,7 +1,11 @@
 import { defaultAccounts } from '@features/accounts/model/fixtures'
 import {
+  getCalendarEvents,
+  getCalendarEventsForDate,
+  getLatestReminderForMember,
   getPaymentSummary,
   getRecentTransactions,
+  getStatisticsSummary,
   getTransactionTotals,
   groupTransactionsByDate,
 } from '@features/accounts/model/selectors'
@@ -37,5 +41,28 @@ describe('account selectors', () => {
 
     expect(Object.keys(grouped)).toContain('2026-03-03')
     expect(grouped['2026-03-03']).toHaveLength(2)
+  })
+
+  test('getLatestReminderForMember returns the most recent reminder for a member', () => {
+    const reminder = getLatestReminderForMember(account, 'm3')
+
+    expect(reminder?.type).toBe('payment-reminder')
+    expect(reminder?.message).toContain('납부 안내')
+  })
+
+  test('getStatisticsSummary returns current high-level operating metrics', () => {
+    const summary = getStatisticsSummary(account)
+
+    expect(summary.net).toBe(52500)
+    expect(summary.unpaidCount).toBe(2)
+    expect(summary.expense).toBe(47500)
+  })
+
+  test('getCalendarEventsForDate narrows events to the chosen day', () => {
+    const events = getCalendarEvents(account)
+    const focused = getCalendarEventsForDate(events, '2026-03-04')
+
+    expect(focused.every((event) => event.date === '2026-03-04')).toBe(true)
+    expect(focused.some((event) => event.title.includes('이번 주 스터디 장소 안내'))).toBe(true)
   })
 })

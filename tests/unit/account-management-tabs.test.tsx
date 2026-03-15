@@ -123,4 +123,10 @@ describe("account management tabs", () => {
 
     expect(mockSendTransferRequest).toHaveBeenCalledWith("acc1", "m3", "2026-03")
   })
+
+  test("members tab surfaces the latest reminder context for unpaid members", () => {
+    const { getByText } = render(<MembersTab account={defaultAccounts[0]} />)
+
+    expect(getByText(/최근 안내/)).toBeTruthy()
+  })
 })

@@ -37,6 +37,13 @@ export interface CalendarEventItem {
   tone: "dues" | "transaction" | "notice"
 }
 
+export interface StatisticsSummary {
+  income: number
+  expense: number
+  net: number
+  unpaidCount: number
+}
+
 export function getAccountDuesForMonth(account: GroupAccount, month: string): DuesRecord[] {
   return account.duesRecords.filter((record) => record.month === month)
 }
@@ -163,4 +170,27 @@ export function getCalendarEvents(account: GroupAccount): CalendarEventItem[] {
   }))
 
   return [...duesEvents, ...oneTimeEvents, ...transactionEvents, ...boardEvents].sort((a, b) => a.date.localeCompare(b.date))
+}
+
+export function getCalendarEventsForDate(events: CalendarEventItem[], date: string) {
+  return events.filter((event) => event.date === date)
+}
+
+export function getLatestReminderForMember(account: GroupAccount, memberId: string) {
+  return [...account.reminders]
+    .filter((item) => item.memberId === memberId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
+}
+
+export function getStatisticsSummary(account: GroupAccount): StatisticsSummary {
+  const latestMonth = [...new Set(account.duesRecords.map((record) => record.month))].sort((a, b) => b.localeCompare(a))[0]
+  const totals = getTransactionTotals(account)
+  const paymentSummary = latestMonth ? getPaymentSummary(account, latestMonth) : null
+
+  return {
+    income: totals.income,
+    expense: totals.expense,
+    net: totals.net,
+    unpaidCount: paymentSummary?.unpaid ?? 0,
+  }
 }

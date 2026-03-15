@@ -299,4 +299,29 @@ describe('AppProvider state transitions', () => {
     const updatedAccount = getCtx().accounts.find((item) => item.id === 'acc1')
     expect(updatedAccount?.boardPosts[0]?.comments[0]?.body).toBe('확인했습니다.')
   })
+
+  test('sending a payment reminder also appends a notification item', async () => {
+    render(
+      <AppProvider>
+        <Harness />
+      </AppProvider>
+    )
+
+    await waitFor(() => expect(getCtx().isBootstrapping).toBe(false))
+
+    await act(async () => {
+      await getCtx().login('test@test.com', 'password')
+    })
+
+    await waitFor(() => expect(getCtx().currentUser?.id).toBe('u1'))
+
+    const previousCount = getCtx().notifications.length
+
+    await act(async () => {
+      await getCtx().sendPaymentReminder('acc1', 'm3', '2026-03')
+    })
+
+    expect(getCtx().notifications).toHaveLength(previousCount + 1)
+    expect(getCtx().notifications[0]?.title).toBe('납부 안내를 보냈어요')
+  })
 })

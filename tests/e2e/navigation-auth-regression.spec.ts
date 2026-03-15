@@ -99,13 +99,33 @@ test("8) 게시판 글과 댓글 작성이 동작한다", async ({ page }) => {
   await expect(page.getByText("e2e 댓글 확인")).toBeVisible()
 })
 
-test("9) 목록에서 새 모임통장 개설 화면 진입", async ({ page }) => {
+test("9) 리마인드 전송 후 알림센터에서 확인할 수 있다", async ({ page }) => {
+  await loginAsTestUser(page)
+  await openFirstAccountDetail(page)
+  await page.getByText("멤버", { exact: true }).last().click()
+  await page.getByRole("button", { name: "납부 안내" }).first().click()
+  await expect(page.getByText("납부 안내 전송")).toBeVisible()
+
+  await page.getByLabel("목록으로 이동").click()
+  await page.getByLabel("알림 목록 열기").click()
+  await expect(page.getByText("납부 안내를 보냈어요")).toBeVisible()
+})
+
+test("10) 캘린더에서 날짜를 선택하면 해당 일정 중심으로 볼 수 있다", async ({ page }) => {
+  await loginAsTestUser(page)
+  await openFirstAccountDetail(page)
+  await page.getByText("일정", { exact: true }).last().click()
+  await page.getByLabel("2026-03-04 일정 보기").click()
+  await expect(page.getByText("선택한 날짜 일정")).toBeVisible()
+})
+
+test("11) 목록에서 새 모임통장 개설 화면 진입", async ({ page }) => {
   await loginAsTestUser(page)
   await page.getByRole("button", { name: "+ 새 모임통장 개설" }).click()
   await expect(page.getByText("목록 화면과 분리된 입력 화면에서 정보를 입력합니다.")).toBeVisible()
 })
 
-test("10) 목록에서 로그아웃 후 로그인 화면 복귀", async ({ page }) => {
+test("12) 목록에서 로그아웃 후 로그인 화면 복귀", async ({ page }) => {
   await loginAsTestUser(page)
   await page.getByLabel("앱 설정 열기").click()
   await page.getByText("로그아웃", { exact: true }).click()
