@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from "react-native"
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native"
 import { useEffect, useMemo, useState } from "react"
 import { formatDate } from "@shared/lib/format"
 import { Icon, uiColors } from "@shared/ui"
@@ -34,6 +34,8 @@ function getInitialDateForMonth(events: ReturnType<typeof getCalendarEvents>, mo
 }
 
 export function CalendarTab({ account }: { account: GroupAccount }) {
+  const { width } = useWindowDimensions()
+  const compact = width < 390
   const events = getCalendarEvents(account)
   const latestDate = events[events.length - 1]?.date ?? new Date().toISOString().slice(0, 10)
   const initialMonth = latestDate.slice(0, 7)
@@ -103,7 +105,7 @@ export function CalendarTab({ account }: { account: GroupAccount }) {
         {focusedEvents.length > 0 ? (
           <View style={styles.list}>
             {focusedEvents.map((event) => (
-              <Pressable key={event.id} style={styles.eventCard}>
+              <Pressable key={event.id} style={[styles.eventCard, compact && styles.eventCardCompact]}>
                 <Text style={styles.eventTone}>{getToneLabel(event.tone)}</Text>
                 <Text style={styles.eventTitle}>{event.title}</Text>
                 <Text style={styles.eventMeta}>{formatDate(event.date)}</Text>
@@ -111,7 +113,7 @@ export function CalendarTab({ account }: { account: GroupAccount }) {
             ))}
           </View>
         ) : (
-          <EmptyStateCard title="선택한 날짜의 일정이 없습니다." description="다른 날짜를 눌러 예정된 회비, 거래, 공지 일정을 확인해보세요." />
+          <EmptyStateCard title="선택한 날짜 일정이 없습니다." description="다른 날짜를 눌러 일정을 확인해보세요." />
         )}
       </SectionCard>
     </View>
@@ -198,6 +200,9 @@ const styles = StyleSheet.create({
     backgroundColor: uiColors.surfaceMuted,
     padding: 14,
     gap: 4,
+  },
+  eventCardCompact: {
+    padding: 12,
   },
   eventTone: {
     alignSelf: "flex-start",

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native"
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native"
 import { formatKRW, formatMonth } from "@shared/lib/format"
 import { uiColors } from "@shared/ui"
 import { getExpenseCategoryBreakdown, getMonthlyTransactionTrend, getStatisticsSummary } from "../../model/selectors"
@@ -8,6 +8,8 @@ import { SectionCard } from "../SectionCard"
 import { SectionHeader } from "../SectionHeader"
 
 export function StatisticsTab({ account }: { account: GroupAccount }) {
+  const { width } = useWindowDimensions()
+  const compact = width < 390
   const trend = getMonthlyTransactionTrend(account)
   const breakdown = getExpenseCategoryBreakdown(account)
   const summary = getStatisticsSummary(account)
@@ -32,7 +34,7 @@ export function StatisticsTab({ account }: { account: GroupAccount }) {
       <SectionCard>
         <SectionHeader title="월별 추이" />
         {trend.length > 0 ? (
-          <View style={styles.chartStack}>
+          <View style={[styles.chartStack, compact && styles.chartStackCompact]}>
             {trend.map((point) => (
               <View key={point.month} style={styles.trendRow}>
                 <Text style={styles.rowLabel}>{formatMonth(point.month)}</Text>
@@ -50,7 +52,7 @@ export function StatisticsTab({ account }: { account: GroupAccount }) {
             </View>
           </View>
         ) : (
-          <EmptyStateCard title="아직 집계할 거래가 없습니다." description="거래가 쌓이면 월별 추이를 여기서 볼 수 있습니다." />
+          <EmptyStateCard title="아직 집계할 거래가 없습니다." description="거래가 쌓이면 흐름을 여기서 보여줍니다." />
         )}
       </SectionCard>
 
@@ -72,7 +74,7 @@ export function StatisticsTab({ account }: { account: GroupAccount }) {
             ))}
           </View>
         ) : (
-          <EmptyStateCard title="출금 내역이 아직 없습니다." description="지출이 생기면 카테고리 비중을 정리해 보여드립니다." />
+          <EmptyStateCard title="출금 내역이 아직 없습니다." description="지출이 생기면 비중을 바로 보여줍니다." />
         )}
       </SectionCard>
     </View>
@@ -86,6 +88,10 @@ const styles = StyleSheet.create({
   chartStack: {
     gap: 12,
     marginTop: 10,
+  },
+  chartStackCompact: {
+    gap: 10,
+    marginTop: 8,
   },
   summaryRow: {
     gap: 8,

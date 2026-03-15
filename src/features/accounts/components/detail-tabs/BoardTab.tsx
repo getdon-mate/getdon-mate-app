@@ -120,7 +120,7 @@ export function BoardTab({ account }: { account: GroupAccount }) {
           </SectionCard>
         ))
       ) : (
-        <EmptyStateCard title="첫 공지를 남겨보세요." description="모임 공지와 운영 메모를 한 곳에서 공유할 수 있습니다." />
+        <EmptyStateCard title="첫 공지를 남겨보세요." description="운영 소식은 짧게 바로 올릴 수 있습니다." />
       )}
     </View>
   )
