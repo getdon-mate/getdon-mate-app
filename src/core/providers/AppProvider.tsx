@@ -67,6 +67,16 @@ interface CreateBoardCommentInput {
   body: string
 }
 
+interface UpdateBoardPostInput {
+  title: string
+  body: string
+  pinned: boolean
+}
+
+interface UpdateBoardCommentInput {
+  body: string
+}
+
 interface UpdateAccountInput {
   groupName: string
   bankName: string
@@ -147,6 +157,10 @@ interface AppAccountsContextType {
   sendTransferRequest: (accountId: string, memberId: string, month: string) => Promise<void>
   createBoardPost: (accountId: string, data: CreateBoardPostInput) => Promise<void>
   addBoardComment: (accountId: string, postId: string, data: CreateBoardCommentInput) => Promise<void>
+  updateBoardPost: (accountId: string, postId: string, data: UpdateBoardPostInput) => Promise<void>
+  deleteBoardPost: (accountId: string, postId: string) => Promise<void>
+  updateBoardComment: (accountId: string, postId: string, commentId: string, data: UpdateBoardCommentInput) => Promise<void>
+  deleteBoardComment: (accountId: string, postId: string, commentId: string) => Promise<void>
   resetDemoData: () => void
 }
 
@@ -327,21 +341,23 @@ function createReminderNotification(memberName: string, month: string, type: Rem
   }
 }
 
-function createBoardPost(data: CreateBoardPostInput, authorName: string): BoardPost {
+function createBoardPost(data: CreateBoardPostInput, authorId: string, authorName: string): BoardPost {
   return {
     id: `post${Date.now()}`,
     title: data.title.trim(),
     body: data.body.trim(),
     pinned: data.pinned,
     createdAt: new Date().toISOString(),
+    authorUserId: authorId,
     authorName,
     comments: [],
   }
 }
 
-function createBoardComment(data: CreateBoardCommentInput, authorName: string): BoardComment {
+function createBoardComment(data: CreateBoardCommentInput, authorId: string, authorName: string): BoardComment {
   return {
     id: `comment${Date.now()}`,
+    authorUserId: authorId,
     authorName,
     body: data.body.trim(),
     createdAt: new Date().toISOString(),
@@ -1079,7 +1095,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               ? {
                   ...account,
                   boardPosts: [
-                    createBoardPost(data, currentUser.name),
+                    createBoardPost(data, currentUser.id, currentUser.name),
                     ...account.boardPosts.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.createdAt.localeCompare(a.createdAt)),
                   ],
                 }
@@ -1115,12 +1131,119 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 post.id === postId
                   ? {
                       ...post,
-                      comments: [...post.comments, createBoardComment(data, currentUser.name)],
+                      comments: [...post.comments, createBoardComment(data, currentUser.id, currentUser.name)],
                     }
                   : post
               ),
             }
           })
+        )
+      })
+    },
+    [currentUser, runBusy]
+  )
+
+  const updateBoardPost = useCallback(
+    async (accountId: string, postId: string, data: UpdateBoardPostInput) => {
+      if (!currentUser || !data.title.trim() || !data.body.trim()) return
+
+      await runBusy(async () => {
+        setAccounts((prev) =>
+          prev.map((account) =>
+            account.id === accountId
+              ? {
+                  ...account,
+                  boardPosts: account.boardPosts.map((post) =>
+                    post.id === postId && post.authorUserId === currentUser.id
+                      ? {
+                          ...post,
+                          title: data.title.trim(),
+                          body: data.body.trim(),
+                          pinned: data.pinned,
+                        }
+                      : post
+                  ),
+                }
+              : account
+          )
+        )
+      })
+    },
+    [currentUser, runBusy]
+  )
+
+  const deleteBoardPost = useCallback(
+    async (accountId: string, postId: string) => {
+      if (!currentUser) return
+
+      await runBusy(async () => {
+        setAccounts((prev) =>
+          prev.map((account) =>
+            account.id === accountId
+              ? {
+                  ...account,
+                  boardPosts: account.boardPosts.filter((post) => !(post.id === postId && post.authorUserId === currentUser.id)),
+                }
+              : account
+          )
+        )
+      })
+    },
+    [currentUser, runBusy]
+  )
+
+  const updateBoardComment = useCallback(
+    async (accountId: string, postId: string, commentId: string, data: UpdateBoardCommentInput) => {
+      if (!currentUser || !data.body.trim()) return
+
+      await runBusy(async () => {
+        setAccounts((prev) =>
+          prev.map((account) =>
+            account.id === accountId
+              ? {
+                  ...account,
+                  boardPosts: account.boardPosts.map((post) =>
+                    post.id === postId
+                      ? {
+                          ...post,
+                          comments: post.comments.map((comment) =>
+                            comment.id === commentId && comment.authorUserId === currentUser.id
+                              ? { ...comment, body: data.body.trim() }
+                              : comment
+                          ),
+                        }
+                      : post
+                  ),
+                }
+              : account
+          )
+        )
+      })
+    },
+    [currentUser, runBusy]
+  )
+
+  const deleteBoardComment = useCallback(
+    async (accountId: string, postId: string, commentId: string) => {
+      if (!currentUser) return
+
+      await runBusy(async () => {
+        setAccounts((prev) =>
+          prev.map((account) =>
+            account.id === accountId
+              ? {
+                  ...account,
+                  boardPosts: account.boardPosts.map((post) =>
+                    post.id === postId
+                      ? {
+                          ...post,
+                          comments: post.comments.filter((comment) => !(comment.id === commentId && comment.authorUserId === currentUser.id)),
+                        }
+                      : post
+                  ),
+                }
+              : account
+          )
         )
       })
     },
@@ -1254,6 +1377,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       sendTransferRequest,
       createBoardPost: createBoardPostForAccount,
       addBoardComment,
+      updateBoardPost,
+      deleteBoardPost,
+      updateBoardComment,
+      deleteBoardComment,
       resetDemoData,
     }),
     [
@@ -1280,8 +1407,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleOneTimeDuesRecord,
       updateAccount,
       updateAutoTransfer,
+      updateBoardComment,
+      updateBoardPost,
       updateMember,
       updateOneTimeDues,
+      deleteBoardComment,
+      deleteBoardPost,
       updateTransaction,
     ]
   )

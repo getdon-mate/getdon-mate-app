@@ -26,8 +26,13 @@ const mockUpdateTransaction = jest.fn(async () => undefined)
 const mockDeleteTransaction = jest.fn(async () => undefined)
 const mockCreateBoardPost = jest.fn(async () => undefined)
 const mockAddBoardComment = jest.fn(async () => undefined)
+const mockUpdateBoardPost = jest.fn(async () => undefined)
+const mockDeleteBoardPost = jest.fn(async () => undefined)
+const mockUpdateBoardComment = jest.fn(async () => undefined)
+const mockDeleteBoardComment = jest.fn(async () => undefined)
 const mockShowToast = jest.fn()
 const mockConfirm = jest.fn(async () => true)
+const mockConfirmDanger = jest.fn(async () => true)
 const mockOpenCalendarQuickAction = jest.fn()
 let mockIsMutating = false
 
@@ -63,6 +68,10 @@ jest.mock("@core/providers/AppProvider", () => ({
     sendTransferRequest: mockSendTransferRequest,
     createBoardPost: mockCreateBoardPost,
     addBoardComment: mockAddBoardComment,
+    updateBoardPost: mockUpdateBoardPost,
+    deleteBoardPost: mockDeleteBoardPost,
+    updateBoardComment: mockUpdateBoardComment,
+    deleteBoardComment: mockDeleteBoardComment,
     isMutating: mockIsMutating,
   }),
   useAppAuth: () => ({
@@ -76,7 +85,7 @@ jest.mock("@core/providers/FeedbackProvider", () => ({
     showToast: mockShowToast,
     showError: jest.fn(),
     confirm: mockConfirm,
-    confirmDanger: jest.fn(async () => true),
+    confirmDanger: mockConfirmDanger,
   }),
 }))
 
@@ -91,8 +100,13 @@ describe("account management tabs", () => {
     mockDeleteTransaction.mockClear()
     mockCreateBoardPost.mockClear()
     mockAddBoardComment.mockClear()
+    mockUpdateBoardPost.mockClear()
+    mockDeleteBoardPost.mockClear()
+    mockUpdateBoardComment.mockClear()
+    mockDeleteBoardComment.mockClear()
     mockShowToast.mockClear()
     mockConfirm.mockClear()
+    mockConfirmDanger.mockClear()
     mockOpenCalendarQuickAction.mockClear()
     mockIsMutating = false
   })
@@ -312,7 +326,9 @@ describe("account management tabs", () => {
   })
 
   test("board tab can apply a notice template into the composer", () => {
-    const { getByText, getByDisplayValue } = render(<BoardTab account={defaultAccounts[0]} />)
+    const { getByText, getByDisplayValue, getByLabelText } = render(<BoardTab account={defaultAccounts[0]} />)
+
+    fireEvent.press(getByLabelText("게시판 게시글 작성"))
 
     fireEvent.press(getByText("회비 안내"))
 
@@ -367,6 +383,27 @@ describe("account management tabs", () => {
     const { getAllByText } = render(<BoardTab account={defaultAccounts[0]} />)
 
     expect(getAllByText("공지").length).toBeGreaterThan(0)
+  })
+
+  test("board tab opens the composer from the header action instead of showing it immediately", () => {
+    const { getByLabelText, queryByPlaceholderText } = render(<BoardTab account={defaultAccounts[0]} />)
+
+    expect(queryByPlaceholderText("예: 이번 주 모임 장소 안내")).toBeNull()
+
+    fireEvent.press(getByLabelText("게시판 게시글 작성"))
+
+    expect(queryByPlaceholderText("예: 이번 주 모임 장소 안내")).toBeTruthy()
+  })
+
+  test("board tab shows author controls, profile badges, and comment dividers", () => {
+    const { getByLabelText, getByTestId } = render(<BoardTab account={defaultAccounts[0]} />)
+
+    expect(getByLabelText("이번 주 스터디 장소 안내 게시글 수정")).toBeTruthy()
+    expect(getByLabelText("이번 주 스터디 장소 안내 게시글 삭제")).toBeTruthy()
+    expect(getByLabelText("김지현 댓글 수정")).toBeTruthy()
+    expect(getByLabelText("김지현 댓글 삭제")).toBeTruthy()
+    expect(getByTestId("comment-avatar-comment1")).toBeTruthy()
+    expect(getByTestId("comment-divider-comment2")).toBeTruthy()
   })
 
   test("members tab empty state uses shorter filter-reset copy", () => {

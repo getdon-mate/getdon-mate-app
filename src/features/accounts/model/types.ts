@@ -68,6 +68,7 @@ export interface ReminderItem {
 
 export interface BoardComment {
   id: string
+  authorUserId?: string
   authorName: string
   body: string
   createdAt: string
@@ -79,6 +80,7 @@ export interface BoardPost {
   body: string
   pinned: boolean
   createdAt: string
+  authorUserId?: string
   authorName: string
   comments: BoardComment[]
 }

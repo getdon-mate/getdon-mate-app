@@ -20,6 +20,7 @@ const iconNameMap = {
   refresh: "refresh",
   logout: "log-out-outline",
   trash: "trash-outline",
+  edit: "create-outline",
   search: "search-outline",
   sort: "swap-vertical-outline",
   closeCircle: "close-circle-outline",

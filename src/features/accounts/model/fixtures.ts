@@ -77,6 +77,7 @@ const studyBoardPosts: BoardPost[] = [
     body: "이번 주는 2층 회의실에서 진행합니다. 10분 전에 도착해주세요.",
     pinned: true,
     createdAt: "2026-03-04T09:00:00.000Z",
+    authorUserId: "u1",
     authorName: "김지현",
     comments: [
       {
@@ -84,6 +85,13 @@ const studyBoardPosts: BoardPost[] = [
         authorName: "이승우",
         body: "확인했습니다.",
         createdAt: "2026-03-04T09:15:00.000Z",
+      },
+      {
+        id: "comment2",
+        authorUserId: "u1",
+        authorName: "김지현",
+        body: "추가 공지는 여기 댓글로 이어갈게요.",
+        createdAt: "2026-03-04T10:00:00.000Z",
       },
     ],
   },
@@ -93,6 +101,7 @@ const studyBoardPosts: BoardPost[] = [
     body: "이번 주 간식비는 거래 탭에 반영했습니다.",
     pinned: false,
     createdAt: "2026-03-03T12:00:00.000Z",
+    authorUserId: "u1",
     authorName: "김지현",
     comments: [],
   },
@@ -105,6 +114,7 @@ const hikingBoardPosts: BoardPost[] = [
     body: "토요일 오전 8시에 입구에서 모입니다.",
     pinned: true,
     createdAt: "2026-03-02T07:30:00.000Z",
+    authorUserId: "u1",
     authorName: "김지현",
     comments: [],
   },
