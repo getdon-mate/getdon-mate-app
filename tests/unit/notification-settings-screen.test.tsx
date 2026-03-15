@@ -83,4 +83,13 @@ describe("NotificationSettingsScreen", () => {
     )
     expect(mockConfirm).not.toHaveBeenCalled()
   })
+
+  test("reset to defaults updates the enabled summary before saving", () => {
+    const { getByText } = render(<NotificationSettingsScreen />)
+
+    fireEvent.press(getByText("기본값 복원"))
+
+    expect(getByText("3/3 활성")).toBeTruthy()
+    expect(getByText("미저장 변경 1건")).toBeTruthy()
+  })
 })

@@ -47,6 +47,8 @@ const studyTransactions: Transaction[] = [
   { id: "t2", type: "income", amount: 50000, description: "3월 회비", date: "2026-03-03", category: "회비", memberId: "m2" },
   { id: "t3", type: "expense", amount: 35000, description: "스터디 카페 대관", date: "2026-03-03", category: "장소" },
   { id: "t4", type: "expense", amount: 12500, description: "간식 구매", date: "2026-03-02", category: "간식" },
+  { id: "t5", type: "income", amount: 50000, description: "2월 회비", date: "2026-02-22", category: "회비", memberId: "m3" },
+  { id: "t6", type: "expense", amount: 18000, description: "2월 자료 출력", date: "2026-02-21", category: "운영" },
 ]
 
 const hikingTransactions: Transaction[] = [

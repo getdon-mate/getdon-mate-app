@@ -28,9 +28,9 @@ describe('account selectors', () => {
   test('getTransactionTotals calculates income/expense/net', () => {
     const totals = getTransactionTotals(account)
 
-    expect(totals.income).toBe(100000)
-    expect(totals.expense).toBe(47500)
-    expect(totals.net).toBe(52500)
+    expect(totals.income).toBe(150000)
+    expect(totals.expense).toBe(65500)
+    expect(totals.net).toBe(84500)
   })
 
   test('getRecentTransactions respects limit', () => {
@@ -60,9 +60,9 @@ describe('account selectors', () => {
   test('getStatisticsSummary returns current high-level operating metrics', () => {
     const summary = getStatisticsSummary(account)
 
-    expect(summary.net).toBe(52500)
+    expect(summary.net).toBe(84500)
     expect(summary.unpaidCount).toBe(2)
-    expect(summary.expense).toBe(47500)
+    expect(summary.expense).toBe(65500)
   })
 
   test('getCalendarEventsForDate narrows events to the chosen day', () => {

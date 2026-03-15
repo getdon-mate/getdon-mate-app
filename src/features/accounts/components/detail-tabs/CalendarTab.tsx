@@ -102,6 +102,7 @@ export function CalendarTab({ account }: { account: GroupAccount }) {
       <SectionCard>
         <SectionHeader title="선택한 날짜 일정" />
         <Text style={styles.selectedDateLabel}>{formatDate(selectedDate)}</Text>
+        <Text style={styles.selectedCountLabel}>선택 일정 {focusedEvents.length}건</Text>
         {focusedEvents.length > 0 ? (
           <View style={styles.list}>
             {focusedEvents.map((event) => (
@@ -191,6 +192,12 @@ const styles = StyleSheet.create({
     marginTop: 10,
     color: uiColors.textMuted,
     fontSize: 12,
+    fontWeight: "700",
+  },
+  selectedCountLabel: {
+    marginTop: 4,
+    color: uiColors.textStrong,
+    fontSize: 13,
     fontWeight: "700",
   },
   eventCard: {

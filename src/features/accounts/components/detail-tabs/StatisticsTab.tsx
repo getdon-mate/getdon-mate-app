@@ -1,11 +1,16 @@
+import { useMemo, useState } from "react"
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native"
 import { formatKRW, formatMonth } from "@shared/lib/format"
-import { uiColors } from "@shared/ui"
+import { ActionChip, uiColors } from "@shared/ui"
 import { getExpenseCategoryBreakdown, getMonthlyTransactionTrend, getStatisticsSummary } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
 import { SectionCard } from "../SectionCard"
 import { SectionHeader } from "../SectionHeader"
+
+function getTrendRowLabel(month: string) {
+  return `${Number(month.split("-")[1])}월`
+}
 
 export function StatisticsTab({ account }: { account: GroupAccount }) {
   const { width } = useWindowDimensions()
@@ -13,7 +18,13 @@ export function StatisticsTab({ account }: { account: GroupAccount }) {
   const trend = getMonthlyTransactionTrend(account)
   const breakdown = getExpenseCategoryBreakdown(account)
   const summary = getStatisticsSummary(account)
-  const maxAmount = Math.max(...trend.flatMap((item) => [item.income, item.expense]), 1)
+  const [selectedMonth, setSelectedMonth] = useState<"all" | string>("all")
+  const visibleTrend = useMemo(
+    () => (selectedMonth === "all" ? trend : trend.filter((item) => item.month === selectedMonth)),
+    [selectedMonth, trend]
+  )
+  const periodOptions = selectedMonth === "all" ? trend : visibleTrend
+  const maxAmount = Math.max(...visibleTrend.flatMap((item) => [item.income, item.expense]), 1)
 
   return (
     <View style={styles.stack}>
@@ -35,9 +46,23 @@ export function StatisticsTab({ account }: { account: GroupAccount }) {
         <SectionHeader title="월별 추이" />
         {trend.length > 0 ? (
           <View style={[styles.chartStack, compact && styles.chartStackCompact]}>
-            {trend.map((point) => (
+            <View style={styles.filterRow}>
+              <ActionChip label="전체" active={selectedMonth === "all"} onPress={() => setSelectedMonth("all")} />
+              {periodOptions.map((point) => (
+                <ActionChip
+                  key={point.month}
+                  label={formatMonth(point.month)}
+                  active={selectedMonth === point.month}
+                  onPress={() => setSelectedMonth(point.month)}
+                />
+              ))}
+            </View>
+            <Text style={styles.selectedPeriodLabel}>
+              선택 기간 · {selectedMonth === "all" ? "전체" : formatMonth(selectedMonth)}
+            </Text>
+            {visibleTrend.map((point) => (
               <View key={point.month} style={styles.trendRow}>
-                <Text style={styles.rowLabel}>{formatMonth(point.month)}</Text>
+                <Text style={styles.rowLabel}>{getTrendRowLabel(point.month)}</Text>
                 <View style={styles.barTrack}>
                   <View style={[styles.incomeBar, { width: `${(point.income / maxAmount) * 100}%` }]} />
                 </View>
@@ -93,8 +118,18 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 8,
   },
+  filterRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+  },
   summaryRow: {
     gap: 8,
+  },
+  selectedPeriodLabel: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
   },
   summaryLabel: {
     color: uiColors.textMuted,

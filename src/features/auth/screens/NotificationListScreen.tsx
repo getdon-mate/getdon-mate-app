@@ -25,6 +25,13 @@ function getCategoryLabel(item: NotificationItem) {
   return category === "reminder" ? "안내" : category === "notice" ? "공지" : "활동"
 }
 
+function getFilterSummary(filter: NotificationFilter) {
+  if (filter === "reminder") return "안내만 보고 있어요."
+  if (filter === "notice") return "공지 알림만 보고 있어요."
+  if (filter === "unread") return "읽지 않은 알림만 보고 있어요."
+  return null
+}
+
 export function NotificationListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const { width } = useWindowDimensions()
@@ -41,6 +48,7 @@ export function NotificationListScreen() {
   } = useAppRuntime()
   const [filter, setFilter] = useState<NotificationFilter>("all")
   const filteredNotifications = useMemo(() => filterNotifications(notifications, filter), [filter, notifications])
+  const filterSummary = getFilterSummary(filter)
   const hasNotifications = notifications.length > 0
   const isFilteredEmpty = hasNotifications && filteredNotifications.length === 0
 
@@ -78,6 +86,7 @@ export function NotificationListScreen() {
           <ActionChip label="안내" active={filter === "reminder"} onPress={() => setFilter("reminder")} accessibilityLabel="알림 필터 안내" />
           <ActionChip label="공지" active={filter === "notice"} onPress={() => setFilter("notice")} accessibilityLabel="알림 필터 공지" />
         </View>
+        {filterSummary ? <Text style={styles.filterSummary}>{filterSummary}</Text> : null}
       </View>
 
       {filteredNotifications.length === 0 ? (
@@ -167,6 +176,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     flexWrap: "wrap",
+  },
+  filterSummary: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
   },
   backButton: {
     width: 40,

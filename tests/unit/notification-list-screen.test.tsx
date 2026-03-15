@@ -95,6 +95,7 @@ describe("NotificationListScreen", () => {
 
     fireEvent.press(getByLabelText("알림 필터 안내"))
 
+    expect(getByText("안내만 보고 있어요.")).toBeTruthy()
     expect(getByText("납부 안내를 보냈어요")).toBeTruthy()
     expect(queryByText("모임 공지가 등록됐어요")).toBeNull()
     expect(queryByText("생활비 통장에 입금이 반영됐어요")).toBeNull()

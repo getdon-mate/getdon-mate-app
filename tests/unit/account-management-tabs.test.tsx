@@ -178,6 +178,29 @@ describe("account management tabs", () => {
     expect(getByText("지출이 생기면 비중을 바로 보여줍니다.")).toBeTruthy()
   })
 
+  test("statistics tab can focus a single month from the period chips", () => {
+    const { getByText, queryByText } = render(<StatisticsTab account={defaultAccounts[0]} />)
+
+    fireEvent.press(getByText("2026년 2월"))
+
+    expect(getByText("선택 기간 · 2026년 2월")).toBeTruthy()
+    expect(queryByText("2026년 3월")).toBeNull()
+  })
+
+  test("calendar tab summarizes the selected date event count", () => {
+    const { getByLabelText, getByText } = render(<CalendarTab account={defaultAccounts[0]} />)
+
+    fireEvent.press(getByLabelText("2026-03-04 일정 보기"))
+
+    expect(getByText("선택 일정 2건")).toBeTruthy()
+  })
+
+  test("board tab separates pinned notices with a badge", () => {
+    const { getAllByText } = render(<BoardTab account={defaultAccounts[0]} />)
+
+    expect(getAllByText("공지").length).toBeGreaterThan(0)
+  })
+
   test("members tab empty state uses shorter filter-reset copy", () => {
     const { getByText, getByLabelText } = render(<MembersTab account={defaultAccounts[0]} />)
 

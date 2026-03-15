@@ -91,7 +91,10 @@ export function BoardTab({ account }: { account: GroupAccount }) {
           <SectionCard key={post.id}>
             <View style={styles.postHeader}>
               <View style={styles.postTitleWrap}>
-                <Text style={styles.postTitle}>{post.pinned ? `[공지] ${post.title}` : post.title}</Text>
+                <View style={styles.postTitleRow}>
+                  {post.pinned ? <Text style={styles.noticeBadge}>공지</Text> : null}
+                  <Text style={styles.postTitle}>{post.title}</Text>
+                </View>
                 <Text style={styles.postMeta}>
                   {post.authorName} · {formatDate(post.createdAt.slice(0, 10))}
                 </Text>
@@ -168,6 +171,24 @@ const styles = StyleSheet.create({
   postTitleWrap: {
     gap: 4,
     flex: 1,
+  },
+  postTitleRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+  },
+  noticeBadge: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: uiColors.primaryBorder,
+    backgroundColor: uiColors.primarySoft,
+    color: uiColors.primary,
+    fontSize: 11,
+    fontWeight: "700",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    overflow: "hidden",
   },
   postTitle: {
     color: uiColors.textStrong,
