@@ -88,13 +88,11 @@ export function AppSettingsScreen() {
         </View>
         <SettingsActionRow
           label="마이페이지"
-          caption="이름과 이메일"
           icon="user"
           onPress={() => navigation.navigate(ROUTES.MyPage)}
         />
         <SettingsActionRow
           label="알림 설정"
-          caption="알림 방식"
           icon="bell"
           onPress={() => navigation.navigate(ROUTES.NotificationSettings)}
         />
@@ -104,13 +102,11 @@ export function AppSettingsScreen() {
         <View style={styles.dangerGroup}>
           <SettingsActionRow
             label="로그아웃"
-            caption="이 기기에서 로그아웃"
             icon="logout"
             onPress={() => void handleLogout()}
           />
           <SettingsActionRow
             label="회원 탈퇴"
-            caption="계정 삭제"
             icon="trash"
             onPress={() => void handleWithdraw()}
             tone="danger"

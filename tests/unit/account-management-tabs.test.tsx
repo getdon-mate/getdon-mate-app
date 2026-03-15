@@ -460,12 +460,15 @@ describe("account management tabs", () => {
   })
 
   test("board tab shows author controls, profile badges, and comment dividers", () => {
-    const { getByLabelText, getByTestId } = render(<BoardTab account={defaultAccounts[0]} />)
+    const { getByLabelText, getByTestId, queryByLabelText } = render(<BoardTab account={defaultAccounts[0]} />)
 
     fireEvent.press(getByLabelText("이번 주 스터디 장소 안내 게시글 메뉴 열기"))
 
     expect(getByLabelText("이번 주 스터디 장소 안내 게시글 수정")).toBeTruthy()
     expect(getByLabelText("이번 주 스터디 장소 안내 게시글 삭제")).toBeTruthy()
+    expect(queryByLabelText("김지현 댓글 수정")).toBeNull()
+    expect(queryByLabelText("김지현 댓글 삭제")).toBeNull()
+    fireEvent.press(getByLabelText("김지현 댓글 메뉴 열기"))
     expect(getByLabelText("김지현 댓글 수정")).toBeTruthy()
     expect(getByLabelText("김지현 댓글 삭제")).toBeTruthy()
     expect(getByTestId("comment-avatar-comment1")).toBeTruthy()

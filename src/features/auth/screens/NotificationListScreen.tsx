@@ -117,7 +117,6 @@ export function NotificationListScreen() {
         </View>
         <View style={styles.headerCopy}>
           <PageHeader title="알림" subtitle={`새 알림 ${unreadNotificationCount}개`} />
-          <Text style={styles.headerHint}>중요한 안내만 빠르게 확인하세요.</Text>
         </View>
         <View style={styles.filterRow}>
           <FilterChip
@@ -234,11 +233,6 @@ const styles = StyleSheet.create({
   },
   headerCopy: {
     gap: 6,
-  },
-  headerHint: {
-    color: uiColors.textMuted,
-    fontSize: 12,
-    lineHeight: 18,
   },
   filterRow: {
     flexDirection: "row",

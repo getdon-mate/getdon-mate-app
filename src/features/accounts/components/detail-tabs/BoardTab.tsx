@@ -71,6 +71,7 @@ function CommentItem({
   onDelete: () => void
 }) {
   const profile = getProfileMeta(account, comment.authorName, comment.authorUserId)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
     <View style={[styles.commentRow, showDivider && styles.commentRowWithDivider]} testID={showDivider ? `comment-divider-${comment.id}` : undefined}>
@@ -84,13 +85,43 @@ function CommentItem({
             <Text style={styles.commentTime}>{formatActivityTimestamp(comment.createdAt)}</Text>
           </View>
           {ownComment ? (
-            <View style={styles.inlineActions}>
-              <Pressable onPress={onStartEdit} accessibilityRole="button" accessibilityLabel={`${comment.authorName} 댓글 수정`} style={styles.inlineIconButton}>
-                <Icon name="edit" size={14} color={uiColors.textMuted} />
+            <View style={styles.commentMenuWrap}>
+              <Pressable
+                onPress={() => setMenuOpen((prev) => !prev)}
+                accessibilityRole="button"
+                accessibilityLabel={`${comment.authorName} 댓글 메뉴 열기`}
+                style={[styles.inlineIconButton, menuOpen && styles.inlineIconButtonActive]}
+              >
+                <Icon name="ellipsis" size={14} color={uiColors.textMuted} />
               </Pressable>
-              <Pressable onPress={onDelete} accessibilityRole="button" accessibilityLabel={`${comment.authorName} 댓글 삭제`} style={styles.inlineIconButton}>
-                <Icon name="trash" size={14} color={uiColors.danger} />
-              </Pressable>
+              {menuOpen ? (
+                <View style={styles.commentMenuPanel}>
+                  <Pressable
+                    onPress={() => {
+                      setMenuOpen(false)
+                      onStartEdit()
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${comment.authorName} 댓글 수정`}
+                    style={styles.commentMenuItem}
+                  >
+                    <Icon name="edit" size={14} color={uiColors.textStrong} />
+                    <Text style={styles.commentMenuText}>수정</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      setMenuOpen(false)
+                      onDelete()
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${comment.authorName} 댓글 삭제`}
+                    style={[styles.commentMenuItem, styles.commentMenuItemDanger]}
+                  >
+                    <Icon name="trash" size={14} color={uiColors.danger} />
+                    <Text style={styles.commentMenuTextDanger}>삭제</Text>
+                  </Pressable>
+                </View>
+              ) : null}
             </View>
           ) : null}
         </View>
@@ -702,6 +733,42 @@ const styles = StyleSheet.create({
   inlineActions: {
     flexDirection: "row",
     gap: 6,
+  },
+  commentMenuWrap: {
+    position: "relative",
+  },
+  commentMenuPanel: {
+    position: "absolute",
+    top: 32,
+    right: 0,
+    minWidth: 104,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surface,
+    overflow: "hidden",
+    zIndex: 20,
+  },
+  commentMenuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  commentMenuItemDanger: {
+    borderTopWidth: 1,
+    borderTopColor: uiColors.border,
+  },
+  commentMenuText: {
+    color: uiColors.textStrong,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  commentMenuTextDanger: {
+    color: uiColors.danger,
+    fontSize: 13,
+    fontWeight: "700",
   },
   inlineIconButton: {
     width: 28,
