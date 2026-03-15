@@ -60,7 +60,7 @@ export function AccountCreateScreen() {
             <Pressable style={styles.backButton} onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="이전 화면으로 이동">
               <Icon name="chevronLeft" size={20} color={uiColors.text} />
             </Pressable>
-            <PageHeader title="새 모임통장 개설" subtitle="목록 화면과 분리된 입력 화면에서 정보를 입력합니다." />
+            <PageHeader title="모임통장 개설" subtitle="새로운 모임통장을 만들어보세요." />
           </View>
           <AccountCreatePanel
             groupName={groupName}

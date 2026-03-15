@@ -112,15 +112,15 @@ describe("home global management split", () => {
   })
 
   test("app settings screen owns global account actions", () => {
-    const { getByText, queryByText } = render(<AppSettingsScreen />)
+    const { getByText } = render(<AppSettingsScreen />)
 
-    expect(queryByText("전역 설정 허브")).toBeNull()
-    expect(queryByText("빠른 이동")).toBeNull()
-    expect(queryByText("계정 액션")).toBeNull()
-    expect(queryByText("이름과 이메일")).toBeNull()
-    expect(queryByText("알림 방식")).toBeNull()
-    expect(queryByText("이 기기에서 로그아웃")).toBeNull()
-    expect(queryByText("계정 삭제")).toBeNull()
+    expect(getByText("전역 설정 허브")).toBeTruthy()
+    expect(getByText("빠른 이동")).toBeTruthy()
+    expect(getByText("계정 액션")).toBeTruthy()
+    expect(getByText("이름과 이메일을 확인하고 수정합니다.")).toBeTruthy()
+    expect(getByText("중요 알림 수신 방식을 관리합니다.")).toBeTruthy()
+    expect(getByText("현재 기기에서 세션을 종료합니다.")).toBeTruthy()
+    expect(getByText("계정을 삭제하고 모든 세션을 종료합니다.")).toBeTruthy()
     expect(getByText("알림 설정")).toBeTruthy()
     expect(getByText("로그아웃")).toBeTruthy()
     expect(getByText("회원 탈퇴")).toBeTruthy()
@@ -169,18 +169,14 @@ describe("home global management split", () => {
     expect(getAllByTestId("masked-amount").length).toBeGreaterThan(0)
   })
 
-  test("account list search and attention filter can narrow the visible accounts", () => {
-    const { getByLabelText, getByText, queryByText } = render(<AccountListScreen />)
+  test("account list attention filter can narrow the visible accounts", () => {
+    const { getByText, queryByText } = render(<AccountListScreen />)
 
     fireEvent.press(getByText("미납 2명+"))
 
     expect(getByText("개발자 스터디 모임")).toBeTruthy()
     expect(queryByText("주말 산악회")).toBeNull()
-
-    fireEvent.changeText(getByLabelText("모임통장 검색"), "산악")
-
-    expect(getByText("조건에 맞는 모임통장이 없습니다.")).toBeTruthy()
-    fireEvent.press(getByText("필터 초기화"))
+    fireEvent.press(getByText("전체"))
 
     expect(getByText("주말 산악회")).toBeTruthy()
   })

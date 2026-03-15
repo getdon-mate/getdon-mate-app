@@ -22,16 +22,13 @@ test("1) 로그인 후 목록 진입", async ({ page }) => {
   await expect(page.getByText("주말 산악회")).toBeVisible()
 })
 
-test("1-1) 목록 검색과 필터로 모임통장을 좁혀볼 수 있다", async ({ page }) => {
+test("1-1) 목록 필터로 모임통장을 좁혀볼 수 있다", async ({ page }) => {
   await loginAsTestUser(page)
 
   await page.getByRole("button", { name: "미납 2명+" }).click()
   await expect(page.getByText("개발자 스터디 모임")).toBeVisible()
   await expect(page.getByText("주말 산악회")).toHaveCount(0)
-
-  await page.getByLabel("모임통장 검색").fill("산악")
-  await expect(page.getByText("조건에 맞는 모임통장이 없습니다.")).toBeVisible()
-  await page.getByRole("button", { name: "필터 초기화" }).click()
+  await page.getByRole("button", { name: "전체" }).click()
   await expect(page.getByText("주말 산악회")).toBeVisible()
 })
 
@@ -241,7 +238,7 @@ test("10-5) 통계 추이를 누르면 툴팁으로 월별 금액을 볼 수 있
 test("11) 목록에서 새 모임통장 개설 화면 진입", async ({ page }) => {
   await loginAsTestUser(page)
   await page.getByRole("button", { name: "+ 새 모임통장 개설" }).click()
-  await expect(page.getByText("목록 화면과 분리된 입력 화면에서 정보를 입력합니다.")).toBeVisible()
+  await expect(page.getByText("새로운 모임통장을 만들어보세요.")).toBeVisible()
 })
 
 test("12) 목록에서 로그아웃 후 로그인 화면 복귀", async ({ page }) => {

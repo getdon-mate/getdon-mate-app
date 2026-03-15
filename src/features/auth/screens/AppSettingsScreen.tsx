@@ -6,7 +6,7 @@ import type { RootStackParamList } from "@core/navigation/types"
 import { useAppAuth } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
-import { Card, Icon, PageHeader, uiColors, uiRadius, uiSpacing } from "@shared/ui"
+import { Badge, Card, Icon, PageHeader, uiColors, uiRadius, uiSpacing } from "@shared/ui"
 
 function SettingsActionRow({
   label,
@@ -74,9 +74,39 @@ export function AppSettingsScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <PageHeader title="설정" />
+      <PageHeader title="설정" subtitle="관리와 계정 정보를 수정할 수 있습니다." />
+
+      <Card style={styles.summaryCard}>
+        <View style={styles.summaryTop}>
+          <View style={styles.summaryBadge}>
+            <Icon name="settings" size={18} color={uiColors.primary} />
+          </View>
+          <Badge label="Global" tone="primary" />
+        </View>
+        <View style={styles.summaryText}>
+          <Text style={styles.summaryTitle}>전역 설정 허브</Text>
+          <Text style={styles.summaryBody}>알림, 계정, 보안 액션을 여기에서만 정리합니다.</Text>
+        </View>
+      </Card>
 
       <Card style={styles.card}>
+        <Text style={styles.sectionTitle}>빠른 이동</Text>
+        <SettingsActionRow
+          label="마이페이지"
+          caption="이름과 이메일을 확인하고 수정합니다."
+          icon="user"
+          onPress={() => navigation.navigate(ROUTES.MyPage)}
+        />
+        <SettingsActionRow
+          label="알림 설정"
+          caption="중요 알림 수신 방식을 관리합니다."
+          icon="bell"
+          onPress={() => navigation.navigate(ROUTES.NotificationSettings)}
+        />
+      </Card>
+
+      <Card style={styles.card}>
+        <Text style={styles.sectionTitle}>계정 액션</Text>
         <View style={styles.accountStrip}>
           <View style={styles.accountAvatar}>
             <Text style={styles.accountAvatarText}>{(currentUser?.name ?? "사").slice(0, 1)}</Text>
@@ -86,27 +116,17 @@ export function AppSettingsScreen() {
             <Text style={styles.accountEmail}>{currentUser?.email ?? "email@example.com"}</Text>
           </View>
         </View>
-        <SettingsActionRow
-          label="마이페이지"
-          icon="user"
-          onPress={() => navigation.navigate(ROUTES.MyPage)}
-        />
-        <SettingsActionRow
-          label="알림 설정"
-          icon="bell"
-          onPress={() => navigation.navigate(ROUTES.NotificationSettings)}
-        />
-      </Card>
-
-      <Card style={styles.card}>
+        <Text style={styles.sectionDescription}>세션 종료와 탈퇴는 여기에서만 다룹니다.</Text>
         <View style={styles.dangerGroup}>
           <SettingsActionRow
             label="로그아웃"
+            caption="현재 기기에서 세션을 종료합니다."
             icon="logout"
             onPress={() => void handleLogout()}
           />
           <SettingsActionRow
             label="회원 탈퇴"
+            caption="계정을 삭제하고 모든 세션을 종료합니다."
             icon="trash"
             onPress={() => void handleWithdraw()}
             tone="danger"
@@ -130,12 +150,58 @@ const styles = StyleSheet.create({
     gap: uiSpacing.md,
     borderRadius: uiRadius.xxl,
   },
+  summaryCard: {
+    gap: uiSpacing.lg,
+    backgroundColor: uiColors.surface,
+    borderColor: uiColors.border,
+  },
+  summaryTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  summaryBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: uiColors.primarySoft,
+    borderWidth: 1,
+    borderColor: uiColors.primaryBorder,
+  },
+  summaryText: {
+    gap: 8,
+  },
+  summaryTitle: {
+    color: uiColors.textStrong,
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  summaryBody: {
+    color: uiColors.textMuted,
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  sectionTitle: {
+    color: uiColors.textStrong,
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  sectionDescription: {
+    color: uiColors.textMuted,
+    fontSize: 13,
+    lineHeight: 20,
+  },
   accountStrip: {
     flexDirection: "row",
     alignItems: "center",
     gap: uiSpacing.md,
-    paddingHorizontal: 4,
-    paddingBottom: 2,
+    padding: uiSpacing.md,
+    borderRadius: uiRadius.lg,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surface,
   },
   accountAvatar: {
     width: 46,
@@ -165,9 +231,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   row: {
-    minHeight: 68,
+    minHeight: 72,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -182,14 +248,14 @@ const styles = StyleSheet.create({
   },
   rowLeft: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: uiSpacing.sm,
     flex: 1,
   },
   iconBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: uiColors.primarySoft,
@@ -202,7 +268,7 @@ const styles = StyleSheet.create({
   },
   rowText: {
     flex: 1,
-    gap: 2,
+    gap: 4,
   },
   rowLabel: {
     color: uiColors.textStrong,
@@ -212,7 +278,7 @@ const styles = StyleSheet.create({
   rowCaption: {
     color: uiColors.textMuted,
     fontSize: 12,
-    lineHeight: 16,
+    lineHeight: 18,
   },
   rowLabelDanger: {
     color: uiColors.danger,

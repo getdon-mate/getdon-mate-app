@@ -23,7 +23,6 @@ export function UserHeaderCard({
 }) {
   const { width } = useWindowDimensions()
   const compact = width < 390
-  const summaryCopy = unreadNotificationCount ? `읽지 않은 알림 ${unreadNotificationCount}건` : "모임통장 홈"
 
   return (
     <View style={[styles.headerCard, compact && styles.headerCardCompact]}>
@@ -32,7 +31,7 @@ export function UserHeaderCard({
       </View>
       <View style={styles.headerInfo}>
         <Text style={[styles.headerName, compact && styles.headerNameCompact]}>{user?.name ?? "게스트"}</Text>
-        <Text style={styles.headerEmail}>{summaryCopy}</Text>
+        <Text style={styles.headerEmail}></Text>
       </View>
       <View style={[styles.actionGroup, compact && styles.actionGroupCompact]}>
         <Pressable style={[styles.iconButton, compact && styles.iconButtonCompact]} onPress={onToggleMaskAmounts} accessibilityRole="button" accessibilityLabel="금액 표시 전환">

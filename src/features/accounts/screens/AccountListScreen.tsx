@@ -15,7 +15,7 @@ import type { RootStackParamList } from "@core/navigation/types"
 import { useAppAccounts, useAppAuth, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { getCurrentMonthKey } from "@shared/lib/date"
-import { ActionChip, Button, Icon, InputField, uiColors, uiSpacing } from "@shared/ui"
+import { ActionChip, Button, Icon, uiColors, uiSpacing } from "@shared/ui"
 import { onlyDigits } from "@shared/lib/validation"
 import { LoadingStateCard } from "../components/LoadingStateCard"
 import { AccountSummaryCard } from "../components/AccountSummaryCard"
@@ -91,19 +91,11 @@ export function AccountListScreen() {
 
         <View style={styles.sectionHeader}>
           <View style={styles.sectionHeaderCopy}>
-            <Text style={[styles.sectionTitle, compact && styles.sectionTitleCompact]}>모임통장</Text>
-            <Text style={styles.sectionSubtitle}>정산이 필요한 모임부터 {accounts.length}개를 보여줍니다.</Text>
+            <Text style={[styles.sectionTitle, compact && styles.sectionTitleCompact]}></Text>
+            <Text style={styles.sectionSubtitle}></Text>
           </View>
         </View>
         <View style={styles.searchStack}>
-          <InputField
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            label="검색"
-            placeholder="모임명, 은행, 계좌번호"
-            accessibilityLabel="모임통장 검색"
-            containerStyle={styles.searchField}
-          />
           <View testID="account-list-filter-actions" style={styles.filterActionsRow}>
             <View style={styles.filterRow}>
               <ActionChip label="전체" active={filter === "all"} onPress={() => setFilter("all")} />
