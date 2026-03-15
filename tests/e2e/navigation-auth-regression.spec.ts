@@ -22,6 +22,19 @@ test("1) 로그인 후 목록 진입", async ({ page }) => {
   await expect(page.getByText("내 모임통장 2개")).toBeVisible()
 })
 
+test("1-1) 목록 검색과 필터로 모임통장을 좁혀볼 수 있다", async ({ page }) => {
+  await loginAsTestUser(page)
+
+  await page.getByRole("button", { name: "미납 2명+" }).click()
+  await expect(page.getByText("개발자 스터디 모임")).toBeVisible()
+  await expect(page.getByText("주말 산악회")).toHaveCount(0)
+
+  await page.getByLabel("모임통장 검색").fill("산악")
+  await expect(page.getByText("조건에 맞는 모임통장이 없습니다.")).toBeVisible()
+  await page.getByRole("button", { name: "필터 초기화" }).click()
+  await expect(page.getByText("주말 산악회")).toBeVisible()
+})
+
 test("2) 목록에서 상세 진입", async ({ page }) => {
   await loginAsTestUser(page)
   await openFirstAccountDetail(page)
@@ -51,6 +64,15 @@ test("3) 상세 탭 전환(회비/거래/멤버/통계/일정/게시판/관리)"
 
   await page.getByText("관리", { exact: true }).last().click()
   await expect(page.getByText("계좌 요약")).toBeVisible()
+})
+
+test("3-1) 회비 탭에서 미납 멤버 전체 안내를 보낼 수 있다", async ({ page }) => {
+  await loginAsTestUser(page)
+  await openFirstAccountDetail(page)
+  await page.getByText("회비", { exact: true }).last().click()
+
+  await page.getByRole("button", { name: "미납 전체 안내" }).click()
+  await expect(page.getByText("미납 멤버 2명에게 납부 안내를 보냈습니다.")).toBeVisible()
 })
 
 test("4) 설정에서 알림 설정 화면 진입", async ({ page }) => {

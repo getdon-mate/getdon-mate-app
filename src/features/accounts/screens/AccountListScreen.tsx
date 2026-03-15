@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import {
@@ -15,12 +15,15 @@ import type { RootStackParamList } from "@core/navigation/types"
 import { useAppAccounts, useAppAuth, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { getCurrentMonthKey } from "@shared/lib/date"
-import { Button, Icon, uiColors, uiSpacing } from "@shared/ui"
+import { ActionChip, Button, Icon, InputField, uiColors, uiSpacing } from "@shared/ui"
+import { onlyDigits } from "@shared/lib/validation"
 import { LoadingStateCard } from "../components/LoadingStateCard"
 import { AccountSummaryCard } from "../components/AccountSummaryCard"
 import { EmptyStateCard } from "../components/EmptyStateCard"
 import { UserHeaderCard } from "../components/UserHeaderCard"
-import { getHomeAccounts } from "../model/selectors"
+import { getHomeAccounts, getPaymentSummary } from "../model/selectors"
+
+type HomeFilter = "all" | "attention"
 
 export function AccountListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
@@ -32,9 +35,26 @@ export function AccountListScreen() {
   const { width } = useWindowDimensions()
   const isWide = width >= 960
   const compact = width < 390
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filter, setFilter] = useState<HomeFilter>("all")
 
   const initials = useMemo(() => currentUser?.name.slice(-2) ?? "??", [currentUser])
   const orderedAccounts = useMemo(() => getHomeAccounts(accounts), [accounts])
+  const visibleAccounts = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    const digitQuery = onlyDigits(query)
+
+    return orderedAccounts.filter((account) => {
+      const matchesFilter =
+        filter === "attention" ? getPaymentSummary(account, currentMonth).unpaid >= 2 : true
+      if (!matchesFilter) return false
+      if (!query) return true
+
+      const accountText = [account.groupName, account.bankName, account.accountNumber].join(" ").toLowerCase()
+      return accountText.includes(query) || (digitQuery.length > 0 && onlyDigits(account.accountNumber).includes(digitQuery))
+    })
+  }, [currentMonth, filter, orderedAccounts, searchQuery])
+  const hasActiveFilter = filter !== "all" || Boolean(searchQuery.trim())
 
   async function handleRefresh() {
     const source = await refreshAccounts()
@@ -84,14 +104,28 @@ export function AccountListScreen() {
             <Icon name="refresh" size={18} color={uiColors.text} />
           </Pressable>
         </View>
+        <View style={styles.searchStack}>
+          <InputField
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            label="검색"
+            placeholder="모임명, 은행, 계좌번호"
+            accessibilityLabel="모임통장 검색"
+            containerStyle={styles.searchField}
+          />
+          <View style={styles.filterRow}>
+            <ActionChip label="전체" active={filter === "all"} onPress={() => setFilter("all")} />
+            <ActionChip label="미납 2명+" active={filter === "attention"} onPress={() => setFilter("attention")} />
+          </View>
+        </View>
 
         {isBootstrapping ? (
           <>
             <LoadingStateCard />
             <LoadingStateCard />
           </>
-        ) : orderedAccounts.length > 0 ? (
-          orderedAccounts.map((account) => (
+        ) : visibleAccounts.length > 0 ? (
+          visibleAccounts.map((account) => (
             <AccountSummaryCard
               key={account.id}
               account={account}
@@ -103,6 +137,16 @@ export function AccountListScreen() {
               }}
             />
           ))
+        ) : hasActiveFilter ? (
+          <EmptyStateCard
+            title="조건에 맞는 모임통장이 없습니다."
+            description="검색어나 필터를 조정해보세요."
+            actionLabel="필터 초기화"
+            onAction={() => {
+              setSearchQuery("")
+              setFilter("all")
+            }}
+          />
         ) : (
           <EmptyStateCard
             title="아직 모임통장이 없습니다."
@@ -166,6 +210,17 @@ const styles = StyleSheet.create({
     color: uiColors.textMuted,
     fontWeight: "600",
     letterSpacing: 0.35,
+  },
+  searchStack: {
+    gap: 8,
+  },
+  searchField: {
+    gap: 4,
+  },
+  filterRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
   },
   headerIconButton: {
     width: 40,

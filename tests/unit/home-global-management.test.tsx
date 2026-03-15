@@ -152,4 +152,20 @@ describe("home global management split", () => {
 
     expect(getAllByTestId("masked-amount").length).toBeGreaterThan(0)
   })
+
+  test("account list search and attention filter can narrow the visible accounts", () => {
+    const { getByLabelText, getByText, queryByText } = render(<AccountListScreen />)
+
+    fireEvent.press(getByText("미납 2명+"))
+
+    expect(getByText("개발자 스터디 모임")).toBeTruthy()
+    expect(queryByText("주말 산악회")).toBeNull()
+
+    fireEvent.changeText(getByLabelText("모임통장 검색"), "산악")
+
+    expect(getByText("조건에 맞는 모임통장이 없습니다.")).toBeTruthy()
+    fireEvent.press(getByText("필터 초기화"))
+
+    expect(getByText("주말 산악회")).toBeTruthy()
+  })
 })

@@ -6,6 +6,7 @@ import { formatKRW } from "@shared/lib/format"
 import { getMemberById } from "../../model/member-utils"
 import { getPaymentSummary, getRecentTransactions } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"
+import { EmptyStateCard } from "../EmptyStateCard"
 import { SectionHeader } from "../SectionHeader"
 import { SectionCard } from "../SectionCard"
 import { TransactionRow } from "../TransactionRow"
@@ -47,11 +48,15 @@ export function DashboardTab({
             <Text style={styles.summaryPillValue}>{paid}명</Text>
           </View>
           <View style={styles.summaryPill}>
+            <Text style={styles.summaryPillLabel}>미납</Text>
+            <Text style={styles.summaryPillValue}>{unpaidMembers.length}명</Text>
+          </View>
+          <View style={styles.summaryPill}>
             <Text style={styles.summaryPillLabel}>진행률</Text>
             <Text style={styles.summaryPillValue}>{progress}%</Text>
           </View>
         </View>
-        <Text style={styles.metricText}>{paid}/{payableMembers}명 완납 상태입니다.</Text>
+        <Text style={styles.metricText}>{paid}/{payableMembers}명 완납</Text>
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: `${progress}%` }]} />
         </View>
@@ -84,12 +89,12 @@ export function DashboardTab({
             ))}
           </View>
         ) : (
-          <View style={styles.emptyBox}>
-            <Text style={styles.emptyTitle}>최근 거래내역이 없습니다.</Text>
-            <Text style={styles.emptyDescription}>
-              입금 또는 출금이 발생하면 이 영역에서 바로 확인할 수 있어요.
-            </Text>
-          </View>
+          <EmptyStateCard
+            title="최근 거래내역이 없습니다."
+            description="입금이나 출금이 생기면 여기서 바로 볼 수 있습니다."
+            actionLabel="거래 열기"
+            onAction={onOpenTransactions}
+          />
         )}
       </SectionCard>
     </View>
@@ -186,25 +191,5 @@ const styles = StyleSheet.create({
     color: "#dc2626",
     fontSize: 12,
     fontWeight: "600",
-  },
-  emptyBox: {
-    marginTop: 4,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#f8fafc",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    gap: 4,
-  },
-  emptyTitle: {
-    color: "#111827",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  emptyDescription: {
-    color: "#6b7280",
-    fontSize: 12,
-    lineHeight: 17,
   },
 })

@@ -7,15 +7,17 @@ export function LoadingStateCard({
   lines?: number
 }) {
   return (
-    <Card style={styles.card}>
-      <SkeletonBlock width="36%" height={12} />
-      <SkeletonBlock width="62%" height={24} />
-      <View style={styles.lineStack}>
-        {Array.from({ length: lines }).map((_, index) => (
-          <SkeletonBlock key={index} width={index === lines - 1 ? "58%" : "100%"} height={12} />
-        ))}
-      </View>
-    </Card>
+    <View testID="loading-state-card">
+      <Card style={styles.card}>
+        <SkeletonBlock width="36%" height={12} />
+        <SkeletonBlock width="62%" height={24} />
+        <View style={styles.lineStack}>
+          {Array.from({ length: lines }).map((_, index) => (
+            <SkeletonBlock key={index} width={index === lines - 1 ? "58%" : "100%"} height={12} />
+          ))}
+        </View>
+      </Card>
+    </View>
   )
 }
 

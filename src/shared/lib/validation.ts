@@ -45,3 +45,12 @@ export function validateIsoDate(value: string) {
   }
   return null
 }
+
+export function validatePhoneNumber(value: string) {
+  const digits = onlyDigits(value)
+  if (!digits) return "연락처를 입력해주세요."
+  if (digits.length < 10 || digits.length > 11) {
+    return "연락처 형식을 확인해주세요."
+  }
+  return null
+}

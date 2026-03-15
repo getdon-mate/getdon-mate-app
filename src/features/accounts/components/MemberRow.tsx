@@ -106,14 +106,16 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
     gap: 6,
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
   },
   actionButton: {
-    minWidth: 64,
-    paddingVertical: 8,
+    minWidth: 58,
+    paddingVertical: 7,
   },
   actionButtonWide: {
-    minWidth: 92,
-    paddingVertical: 8,
+    minWidth: 86,
+    paddingVertical: 7,
   },
   avatar: {
     width: 32,
@@ -148,8 +150,8 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   reminderButton: {
-    minWidth: 88,
-    paddingVertical: 8,
+    minWidth: 82,
+    paddingVertical: 7,
   },
   reminderNote: {
     color: uiColors.primary,

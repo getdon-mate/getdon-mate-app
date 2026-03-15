@@ -25,6 +25,7 @@ export function DuesTab({
 
   const monthIndex = availableMonths.indexOf(selectedMonth)
   const { dues: currentDues, paid, unpaid, exempt, progress } = getPaymentSummary(account, selectedMonth)
+  const unpaidRecords = currentDues.filter((record) => record.status === "unpaid")
 
   async function handleSendReminder(memberId: string, memberName: string, type: "payment-reminder" | "transfer-request") {
     if (type === "payment-reminder") {
@@ -35,6 +36,27 @@ export function DuesTab({
 
     await sendTransferRequest(account.id, memberId, selectedMonth)
     showToast({ tone: "success", title: "송금 요청 전송", message: `${memberName}님께 바로 송금할 수 있도록 요청을 보냈습니다.` })
+  }
+
+  async function handleBulkReminder(type: "payment-reminder" | "transfer-request") {
+    if (unpaidRecords.length === 0) return
+
+    if (type === "payment-reminder") {
+      await Promise.all(unpaidRecords.map((record) => sendPaymentReminder(account.id, record.memberId, selectedMonth)))
+      showToast({
+        tone: "success",
+        title: "전체 안내 전송",
+        message: `미납 멤버 ${unpaidRecords.length}명에게 납부 안내를 보냈습니다.`,
+      })
+      return
+    }
+
+    await Promise.all(unpaidRecords.map((record) => sendTransferRequest(account.id, record.memberId, selectedMonth)))
+    showToast({
+      tone: "success",
+      title: "전체 송금 요청",
+      message: `미납 멤버 ${unpaidRecords.length}명에게 송금 요청을 보냈습니다.`,
+    })
   }
 
   return (
@@ -89,6 +111,12 @@ export function DuesTab({
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: `${progress}%` }]} />
         </View>
+        {unpaidRecords.length > 0 ? (
+          <View style={styles.bulkActionRow}>
+            <ActionChip label="미납 전체 안내" onPress={() => void handleBulkReminder("payment-reminder")} />
+            <ActionChip label="미납 전체 요청" onPress={() => void handleBulkReminder("transfer-request")} />
+          </View>
+        ) : null}
       </SectionCard>
 
       <SectionCard>
@@ -216,6 +244,11 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: "#e5e7eb",
     overflow: "hidden",
+  },
+  bulkActionRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
   },
   progressFill: {
     height: "100%",

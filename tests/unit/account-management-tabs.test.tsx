@@ -19,6 +19,7 @@ const mockCurrentUser = {
 const mockSendPaymentReminder = jest.fn(async () => undefined)
 const mockSendTransferRequest = jest.fn(async () => undefined)
 const mockDelegateManager = jest.fn(async () => undefined)
+const mockCreateMember = jest.fn(async () => undefined)
 const mockCreateTransaction = jest.fn(async () => undefined)
 const mockUpdateTransaction = jest.fn(async () => undefined)
 const mockDeleteTransaction = jest.fn(async () => undefined)
@@ -27,6 +28,7 @@ const mockAddBoardComment = jest.fn(async () => undefined)
 const mockShowToast = jest.fn()
 const mockConfirm = jest.fn(async () => true)
 const mockOpenCalendarQuickAction = jest.fn()
+let mockIsMutating = false
 
 jest.mock("@react-navigation/native", () => ({
   useNavigation: () => ({
@@ -41,7 +43,7 @@ jest.mock("@shared/ui/primitives/Icon", () => ({
 
 jest.mock("@core/providers/AppProvider", () => ({
   useApp: () => ({
-    createMember: jest.fn(async () => undefined),
+    createMember: mockCreateMember,
     updateMember: jest.fn(async () => undefined),
     deleteMember: jest.fn(async () => undefined),
     delegateManager: mockDelegateManager,
@@ -60,7 +62,7 @@ jest.mock("@core/providers/AppProvider", () => ({
     sendTransferRequest: mockSendTransferRequest,
     createBoardPost: mockCreateBoardPost,
     addBoardComment: mockAddBoardComment,
-    isMutating: false,
+    isMutating: mockIsMutating,
   }),
   useAppAuth: () => ({
     currentUser: mockCurrentUser,
@@ -82,6 +84,7 @@ describe("account management tabs", () => {
     mockSendPaymentReminder.mockClear()
     mockSendTransferRequest.mockClear()
     mockDelegateManager.mockClear()
+    mockCreateMember.mockClear()
     mockCreateTransaction.mockClear()
     mockUpdateTransaction.mockClear()
     mockDeleteTransaction.mockClear()
@@ -90,6 +93,7 @@ describe("account management tabs", () => {
     mockShowToast.mockClear()
     mockConfirm.mockClear()
     mockOpenCalendarQuickAction.mockClear()
+    mockIsMutating = false
   })
 
   test("detail tab bar exposes statistics calendar and board tabs", () => {
@@ -142,6 +146,17 @@ describe("account management tabs", () => {
     fireEvent.press(getAllByText("납부 안내")[0])
 
     expect(mockSendPaymentReminder).toHaveBeenCalledWith("acc1", "m3", "2026-03")
+  })
+
+  test("dues tab supports sending reminders to all unpaid members at once", () => {
+    const { getByText } = render(
+      <DuesTab account={defaultAccounts[0]} selectedMonth="2026-03" onSelectMonth={jest.fn()} />
+    )
+
+    fireEvent.press(getByText("미납 전체 안내"))
+
+    expect(mockSendPaymentReminder).toHaveBeenCalledWith("acc1", "m3", "2026-03")
+    expect(mockSendPaymentReminder).toHaveBeenCalledWith("acc1", "m4", "2026-03")
   })
 
   test("dues tab surfaces the latest reminder context for unpaid members", () => {
@@ -214,6 +229,18 @@ describe("account management tabs", () => {
 
     expect(getByText("첫 공지를 남겨보세요.")).toBeTruthy()
     expect(getByText("운영 소식은 짧게 바로 올릴 수 있습니다.")).toBeTruthy()
+  })
+
+  test("board tab shows a loading skeleton before the first post arrives", () => {
+    mockIsMutating = true
+    const emptyBoardAccount = {
+      ...defaultAccounts[0],
+      boardPosts: [],
+    }
+
+    const { getAllByTestId } = render(<BoardTab account={emptyBoardAccount} />)
+
+    expect(getAllByTestId("loading-state-card").length).toBeGreaterThan(0)
   })
 
   test("board tab can apply a notice template into the composer", () => {
@@ -301,6 +328,18 @@ describe("account management tabs", () => {
     )
   })
 
+  test("members tab validates phone number format before submit", async () => {
+    const { getByDisplayValue, getByRole, getByText, getByPlaceholderText } = render(<MembersTab account={defaultAccounts[0]} />)
+
+    fireEvent.changeText(getByPlaceholderText("멤버 이름"), "새 멤버")
+    fireEvent.changeText(getByPlaceholderText("010-0000-0000"), "010")
+    fireEvent.press(getByRole("button", { name: "멤버 추가" }))
+
+    expect(getByText("연락처 형식을 확인해주세요.")).toBeTruthy()
+    expect(mockCreateMember).not.toHaveBeenCalled()
+    expect(getByDisplayValue("010")).toBeTruthy()
+  })
+
   test("transactions tab distinguishes empty search results from an empty ledger", () => {
     const { getByLabelText, getByText } = render(<TransactionsTab account={defaultAccounts[0]} />)
 
@@ -310,6 +349,18 @@ describe("account management tabs", () => {
     expect(getByText("조건에 맞는 거래가 없습니다.")).toBeTruthy()
     expect(getByText("검색어나 필터를 조정하면 다시 거래를 볼 수 있습니다.")).toBeTruthy()
     expect(getByText("필터 초기화")).toBeTruthy()
+  })
+
+  test("transactions tab shows a loading skeleton before the first transaction arrives", () => {
+    mockIsMutating = true
+    const emptyTransactionsAccount = {
+      ...defaultAccounts[0],
+      transactions: [],
+    }
+
+    const { getAllByTestId } = render(<TransactionsTab account={emptyTransactionsAccount} />)
+
+    expect(getAllByTestId("loading-state-card").length).toBeGreaterThan(0)
   })
 
   test("transactions tab can apply recent category suggestions to the composer", () => {

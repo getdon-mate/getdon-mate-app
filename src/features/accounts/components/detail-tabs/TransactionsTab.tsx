@@ -9,6 +9,7 @@ import { getMemberById } from "../../model/member-utils"
 import { getTransactionTotals, groupTransactionsByDate } from "../../model/selectors"
 import type { GroupAccount, Transaction, TransactionType } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
+import { LoadingStateCard } from "../LoadingStateCard"
 import { SectionCard } from "../SectionCard"
 import { SectionHeader } from "../SectionHeader"
 import { TransactionRow } from "../TransactionRow"
@@ -361,6 +362,11 @@ export function TransactionsTab({
             </View>
           </SectionCard>
         ))
+      ) : isMutating ? (
+        <>
+          <LoadingStateCard lines={4} />
+          <LoadingStateCard lines={3} />
+        </>
       ) : (
         <EmptyStateCard
           title={hasActiveFilter ? "조건에 맞는 거래가 없습니다." : "표시할 거래내역이 없습니다."}

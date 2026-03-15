@@ -51,6 +51,7 @@ export function NotificationListScreen() {
   const filterSummary = getFilterSummary(filter)
   const hasNotifications = notifications.length > 0
   const isFilteredEmpty = hasNotifications && filteredNotifications.length === 0
+  const readNotificationCount = notifications.length - unreadNotificationCount
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -79,6 +80,20 @@ export function NotificationListScreen() {
         <View style={styles.headerCopy}>
           <PageHeader title="알림" subtitle={`새 알림 ${unreadNotificationCount}개`} />
           <Text style={styles.headerHint}>중요한 안내만 빠르게 확인하세요.</Text>
+        </View>
+        <View style={styles.summaryRow}>
+          <View style={styles.summaryPill}>
+            <Text style={styles.summaryLabel}>전체</Text>
+            <Text style={styles.summaryValue}>{notifications.length}건</Text>
+          </View>
+          <View style={styles.summaryPill}>
+            <Text style={styles.summaryLabel}>읽지 않음</Text>
+            <Text style={styles.summaryValue}>{unreadNotificationCount}건</Text>
+          </View>
+          <View style={styles.summaryPill}>
+            <Text style={styles.summaryLabel}>읽음 완료</Text>
+            <Text style={styles.summaryValue}>{readNotificationCount}건</Text>
+          </View>
         </View>
         <View style={styles.filterRow}>
           <ActionChip label="전체" active={filter === "all"} onPress={() => setFilter("all")} accessibilityLabel="알림 필터 전체" />
@@ -172,6 +187,30 @@ const styles = StyleSheet.create({
     color: uiColors.textMuted,
     fontSize: 12,
     lineHeight: 18,
+  },
+  summaryRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  summaryPill: {
+    flex: 1,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surfaceMuted,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    gap: 3,
+  },
+  summaryLabel: {
+    color: uiColors.textMuted,
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  summaryValue: {
+    color: uiColors.textStrong,
+    fontSize: 14,
+    fontWeight: "800",
   },
   filterRow: {
     flexDirection: "row",

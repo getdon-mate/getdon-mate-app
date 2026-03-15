@@ -2,7 +2,7 @@ import { useMemo, useState } from "react"
 import { StyleSheet, Text, View } from "react-native"
 import { useApp, useAppAuth } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
-import { requireText } from "@shared/lib/validation"
+import { requireText, validatePhoneNumber } from "@shared/lib/validation"
 import { ActionChip, Button, InputField, uiColors } from "@shared/ui"
 import { getMemberPaymentRate } from "../../model/member-utils"
 import { getLatestReminderForMember } from "../../model/selectors"
@@ -23,6 +23,8 @@ export function MembersTab({ account }: { account: GroupAccount }) {
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [nameError, setNameError] = useState<string | undefined>(undefined)
+  const [phoneError, setPhoneError] = useState<string | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all")
   const [sortBy, setSortBy] = useState<MemberSort>("payment-rate")
@@ -84,13 +86,19 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     setEditingId(null)
     setName("")
     setPhone("")
+    setNameError(undefined)
+    setPhoneError(undefined)
   }
 
   async function handleSubmit() {
     if (submitting) return
-    const validationError = requireText(name, "멤버 이름을 입력해주세요.") ?? requireText(phone, "연락처를 입력해주세요.")
-    if (validationError) {
-      showAlert({ title: "입력 오류", message: validationError, tone: "danger" })
+    const nextNameError = requireText(name, "멤버 이름을 입력해주세요.") ?? undefined
+    const nextPhoneError = validatePhoneNumber(phone) ?? undefined
+    setNameError(nextNameError)
+    setPhoneError(nextPhoneError)
+
+    if (nextNameError || nextPhoneError) {
+      showAlert({ title: "입력 오류", message: nextNameError ?? nextPhoneError, tone: "danger" })
       return
     }
 
@@ -123,6 +131,8 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     setEditingId(member.id)
     setName(member.name)
     setPhone(member.phone)
+    setNameError(undefined)
+    setPhoneError(undefined)
   }
 
   async function handleDelegateManager(memberId: string) {
@@ -217,9 +227,29 @@ export function MembersTab({ account }: { account: GroupAccount }) {
       <SectionCard>
         <Text style={styles.sectionTitle}>{editingMember ? "멤버 수정" : "멤버 추가"}</Text>
         <View style={styles.formStack}>
-          <InputField value={name} onChangeText={setName} label="이름" placeholder="멤버 이름" editable={!submitting} />
-          <InputField value={phone} onChangeText={setPhone} label="연락처" placeholder="010-0000-0000" editable={!submitting} />
-          <Text style={styles.formHint}>새 멤버는 기본으로 멤버 권한으로 등록됩니다. 현재 총무만 다른 멤버에게 총무를 위임할 수 있고, 현재 총무는 삭제할 수 없습니다.</Text>
+          <InputField
+            value={name}
+            onChangeText={(value) => {
+              setName(value)
+              if (nameError) setNameError(undefined)
+            }}
+            label="이름"
+            placeholder="멤버 이름"
+            editable={!submitting}
+            error={nameError}
+          />
+          <InputField
+            value={phone}
+            onChangeText={(value) => {
+              setPhone(value)
+              if (phoneError) setPhoneError(undefined)
+            }}
+            label="연락처"
+            placeholder="010-0000-0000"
+            editable={!submitting}
+            error={phoneError}
+          />
+          <Text style={styles.formHint}>총무만 위임할 수 있고, 현재 총무는 삭제할 수 없습니다.</Text>
           <View style={styles.actionRow}>
             {editingMember ? <Button label="편집 취소" variant="ghost" onPress={resetForm} style={styles.actionButton} disabled={submitting} /> : null}
             <Button
@@ -319,7 +349,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   formStack: {
-    gap: 10,
+    gap: 8,
     marginTop: 10,
   },
   filterRow: {
@@ -352,6 +382,6 @@ const styles = StyleSheet.create({
   formHint: {
     color: uiColors.textMuted,
     fontSize: 12,
-    lineHeight: 18,
+    lineHeight: 17,
   },
 })

@@ -7,6 +7,7 @@ import { requireText } from "@shared/lib/validation"
 import { ActionChip, Button, InputField, ToggleSwitch, uiColors } from "@shared/ui"
 import type { GroupAccount } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
+import { LoadingStateCard } from "../LoadingStateCard"
 import { SectionCard } from "../SectionCard"
 import { SectionHeader } from "../SectionHeader"
 
@@ -205,6 +206,11 @@ export function BoardTab({ account }: { account: GroupAccount }) {
               </View>
             </SectionCard>
           ))}
+        </>
+      ) : isMutating ? (
+        <>
+          <LoadingStateCard lines={3} />
+          <LoadingStateCard lines={2} />
         </>
       ) : (
         <EmptyStateCard title="첫 공지를 남겨보세요." description="운영 소식은 짧게 바로 올릴 수 있습니다." />
