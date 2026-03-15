@@ -1,4 +1,4 @@
-import type { AppUser, DuesRecord, GroupAccount, Member, Transaction } from "./types"
+import type { AppUser, BoardPost, DuesRecord, GroupAccount, Member, ReminderItem, Transaction } from "./types"
 
 export const defaultUsers: AppUser[] = [
   {
@@ -55,6 +55,59 @@ const hikingTransactions: Transaction[] = [
   { id: "ht3", type: "expense", amount: 85000, description: "점심 식사", date: "2026-02-22", category: "식비" },
 ]
 
+const studyReminders: ReminderItem[] = [
+  {
+    id: "rem1",
+    memberId: "m3",
+    month: "2026-03",
+    type: "payment-reminder",
+    message: "3월 회비 납부 안내를 보냈습니다.",
+    createdAt: "2026-03-07T09:00:00.000Z",
+  },
+]
+
+const hikingReminders: ReminderItem[] = []
+
+const studyBoardPosts: BoardPost[] = [
+  {
+    id: "post1",
+    title: "이번 주 스터디 장소 안내",
+    body: "이번 주는 2층 회의실에서 진행합니다. 10분 전에 도착해주세요.",
+    pinned: true,
+    createdAt: "2026-03-04T09:00:00.000Z",
+    authorName: "김지현",
+    comments: [
+      {
+        id: "comment1",
+        authorName: "이승우",
+        body: "확인했습니다.",
+        createdAt: "2026-03-04T09:15:00.000Z",
+      },
+    ],
+  },
+  {
+    id: "post2",
+    title: "간식 정산 공유",
+    body: "이번 주 간식비는 거래 탭에 반영했습니다.",
+    pinned: false,
+    createdAt: "2026-03-03T12:00:00.000Z",
+    authorName: "김지현",
+    comments: [],
+  },
+]
+
+const hikingBoardPosts: BoardPost[] = [
+  {
+    id: "hpost1",
+    title: "다음 산행 공지",
+    body: "토요일 오전 8시에 입구에서 모입니다.",
+    pinned: true,
+    createdAt: "2026-03-02T07:30:00.000Z",
+    authorName: "김지현",
+    comments: [],
+  },
+]
+
 export const defaultAccounts: GroupAccount[] = [
   {
     id: "acc1",
@@ -69,6 +122,8 @@ export const defaultAccounts: GroupAccount[] = [
     transactions: studyTransactions,
     autoTransfer: { enabled: false, dayOfMonth: 10, amount: 50000, fromAccount: "" },
     oneTimeDues: [],
+    reminders: studyReminders,
+    boardPosts: studyBoardPosts,
   },
   {
     id: "acc2",
@@ -83,6 +138,8 @@ export const defaultAccounts: GroupAccount[] = [
     transactions: hikingTransactions,
     autoTransfer: { enabled: true, dayOfMonth: 5, amount: 30000, fromAccount: "국민 123-456-789" },
     oneTimeDues: [],
+    reminders: hikingReminders,
+    boardPosts: hikingBoardPosts,
   },
 ]
 

@@ -55,6 +55,34 @@ export interface OneTimeDues {
   records: OneTimeDuesRecord[]
 }
 
+export type ReminderType = "payment-reminder" | "transfer-request"
+
+export interface ReminderItem {
+  id: string
+  memberId: string
+  month: string
+  type: ReminderType
+  message: string
+  createdAt: string
+}
+
+export interface BoardComment {
+  id: string
+  authorName: string
+  body: string
+  createdAt: string
+}
+
+export interface BoardPost {
+  id: string
+  title: string
+  body: string
+  pinned: boolean
+  createdAt: string
+  authorName: string
+  comments: BoardComment[]
+}
+
 export interface GroupAccount {
   id: string
   groupName: string
@@ -68,6 +96,8 @@ export interface GroupAccount {
   transactions: Transaction[]
   autoTransfer: AutoTransfer
   oneTimeDues: OneTimeDues[]
+  reminders: ReminderItem[]
+  boardPosts: BoardPost[]
 }
 
 export interface AppUser {

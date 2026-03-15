@@ -60,6 +60,8 @@ export function toDomainAccount(account: ApiGroupAccount): GroupAccount {
       status: dues.status ?? "active",
       records: dues.records.map((record) => ({ ...record })),
     })),
+    reminders: [],
+    boardPosts: [],
   }
 }
 

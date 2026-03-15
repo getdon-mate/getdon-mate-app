@@ -57,6 +57,7 @@ describe("AccountDetailHero", () => {
     )
 
     expect(getByTestId("masked-amount")).toBeTruthy()
+    expect(getByTestId("masked-balance-overlay")).toBeTruthy()
     expect(queryByText(/1,850,000/)).toBeNull()
   })
 })

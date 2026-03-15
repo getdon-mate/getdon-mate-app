@@ -255,4 +255,48 @@ describe('AppProvider state transitions', () => {
     await waitFor(() => expect(getCtx().isBootstrapping).toBe(false))
     expect(getCtx().maskAmounts).toBe(true)
   })
+
+  test('collaboration actions create reminders, posts, and comments inside account state', async () => {
+    render(
+      <AppProvider>
+        <Harness />
+      </AppProvider>
+    )
+
+    await waitFor(() => expect(getCtx().isBootstrapping).toBe(false))
+
+    await act(async () => {
+      await getCtx().login('test@test.com', 'password')
+    })
+
+    await waitFor(() => expect(getCtx().currentUser?.id).toBe('u1'))
+
+    await act(async () => {
+      await getCtx().sendPaymentReminder('acc1', 'm3', '2026-03')
+      await getCtx().sendTransferRequest('acc1', 'm4', '2026-03')
+      await getCtx().createBoardPost('acc1', {
+        title: '이번 주 공지',
+        body: '장소가 변경되었습니다.',
+        pinned: true,
+      })
+    })
+
+    const account = getCtx().accounts.find((item) => item.id === 'acc1')
+    const createdPost = account?.boardPosts[0]
+    const reminderMembers = account?.reminders.map((item) => item.memberId) ?? []
+    const reminderTypes = account?.reminders.map((item) => item.type) ?? []
+
+    expect(reminderMembers).toEqual(expect.arrayContaining(['m3', 'm4']))
+    expect(reminderTypes).toEqual(expect.arrayContaining(['payment-reminder', 'transfer-request']))
+    expect(createdPost?.title).toBe('이번 주 공지')
+
+    await act(async () => {
+      await getCtx().addBoardComment('acc1', createdPost?.id ?? '', {
+        body: '확인했습니다.',
+      })
+    })
+
+    const updatedAccount = getCtx().accounts.find((item) => item.id === 'acc1')
+    expect(updatedAccount?.boardPosts[0]?.comments[0]?.body).toBe('확인했습니다.')
+  })
 })

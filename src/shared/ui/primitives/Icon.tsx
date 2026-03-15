@@ -27,6 +27,10 @@ const iconNameMap = {
   share: "share-social-outline",
   google: "logo-google",
   kakao: "chatbubble-ellipses-outline",
+  filter: "options-outline",
+  calendar: "calendar-outline",
+  pieChart: "pie-chart-outline",
+  chat: "chatbox-ellipses-outline",
 } as const satisfies Record<string, ComponentProps<typeof Ionicons>["name"]>
 
 export type IconName = keyof typeof iconNameMap
