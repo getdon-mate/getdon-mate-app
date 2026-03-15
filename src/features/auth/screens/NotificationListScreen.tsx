@@ -10,6 +10,10 @@ import { getNotificationCategory, type NotificationItem } from "@shared/lib/noti
 
 type NotificationFilter = "all" | "unread" | "reminder" | "notice"
 
+export function getUnreadActionLabel(width: number) {
+  return width < 390 ? "읽음" : "읽음 처리"
+}
+
 function filterNotifications(notifications: NotificationItem[], filter: NotificationFilter) {
   if (filter === "all") return notifications
   if (filter === "unread") return notifications.filter((item) => item.unread)
@@ -26,6 +30,7 @@ export function NotificationListScreen() {
   const { width } = useWindowDimensions()
   const compact = width < 420
   const narrow = width < 390
+  const unreadActionLabel = getUnreadActionLabel(width)
   const {
     notifications,
     unreadNotificationCount,
@@ -87,7 +92,7 @@ export function NotificationListScreen() {
       ) : (
         <View style={styles.list}>
           {filteredNotifications.map((item) => (
-            <Card key={item.id} style={[styles.noticeCard, item.unread && styles.noticeCardUnread]}>
+            <Card key={item.id} style={[styles.noticeCard, compact && styles.noticeCardCompact, item.unread && styles.noticeCardUnread]}>
               <View style={styles.noticeTopRow}>
                 <View style={styles.noticeTitleWrap}>
                   <Text style={styles.noticeCategory}>{getCategoryLabel(item)}</Text>
@@ -99,7 +104,12 @@ export function NotificationListScreen() {
               <View style={styles.noticeFooter}>
                 {item.unread ? <View style={styles.unreadDot} /> : <Text style={styles.readLabel}>읽음 완료</Text>}
                 {item.unread ? (
-                  <Button label="읽음 처리" variant="secondary" onPress={() => void markNotificationRead(item.id)} style={[styles.readButton, compact && styles.readButtonCompact]} />
+                  <Button
+                    label={unreadActionLabel}
+                    variant="secondary"
+                    onPress={() => void markNotificationRead(item.id)}
+                    style={[styles.readButton, compact && styles.readButtonCompact, narrow && styles.readButtonNarrow]}
+                  />
                 ) : null}
               </View>
             </Card>
@@ -174,6 +184,9 @@ const styles = StyleSheet.create({
   noticeCard: {
     gap: uiSpacing.sm,
   },
+  noticeCardCompact: {
+    gap: 10,
+  },
   noticeCardUnread: {
     borderColor: uiColors.primaryBorder,
     backgroundColor: uiColors.primarySoft,
@@ -240,5 +253,9 @@ const styles = StyleSheet.create({
   readButtonCompact: {
     minWidth: 78,
     minHeight: 34,
+  },
+  readButtonNarrow: {
+    minWidth: 62,
+    paddingHorizontal: 10,
   },
 })

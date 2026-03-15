@@ -1,9 +1,11 @@
 import { fireEvent, render } from "@testing-library/react-native"
 import { DetailTabBar } from "@features/accounts/components/detail/DetailTabBar"
+import { BoardTab } from "@features/accounts/components/detail-tabs/BoardTab"
 import { CalendarTab } from "@features/accounts/components/detail-tabs/CalendarTab"
 import { DuesTab } from "@features/accounts/components/detail-tabs/DuesTab"
 import { MembersTab } from "@features/accounts/components/detail-tabs/MembersTab"
 import { SettingsTab } from "@features/accounts/components/detail-tabs/SettingsTab"
+import { StatisticsTab } from "@features/accounts/components/detail-tabs/StatisticsTab"
 import { TransactionsTab } from "@features/accounts/components/detail-tabs/TransactionsTab"
 import { defaultAccounts } from "@features/accounts/model/fixtures"
 
@@ -140,5 +142,31 @@ describe("account management tabs", () => {
 
     expect(getByText("2026년 2월")).toBeTruthy()
     expect(getAllByText("개발자 스터디 모임 2026-02 회비 완료").length).toBeGreaterThan(0)
+  })
+
+  test("board tab empty state uses shorter posting copy", () => {
+    const emptyBoardAccount = {
+      ...defaultAccounts[0],
+      boardPosts: [],
+    }
+
+    const { getByText } = render(<BoardTab account={emptyBoardAccount} />)
+
+    expect(getByText("첫 공지를 남겨보세요.")).toBeTruthy()
+    expect(getByText("운영 소식은 짧게 바로 올릴 수 있습니다.")).toBeTruthy()
+  })
+
+  test("statistics tab empty state uses shorter operational copy", () => {
+    const emptyStatsAccount = {
+      ...defaultAccounts[0],
+      transactions: [],
+    }
+
+    const { getByText } = render(<StatisticsTab account={emptyStatsAccount} />)
+
+    expect(getByText("아직 집계할 거래가 없습니다.")).toBeTruthy()
+    expect(getByText("거래가 쌓이면 흐름을 여기서 보여줍니다.")).toBeTruthy()
+    expect(getByText("출금 내역이 아직 없습니다.")).toBeTruthy()
+    expect(getByText("지출이 생기면 비중을 바로 보여줍니다.")).toBeTruthy()
   })
 })

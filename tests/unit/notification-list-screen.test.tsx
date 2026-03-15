@@ -1,5 +1,5 @@
 import { fireEvent, render } from "@testing-library/react-native"
-import { NotificationListScreen } from "@features/auth/screens/NotificationListScreen"
+import { getUnreadActionLabel, NotificationListScreen } from "@features/auth/screens/NotificationListScreen"
 
 const mockGoBack = jest.fn()
 const mockMarkAll = jest.fn(async () => undefined)
@@ -141,5 +141,10 @@ describe("NotificationListScreen", () => {
     fireEvent.press(getByText("샘플 알림 복원"))
 
     expect(mockRestore).toHaveBeenCalled()
+  })
+
+  test("narrow screens shorten the unread action label", () => {
+    expect(getUnreadActionLabel(380)).toBe("읽음")
+    expect(getUnreadActionLabel(430)).toBe("읽음 처리")
   })
 })
