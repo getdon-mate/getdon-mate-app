@@ -94,6 +94,7 @@ interface AppRuntimeContextType {
   isRefreshingAccounts: boolean
   isMutating: boolean
   lastSyncError: string | null
+  authRecoveryNotice: string | null
   dataSource: DataSource
   prefersRealApi: boolean
   maskAmounts: boolean
@@ -365,6 +366,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isRefreshingAccounts, setIsRefreshingAccounts] = useState(false)
   const [busyCount, setBusyCount] = useState(0)
   const [lastSyncError, setLastSyncError] = useState<string | null>(null)
+  const [authRecoveryNotice, setAuthRecoveryNotice] = useState<string | null>(null)
   const [dataSource, setDataSource] = useState<DataSource>(prefersRealApi ? "remote" : "demo")
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null)
   const [accounts, setAccounts] = useState<GroupAccount[]>(() => cloneAccounts(defaultAccounts))
@@ -406,11 +408,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (isBootstrapping) return
 
     const persisted = readPersistedSession()
-    if (!persisted) return
+    if (!persisted) {
+      setAuthRecoveryNotice(null)
+      return
+    }
 
     if (persisted.userId) {
       const restoredUser = users.find((user) => user.id === persisted.userId) ?? null
+      setAuthRecoveryNotice(restoredUser ? null : "저장된 로그인 정보를 복원하지 못해 다시 확인이 필요합니다.")
       setCurrentUser(restoredUser)
+    } else {
+      setAuthRecoveryNotice(null)
     }
 
     if (persisted.selectedAccountId && accounts.some((account) => account.id === persisted.selectedAccountId)) {
@@ -1166,6 +1174,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isRefreshingAccounts,
       isMutating: busyCount > 0,
       lastSyncError,
+      authRecoveryNotice,
       dataSource,
       prefersRealApi,
       maskAmounts,
@@ -1187,6 +1196,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       clearNotifications,
       dataSource,
       defaultNotificationPreferences,
+      authRecoveryNotice,
       isBootstrapping,
       isRefreshingAccounts,
       lastSyncError,

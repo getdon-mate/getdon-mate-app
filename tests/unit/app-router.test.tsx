@@ -80,7 +80,8 @@ describe("AppRouter", () => {
     const { getByText } = render(<AppRouter />)
 
     expect(getByText("getdon mate")).toBeTruthy()
-    expect(getByText("모임통장 관리")).toBeTruthy()
+    expect(getByText("안전하게 준비 중")).toBeTruthy()
+    expect(getByText("최근 데이터와 화면 상태를 정리하고 있어요.")).toBeTruthy()
   })
 
   test("renders busy overlay after bootstrap", () => {

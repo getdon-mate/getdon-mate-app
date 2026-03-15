@@ -3,8 +3,14 @@ import { expect, type Page, test } from "@playwright/test"
 async function loginAsTestUser(page: Page) {
   await page.goto("/")
   await page.getByRole("button", { name: "로그인" }).click()
-  await expect(page.getByText("모임통장")).toBeVisible()
+  await expect(page.getByText("내 모임통장 2개")).toBeVisible()
 }
+
+test("0) 둘러보기로도 목록 진입", async ({ page }) => {
+  await page.goto("/")
+  await page.getByRole("button", { name: "둘러보기" }).click()
+  await expect(page.getByText("내 모임통장 2개")).toBeVisible()
+})
 
 async function openFirstAccountDetail(page: Page) {
   await page.getByText("개발자 스터디 모임").first().click()
@@ -142,5 +148,5 @@ test("12) 목록에서 로그아웃 후 로그인 화면 복귀", async ({ page 
   await page.getByLabel("앱 설정 열기").click()
   await page.getByText("로그아웃", { exact: true }).click()
   await page.getByRole("button", { name: "로그아웃" }).last().click()
-  await expect(page.getByText("계정이 없으신가요? 회원가입")).toBeVisible()
+  await expect(page.getByText("처음이라면 회원가입")).toBeVisible()
 })

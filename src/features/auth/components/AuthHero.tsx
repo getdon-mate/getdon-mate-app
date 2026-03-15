@@ -8,7 +8,7 @@ export function AuthHero() {
         <Text style={styles.iconText}>gm</Text>
       </View>
       <Text style={styles.heroTitle}>getdon mate</Text>
-      <Text style={styles.heroSubtitle}>모임통장을 간단하게 정리하세요.</Text>
+      <Text style={styles.heroSubtitle}>모임 운영 흐름을 빠르게 확인하고 바로 정리하세요.</Text>
     </View>
   )
 }

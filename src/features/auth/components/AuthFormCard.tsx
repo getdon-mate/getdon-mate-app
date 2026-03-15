@@ -13,6 +13,7 @@ interface AuthFormCardProps {
   onChangePassword: (value: string) => void
   onSubmit: () => void
   onSocialLogin: (provider: "google" | "kakao") => void
+  onContinueAsGuest: () => void
   onToggleMode: () => void
   submitting?: boolean
   showTestAccountHint?: boolean
@@ -29,6 +30,7 @@ export function AuthFormCard({
   onChangePassword,
   onSubmit,
   onSocialLogin,
+  onContinueAsGuest,
   onToggleMode,
   submitting = false,
   showTestAccountHint = false,
@@ -88,9 +90,18 @@ export function AuthFormCard({
         size="lg"
       />
 
+      {!isSignup ? (
+        <Button
+          label="둘러보기"
+          variant="ghost"
+          onPress={onContinueAsGuest}
+          disabled={submitting}
+        />
+      ) : null}
+
       <Pressable onPress={onToggleMode} disabled={submitting}>
         <Text style={styles.switchText}>
-          {isSignup ? "이미 계정이 있으신가요? 로그인" : "계정이 없으신가요? 회원가입"}
+          {isSignup ? "이미 계정이 있나요? 로그인" : "처음이라면 회원가입"}
         </Text>
       </Pressable>
 
