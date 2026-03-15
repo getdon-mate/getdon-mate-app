@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native"
 import { uiColors } from "@shared/ui"
 
 export type DetailTab = "dashboard" | "dues" | "transactions" | "members" | "statistics" | "calendar" | "board" | "settings"
@@ -15,6 +15,9 @@ export const DETAIL_TAB_META: { key: DetailTab; label: string }[] = [
 ]
 
 export function DetailTabBar({ activeTab, onChangeTab }: { activeTab: DetailTab; onChangeTab: (tab: DetailTab) => void }) {
+  const { width } = useWindowDimensions()
+  const compact = width < 390
+
   return (
     <View style={styles.bottomNav}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -23,13 +26,13 @@ export function DetailTabBar({ activeTab, onChangeTab }: { activeTab: DetailTab;
           return (
             <Pressable
               key={item.key}
-              style={[styles.navItem, active && styles.navItemActive]}
+              style={[styles.navItem, compact && styles.navItemCompact, active && styles.navItemActive]}
               onPress={() => onChangeTab(item.key)}
               accessibilityRole="tab"
               accessibilityLabel={`${item.label} 탭`}
               accessibilityState={{ selected: active }}
             >
-              <Text style={[styles.navLabel, active && styles.navLabelActive]}>{item.label}</Text>
+              <Text style={[styles.navLabel, compact && styles.navLabelCompact, active && styles.navLabelActive]}>{item.label}</Text>
             </Pressable>
           )
         })}
@@ -58,6 +61,11 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: uiColors.surface,
   },
+  navItemCompact: {
+    minWidth: 52,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
   navItemActive: {
     backgroundColor: uiColors.primarySoft,
   },
@@ -65,6 +73,9 @@ const styles = StyleSheet.create({
     color: uiColors.textMuted,
     fontSize: 12,
     fontWeight: "600",
+  },
+  navLabelCompact: {
+    fontSize: 11,
   },
   navLabelActive: {
     color: uiColors.primary,

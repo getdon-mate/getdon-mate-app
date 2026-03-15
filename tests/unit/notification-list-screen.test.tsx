@@ -7,7 +7,7 @@ const mockClear = jest.fn(async () => undefined)
 const mockRestore = jest.fn(async () => undefined)
 const mockRead = jest.fn(async () => undefined)
 
-const notifications = [
+let mockRuntimeNotifications = [
   {
     id: "notice-reminder",
     title: "납부 안내를 보냈어요",
@@ -43,8 +43,8 @@ jest.mock("@shared/ui/primitives/Icon", () => ({
 
 jest.mock("@core/providers/AppProvider", () => ({
   useAppRuntime: () => ({
-    notifications,
-    unreadNotificationCount: 2,
+    notifications: mockRuntimeNotifications,
+    unreadNotificationCount: mockRuntimeNotifications.filter((item) => item.unread).length,
     markAllNotificationsRead: mockMarkAll,
     clearNotifications: mockClear,
     restoreNotifications: mockRestore,
@@ -54,6 +54,29 @@ jest.mock("@core/providers/AppProvider", () => ({
 
 describe("NotificationListScreen", () => {
   beforeEach(() => {
+    mockRuntimeNotifications = [
+      {
+        id: "notice-reminder",
+        title: "납부 안내를 보냈어요",
+        body: "박소연님에게 2026-03 회비 납부 안내를 전송했습니다.",
+        time: "방금 전",
+        unread: true,
+      },
+      {
+        id: "notice-board",
+        title: "모임 공지가 등록됐어요",
+        body: "이번 주 장소 변경 공지를 확인해보세요.",
+        time: "10분 전",
+        unread: false,
+      },
+      {
+        id: "notice-transaction",
+        title: "생활비 통장에 입금이 반영됐어요",
+        body: "김토스님이 50,000원을 채웠습니다.",
+        time: "어제",
+        unread: true,
+      },
+    ]
     mockGoBack.mockClear()
     mockMarkAll.mockClear()
     mockClear.mockClear()
@@ -84,5 +107,39 @@ describe("NotificationListScreen", () => {
 
     expect(getByText("납부 안내를 보냈어요")).toBeTruthy()
     expect(queryByText("모임 공지가 등록됐어요")).toBeNull()
+  })
+
+  test("header clear action calls runtime clearNotifications", () => {
+    const { getByRole } = render(<NotificationListScreen />)
+
+    fireEvent.press(getByRole("button", { name: "비우기" }))
+
+    expect(mockClear).toHaveBeenCalled()
+  })
+
+  test("filtered empty state offers a quick reset back to all notifications", () => {
+    mockRuntimeNotifications = mockRuntimeNotifications.filter((item) => item.id !== "notice-board")
+    const { getByLabelText, getByText, queryByText } = render(<NotificationListScreen />)
+
+    fireEvent.press(getByLabelText("알림 필터 공지"))
+
+    expect(getByText("맞는 알림이 없습니다.")).toBeTruthy()
+    expect(getByText("전체 보기")).toBeTruthy()
+    expect(queryByText("납부 안내를 보냈어요")).toBeNull()
+
+    fireEvent.press(getByText("전체 보기"))
+
+    expect(getByText("납부 안내를 보냈어요")).toBeTruthy()
+  })
+
+  test("empty notification state can restore the sample feed", () => {
+    mockRuntimeNotifications = []
+    const { getByText } = render(<NotificationListScreen />)
+
+    expect(getByText("표시할 알림이 없습니다.")).toBeTruthy()
+
+    fireEvent.press(getByText("샘플 알림 복원"))
+
+    expect(mockRestore).toHaveBeenCalled()
   })
 })
