@@ -108,6 +108,7 @@ test("9) 리마인드 전송 후 알림센터에서 확인할 수 있다", async
 
   await page.getByLabel("목록으로 이동").click()
   await page.getByLabel("알림 목록 열기").click()
+  await page.getByLabel("알림 필터 안내").click()
   await expect(page.getByText("납부 안내를 보냈어요")).toBeVisible()
 })
 

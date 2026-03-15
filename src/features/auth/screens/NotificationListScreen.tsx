@@ -1,13 +1,30 @@
+import { useMemo, useState } from "react"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native"
 import { useAppRuntime } from "@core/providers/AppProvider"
 import { EmptyStateCard } from "@features/accounts/components/EmptyStateCard"
 import type { RootStackParamList } from "@core/navigation/types"
-import { Button, Card, Icon, PageHeader, uiColors, uiRadius, uiSpacing } from "@shared/ui"
+import { ActionChip, Button, Card, Icon, PageHeader, uiColors, uiRadius, uiSpacing } from "@shared/ui"
+import { getNotificationCategory, type NotificationItem } from "@shared/lib/notification-state"
+
+type NotificationFilter = "all" | "unread" | "reminder" | "notice"
+
+function filterNotifications(notifications: NotificationItem[], filter: NotificationFilter) {
+  if (filter === "all") return notifications
+  if (filter === "unread") return notifications.filter((item) => item.unread)
+  return notifications.filter((item) => getNotificationCategory(item) === filter)
+}
+
+function getCategoryLabel(item: NotificationItem) {
+  const category = getNotificationCategory(item)
+  return category === "reminder" ? "안내" : category === "notice" ? "공지" : "활동"
+}
 
 export function NotificationListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
+  const { width } = useWindowDimensions()
+  const compact = width < 420
   const {
     notifications,
     unreadNotificationCount,
@@ -16,6 +33,8 @@ export function NotificationListScreen() {
     restoreNotifications,
     markNotificationRead,
   } = useAppRuntime()
+  const [filter, setFilter] = useState<NotificationFilter>("all")
+  const filteredNotifications = useMemo(() => filterNotifications(notifications, filter), [filter, notifications])
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -31,30 +50,39 @@ export function NotificationListScreen() {
         </View>
         <View style={styles.headerCopy}>
           <PageHeader title="알림" subtitle={`새 알림 ${unreadNotificationCount}개`} />
-          <Text style={styles.headerHint}>읽음 처리와 목록 정리는 이 화면에서 바로 할 수 있습니다.</Text>
+          <Text style={styles.headerHint}>필터로 필요한 알림만 빠르게 확인할 수 있습니다.</Text>
+        </View>
+        <View style={styles.filterRow}>
+          <ActionChip label="전체" active={filter === "all"} onPress={() => setFilter("all")} accessibilityLabel="알림 필터 전체" />
+          <ActionChip label="읽지 않음" active={filter === "unread"} onPress={() => setFilter("unread")} accessibilityLabel="알림 필터 읽지 않음" />
+          <ActionChip label="안내" active={filter === "reminder"} onPress={() => setFilter("reminder")} accessibilityLabel="알림 필터 안내" />
+          <ActionChip label="공지" active={filter === "notice"} onPress={() => setFilter("notice")} accessibilityLabel="알림 필터 공지" />
         </View>
       </View>
 
-      {notifications.length === 0 ? (
+      {filteredNotifications.length === 0 ? (
         <EmptyStateCard
-          title="알림이 없습니다."
-          description="새 알림이 생기면 이곳에서 바로 확인할 수 있습니다."
+          title="조건에 맞는 알림이 없습니다."
+          description="다른 필터를 선택하거나 샘플 알림을 복원해보세요."
           actionLabel="샘플 알림 복원"
           onAction={() => void restoreNotifications()}
         />
       ) : (
         <View style={styles.list}>
-          {notifications.map((item) => (
+          {filteredNotifications.map((item) => (
             <Card key={item.id} style={[styles.noticeCard, item.unread && styles.noticeCardUnread]}>
               <View style={styles.noticeTopRow}>
-                <Text style={styles.noticeTitle}>{item.title}</Text>
+                <View style={styles.noticeTitleWrap}>
+                  <Text style={styles.noticeCategory}>{getCategoryLabel(item)}</Text>
+                  <Text style={styles.noticeTitle}>{item.title}</Text>
+                </View>
                 <Text style={styles.noticeTime}>{item.time}</Text>
               </View>
               <Text style={styles.noticeBody}>{item.body}</Text>
                 <View style={styles.noticeFooter}>
                   {item.unread ? <View style={styles.unreadDot} /> : <Text style={styles.readLabel}>읽음 완료</Text>}
                   {item.unread ? (
-                  <Button label="읽음 처리" variant="secondary" onPress={() => void markNotificationRead(item.id)} style={styles.readButton} />
+                  <Button label="읽음 처리" variant="secondary" onPress={() => void markNotificationRead(item.id)} style={[styles.readButton, compact && styles.readButtonCompact]} />
                 ) : null}
               </View>
             </Card>
@@ -99,6 +127,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
   },
+  filterRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+  },
   backButton: {
     width: 40,
     height: 40,
@@ -124,8 +157,24 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: uiSpacing.md,
   },
-  noticeTitle: {
+  noticeTitleWrap: {
     flex: 1,
+    gap: 6,
+  },
+  noticeCategory: {
+    alignSelf: "flex-start",
+    borderRadius: uiRadius.full,
+    borderWidth: 1,
+    borderColor: uiColors.primaryBorder,
+    backgroundColor: uiColors.primarySoft,
+    color: uiColors.primary,
+    fontSize: 11,
+    fontWeight: "700",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    overflow: "hidden",
+  },
+  noticeTitle: {
     fontSize: 15,
     fontWeight: "700",
     color: uiColors.text,
@@ -161,5 +210,9 @@ const styles = StyleSheet.create({
   readButton: {
     minHeight: 36,
     borderRadius: uiRadius.full,
+  },
+  readButtonCompact: {
+    minWidth: 78,
+    minHeight: 34,
   },
 })

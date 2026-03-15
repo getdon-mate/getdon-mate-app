@@ -8,6 +8,8 @@ export type NotificationItem = {
   unread: boolean
 }
 
+export type NotificationCategory = "reminder" | "notice" | "activity"
+
 export const defaultNotificationPreferences: NotificationPreferences = {
   duesReminder: true,
   transactionAlert: true,
@@ -37,3 +39,11 @@ export const initialNotifications: NotificationItem[] = [
     unread: false,
   },
 ]
+
+export function getNotificationCategory(item: NotificationItem): NotificationCategory {
+  const text = `${item.title} ${item.body}`
+
+  if (text.includes("공지")) return "notice"
+  if (text.includes("안내") || text.includes("송금 요청") || text.includes("회비")) return "reminder"
+  return "activity"
+}
