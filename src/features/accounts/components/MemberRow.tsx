@@ -14,6 +14,7 @@ export const MemberRow = memo(function MemberRow({
   onDelete,
   reminderActions,
   reminderNote,
+  roleNote,
 }: {
   member: Member
   rate: number
@@ -24,6 +25,7 @@ export const MemberRow = memo(function MemberRow({
   onDelete?: () => void
   reminderActions?: { label: string; onPress: () => void }[]
   reminderNote?: string
+  roleNote?: string
 }) {
   const history = duesRecords
     .filter((record) => record.memberId === member.id)
@@ -38,6 +40,7 @@ export const MemberRow = memo(function MemberRow({
             <View style={styles.memberNameRow}>
               <Text style={styles.memberName}>{member.name}</Text>
               {member.role === "총무" ? <Badge label="현재 총무" tone="primary" /> : null}
+              {rate < 100 ? <Badge label="미납 주의" tone="danger" /> : null}
             </View>
             <Text style={styles.memberMeta}>{member.role} · 납부율 {rate}%</Text>
           </View>
@@ -63,6 +66,10 @@ export const MemberRow = memo(function MemberRow({
           {formatMonth(record.month)} · {record.status === "paid" ? "완납" : record.status === "unpaid" ? "미납" : "면제"}
         </Text>
       ))}
+      <View style={styles.progressTrack}>
+        <View style={[styles.progressFill, { width: `${Math.max(6, rate)}%` }]} />
+      </View>
+      {roleNote ? <Text style={styles.roleNote}>{roleNote}</Text> : null}
       {reminderNote ? <Text style={styles.reminderNote}>{reminderNote}</Text> : null}
       {reminderActions && reminderActions.length > 0 ? (
         <View style={styles.reminderActions}>
@@ -148,5 +155,21 @@ const styles = StyleSheet.create({
     color: uiColors.primary,
     fontSize: 12,
     fontWeight: "700",
+  },
+  roleNote: {
+    color: uiColors.textSoft,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  progressTrack: {
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: uiColors.border,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: uiColors.primary,
   },
 })

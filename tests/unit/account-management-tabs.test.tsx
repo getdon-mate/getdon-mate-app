@@ -119,6 +119,14 @@ describe("account management tabs", () => {
     expect(mockSendPaymentReminder).toHaveBeenCalledWith("acc1", "m3", "2026-03")
   })
 
+  test("dues tab surfaces the latest reminder context for unpaid members", () => {
+    const { getByText } = render(
+      <DuesTab account={defaultAccounts[0]} selectedMonth="2026-03" onSelectMonth={jest.fn()} />
+    )
+
+    expect(getByText("최근 안내 · 3월 7일 납부 안내")).toBeTruthy()
+  })
+
   test("members tab can send a transfer request for unpaid members", () => {
     const { getAllByText } = render(<MembersTab account={defaultAccounts[0]} />)
 
@@ -177,5 +185,23 @@ describe("account management tabs", () => {
 
     expect(getByText("조건에 맞는 멤버가 없습니다.")).toBeTruthy()
     expect(getByText("필터를 바꾸거나 멤버를 추가해보세요.")).toBeTruthy()
+    expect(getByText("검색 초기화")).toBeTruthy()
+  })
+
+  test("members tab explains why the current manager cannot be deleted", () => {
+    const { getByText } = render(<MembersTab account={defaultAccounts[0]} />)
+
+    expect(getByText("현재 총무는 삭제할 수 없어요.")).toBeTruthy()
+  })
+
+  test("transactions tab distinguishes empty search results from an empty ledger", () => {
+    const { getByLabelText, getByText } = render(<TransactionsTab account={defaultAccounts[0]} />)
+
+    fireEvent.press(getByLabelText("거래 필터 열기"))
+    fireEvent.changeText(getByLabelText("거래 검색"), "없는 거래")
+
+    expect(getByText("조건에 맞는 거래가 없습니다.")).toBeTruthy()
+    expect(getByText("검색어나 필터를 조정하면 다시 거래를 볼 수 있습니다.")).toBeTruthy()
+    expect(getByText("필터 초기화")).toBeTruthy()
   })
 })

@@ -2,6 +2,7 @@ import { defaultAccounts } from '@features/accounts/model/fixtures'
 import {
   getCalendarEvents,
   getCalendarEventsForDate,
+  getHomeAccounts,
   getLatestReminderForMember,
   getPaymentSummary,
   getRecentTransactions,
@@ -48,6 +49,12 @@ describe('account selectors', () => {
 
     expect(reminder?.type).toBe('payment-reminder')
     expect(reminder?.message).toContain('납부 안내')
+  })
+
+  test('getHomeAccounts sorts by unpaid pressure and recent activity', () => {
+    const ordered = getHomeAccounts(defaultAccounts)
+
+    expect(ordered.map((item) => item.id)).toEqual(['acc1', 'acc2'])
   })
 
   test('getStatisticsSummary returns current high-level operating metrics', () => {

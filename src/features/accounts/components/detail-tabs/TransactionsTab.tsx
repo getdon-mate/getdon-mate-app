@@ -85,6 +85,7 @@ export function TransactionsTab({
   const dates = Object.keys(grouped).sort((a, b) =>
     sortOrder === "latest" ? b.localeCompare(a) : a.localeCompare(b)
   )
+  const hasActiveFilter = Boolean(query) || filter !== "all" || categoryFilter !== "all" || sortOrder !== "latest"
   const selectedTransaction = useMemo(
     () => account.transactions.find((tx) => tx.id === editingId) ?? null,
     [account.transactions, editingId]
@@ -97,6 +98,13 @@ export function TransactionsTab({
     setDescription("")
     setDate(getToday())
     setCategory(getCategoryLabel(nextType))
+  }
+
+  function resetFilters() {
+    setSearchQuery("")
+    setFilter("all")
+    setCategoryFilter("all")
+    setSortOrder("latest")
   }
 
   async function handleSubmit() {
@@ -285,6 +293,11 @@ export function TransactionsTab({
         ) : (
           <Text style={styles.filterSummary}>필터를 열어 검색, 유형, 카테고리를 좁혀볼 수 있습니다.</Text>
         )}
+        {hasActiveFilter ? (
+          <Text style={styles.activeFilterSummary}>
+            활성 필터 · {query ? "검색 적용" : "검색 없음"} · {filter === "all" ? "전체" : filter === "income" ? "입금" : "출금"} · {sortOrder === "latest" ? "최신순" : "오래된순"}
+          </Text>
+        ) : null}
       </SectionCard>
 
       {dates.length > 0 ? (
@@ -313,8 +326,10 @@ export function TransactionsTab({
         ))
       ) : (
         <EmptyStateCard
-          title="표시할 거래내역이 없습니다."
-          description="필터를 바꾸거나 새 거래를 추가하면 이 영역에 거래가 표시됩니다."
+          title={hasActiveFilter ? "조건에 맞는 거래가 없습니다." : "표시할 거래내역이 없습니다."}
+          description={hasActiveFilter ? "검색어나 필터를 조정하면 다시 거래를 볼 수 있습니다." : "필터를 바꾸거나 새 거래를 추가하면 이 영역에 거래가 표시됩니다."}
+          actionLabel={hasActiveFilter ? "필터 초기화" : undefined}
+          onAction={hasActiveFilter ? resetFilters : undefined}
         />
       )}
 
@@ -415,6 +430,12 @@ const styles = StyleSheet.create({
     color: uiColors.textMuted,
     fontSize: 12,
     lineHeight: 17,
+  },
+  activeFilterSummary: {
+    marginTop: 8,
+    color: uiColors.textSoft,
+    fontSize: 12,
+    fontWeight: "600",
   },
   subtleText: {
     color: uiColors.textMuted,

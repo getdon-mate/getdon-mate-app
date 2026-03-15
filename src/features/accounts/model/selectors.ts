@@ -44,6 +44,18 @@ export interface StatisticsSummary {
   unpaidCount: number
 }
 
+function getLatestActivityDate(account: GroupAccount) {
+  const candidates = [
+    ...account.transactions.map((tx) => tx.date),
+    ...account.boardPosts.map((post) => post.createdAt.slice(0, 10)),
+    ...account.reminders.map((item) => item.createdAt.slice(0, 10)),
+    ...account.oneTimeDues.map((item) => item.dueDate),
+    ...account.duesRecords.filter((record) => record.paidDate).map((record) => record.paidDate as string),
+  ]
+
+  return candidates.sort((a, b) => b.localeCompare(a))[0] ?? "0000-00-00"
+}
+
 export function getAccountDuesForMonth(account: GroupAccount, month: string): DuesRecord[] {
   return account.duesRecords.filter((record) => record.month === month)
 }
@@ -180,6 +192,21 @@ export function getLatestReminderForMember(account: GroupAccount, memberId: stri
   return [...account.reminders]
     .filter((item) => item.memberId === memberId)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
+}
+
+export function getHomeAccounts(accounts: GroupAccount[]) {
+  const latestMonth = [...new Set(accounts.flatMap((account) => account.duesRecords.map((record) => record.month)))].sort((a, b) => b.localeCompare(a))[0]
+
+  return [...accounts].sort((a, b) => {
+    const aUnpaid = latestMonth ? getPaymentSummary(a, latestMonth).unpaid : 0
+    const bUnpaid = latestMonth ? getPaymentSummary(b, latestMonth).unpaid : 0
+    if (aUnpaid !== bUnpaid) return bUnpaid - aUnpaid
+
+    const activityCompare = getLatestActivityDate(b).localeCompare(getLatestActivityDate(a))
+    if (activityCompare !== 0) return activityCompare
+
+    return a.groupName.localeCompare(b.groupName, "ko")
+  })
 }
 
 export function getStatisticsSummary(account: GroupAccount): StatisticsSummary {

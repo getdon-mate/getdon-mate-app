@@ -162,6 +162,7 @@ const styles = StyleSheet.create({
   },
   heroActionRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
     marginTop: 4,
   },
@@ -191,7 +192,8 @@ const styles = StyleSheet.create({
     borderRadius: 17,
   },
   heroGhostButton: {
-    flex: 1,
+    flexGrow: 1,
+    minWidth: 120,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: uiColors.primaryBorder,
@@ -208,7 +210,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   heroPrimaryButton: {
-    flex: 1,
+    flexGrow: 1,
+    minWidth: 120,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: uiColors.border,

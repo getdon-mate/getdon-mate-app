@@ -19,6 +19,7 @@ import { LoadingStateCard } from "../components/LoadingStateCard"
 import { AccountSummaryCard } from "../components/AccountSummaryCard"
 import { EmptyStateCard } from "../components/EmptyStateCard"
 import { UserHeaderCard } from "../components/UserHeaderCard"
+import { getHomeAccounts } from "../model/selectors"
 
 export function AccountListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
@@ -31,6 +32,7 @@ export function AccountListScreen() {
   const compact = width < 390
 
   const initials = useMemo(() => currentUser?.name.slice(-2) ?? "??", [currentUser])
+  const orderedAccounts = useMemo(() => getHomeAccounts(accounts), [accounts])
 
   async function handleRefresh() {
     await refreshAccounts()
@@ -81,8 +83,8 @@ export function AccountListScreen() {
             <LoadingStateCard />
             <LoadingStateCard />
           </>
-        ) : accounts.length > 0 ? (
-          accounts.map((account) => (
+        ) : orderedAccounts.length > 0 ? (
+          orderedAccounts.map((account) => (
             <AccountSummaryCard
               key={account.id}
               account={account}

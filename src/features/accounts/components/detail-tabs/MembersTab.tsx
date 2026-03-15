@@ -284,13 +284,23 @@ export function MembersTab({ account }: { account: GroupAccount }) {
                         })()
                       : undefined
                   }
+                  roleNote={member.role === "총무" ? "현재 총무는 삭제할 수 없어요." : undefined}
                 />
               )
             })}
           </View>
         </SectionCard>
       ) : (
-        <EmptyStateCard title="조건에 맞는 멤버가 없습니다." description="필터를 바꾸거나 멤버를 추가해보세요." />
+        <EmptyStateCard
+          title="조건에 맞는 멤버가 없습니다."
+          description="필터를 바꾸거나 멤버를 추가해보세요."
+          actionLabel="검색 초기화"
+          onAction={() => {
+            setSearchQuery("")
+            setRoleFilter("all")
+            setSortBy("payment-rate")
+          }}
+        />
       )}
     </View>
   )

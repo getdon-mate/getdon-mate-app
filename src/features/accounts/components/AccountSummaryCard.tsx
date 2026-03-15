@@ -1,7 +1,7 @@
 import { memo } from "react"
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native"
 import { AmountMask, Icon, uiColors } from "@shared/ui"
-import { formatKRW } from "@shared/lib/format"
+import { formatDate, formatKRW } from "@shared/lib/format"
 import { getPaymentSummary } from "../model/selectors"
 import type { GroupAccount } from "../model/types"
 
@@ -18,7 +18,10 @@ export const AccountSummaryCard = memo(function AccountSummaryCard({
 }) {
   const { width } = useWindowDimensions()
   const compact = width < 390
-  const { paid } = getPaymentSummary(account, currentMonth)
+  const { paid, unpaid } = getPaymentSummary(account, currentMonth)
+  const latestActivityDate =
+    [...account.transactions.map((tx) => tx.date), ...account.boardPosts.map((post) => post.createdAt.slice(0, 10))]
+      .sort((a, b) => b.localeCompare(a))[0] ?? null
 
   return (
     <Pressable
@@ -51,6 +54,14 @@ export const AccountSummaryCard = memo(function AccountSummaryCard({
       <Text style={[styles.accountSubMeta, compact && styles.accountSubMetaCompact]}>
         {account.bankName} · {paid}/{account.members.length} 완납
       </Text>
+      <View style={styles.badgeRow}>
+        <View style={[styles.statusBadge, unpaid > 0 ? styles.statusBadgeWarning : styles.statusBadgeStable]}>
+          <Text style={[styles.statusBadgeText, unpaid > 0 ? styles.statusBadgeTextWarning : styles.statusBadgeTextStable]}>
+            {unpaid > 0 ? `미납 ${unpaid}명` : "이번 달 완료"}
+          </Text>
+        </View>
+        {latestActivityDate ? <Text style={styles.activityMeta}>최근 {formatDate(latestActivityDate)}</Text> : null}
+      </View>
     </Pressable>
   )
 })
@@ -155,5 +166,40 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
+  },
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  statusBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+  },
+  statusBadgeWarning: {
+    backgroundColor: uiColors.warningSoft,
+    borderColor: uiColors.warningBorder,
+  },
+  statusBadgeStable: {
+    backgroundColor: uiColors.primarySoft,
+    borderColor: uiColors.primaryBorder,
+  },
+  statusBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  statusBadgeTextWarning: {
+    color: uiColors.warning,
+  },
+  statusBadgeTextStable: {
+    color: uiColors.primary,
+  },
+  activityMeta: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    fontWeight: "600",
   },
 })

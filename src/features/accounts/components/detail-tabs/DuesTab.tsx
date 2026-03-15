@@ -5,7 +5,7 @@ import { ActionChip, Icon } from "@shared/ui"
 import { availableMonths } from "../../model/fixtures"
 import { formatDate, formatMonth } from "@shared/lib/format"
 import { getMemberById } from "../../model/member-utils"
-import { getPaymentSummary } from "../../model/selectors"
+import { getLatestReminderForMember, getPaymentSummary } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
 import { SectionHeader } from "../SectionHeader"
@@ -87,6 +87,7 @@ export function DuesTab({
           <View style={styles.stackCompact}>
             {currentDues.map((record) => {
               const member = getMemberById(account.members, record.memberId)
+              const latestReminder = getLatestReminderForMember(account, record.memberId)
               if (!member) return null
               return (
                 <View key={`${record.memberId}-${record.month}`} style={styles.memberRow}>
@@ -97,6 +98,11 @@ export function DuesTab({
                       <Text style={styles.memberMeta}>
                         {record.status === "paid" && record.paidDate ? `${formatDate(record.paidDate)} 납부` : record.status === "unpaid" ? "미납" : "면제"}
                       </Text>
+                      {record.status === "unpaid" && latestReminder ? (
+                        <Text style={styles.reminderMeta}>
+                          최근 안내 · {formatDate(latestReminder.createdAt.slice(0, 10))} {latestReminder.type === "payment-reminder" ? "납부 안내" : "송금 요청"}
+                        </Text>
+                      ) : null}
                     </View>
                   </View>
                   {record.status !== "exempt" && (
@@ -242,6 +248,11 @@ const styles = StyleSheet.create({
   memberMeta: {
     color: "#6b7280",
     fontSize: 12,
+  },
+  reminderMeta: {
+    color: "#2563eb",
+    fontSize: 11,
+    fontWeight: "700",
   },
   recordActions: {
     flexDirection: "row",
