@@ -40,6 +40,7 @@ export function TransactionsTab({
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
 
   const [draftType, setDraftType] = useState<TransactionType>(initialType)
   const [amount, setAmount] = useState("")
@@ -166,6 +167,7 @@ export function TransactionsTab({
   }
 
   function handleEdit(transaction: Transaction) {
+    setMenuOpenId(null)
     setEditingId(transaction.id)
     setDraftType(transaction.type)
     setAmount(String(transaction.amount))
@@ -175,6 +177,7 @@ export function TransactionsTab({
   }
 
   async function handleDelete(transaction: Transaction) {
+    setMenuOpenId(null)
     const confirmed = await confirm({
       title: "거래 삭제",
       message: `${transaction.description} 거래를 삭제합니다.`,
@@ -370,26 +373,48 @@ export function TransactionsTab({
             <Text style={styles.subtleText}>{formatFullDate(date)}</Text>
             <View style={styles.stackCompact}>
               {grouped[date].map((tx) => (
-                <View key={tx.id} style={styles.transactionCard}>
-                  <TransactionRow account={account} tx={tx} />
-                  <View style={styles.inlineActions}>
-                    <Button
-                      label="수정"
-                      variant="ghost"
-                      onPress={() => handleEdit(tx)}
-                      style={styles.inlineActionButton}
-                      disabled={isMutating}
-                    />
-                    <Button
-                      label={isMutating ? "처리 중..." : "삭제"}
-                      variant="danger"
-                      onPress={() => {
-                        void handleDelete(tx)
-                      }}
-                      style={styles.inlineActionButton}
-                      disabled={isMutating}
-                    />
+                <View key={tx.id} style={[styles.transactionCard, menuOpenId === tx.id && styles.transactionCardActive]}>
+                  <View style={styles.transactionCardRow}>
+                    <View style={styles.transactionContent}>
+                      <TransactionRow account={account} tx={tx} />
+                    </View>
+                    <View style={styles.menuWrap}>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`${tx.description} ${tx.date} 거래 메뉴 열기`}
+                        onPress={() => setMenuOpenId((prev) => (prev === tx.id ? null : tx.id))}
+                        style={[styles.menuButton, menuOpenId === tx.id && styles.menuButtonActive]}
+                      >
+                        <Icon name="ellipsis" size={16} color={uiColors.textStrong} />
+                      </Pressable>
+                    </View>
                   </View>
+                  {menuOpenId === tx.id ? (
+                    <View style={styles.menuInlinePanel}>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="수정"
+                        disabled={isMutating}
+                        onPress={() => handleEdit(tx)}
+                        style={[styles.menuItem, isMutating && styles.menuItemDisabled]}
+                      >
+                        <Icon name="edit" size={15} color={uiColors.textStrong} />
+                        <Text style={styles.menuText}>수정</Text>
+                      </Pressable>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="삭제"
+                        disabled={isMutating}
+                        onPress={() => {
+                          void handleDelete(tx)
+                        }}
+                        style={[styles.menuItem, styles.menuItemWithDivider, isMutating && styles.menuItemDisabled]}
+                      >
+                        <Icon name="trash" size={15} color={uiColors.danger} />
+                        <Text style={styles.menuTextDanger}>{isMutating ? "처리 중..." : "삭제"}</Text>
+                      </Pressable>
+                    </View>
+                  ) : null}
                 </View>
               ))}
             </View>
@@ -545,18 +570,72 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   transactionCard: {
-    gap: 6,
     borderBottomWidth: 1,
     borderBottomColor: "#eef2f7",
     paddingBottom: 6,
+    position: "relative",
   },
-  inlineActions: {
+  transactionCardActive: {
+    zIndex: 30,
+  },
+  transactionCardRow: {
     flexDirection: "row",
+    alignItems: "flex-start",
     gap: 8,
   },
-  inlineActionButton: {
-    minWidth: 70,
-    paddingVertical: 8,
+  transactionContent: {
+    flex: 1,
+  },
+  menuWrap: {
+    position: "relative",
+  },
+  menuButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  menuButtonActive: {
+    borderColor: uiColors.primaryBorder,
+    backgroundColor: uiColors.primarySoft,
+  },
+  menuInlinePanel: {
+    alignSelf: "flex-end",
+    marginTop: 8,
+    minWidth: 128,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surface,
+    overflow: "hidden",
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  menuItemWithDivider: {
+    borderTopWidth: 1,
+    borderTopColor: uiColors.border,
+  },
+  menuItemDisabled: {
+    opacity: 0.5,
+  },
+  menuText: {
+    color: uiColors.textStrong,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  menuTextDanger: {
+    color: uiColors.danger,
+    fontSize: 13,
+    fontWeight: "700",
   },
   editingMeta: {
     color: uiColors.textMuted,

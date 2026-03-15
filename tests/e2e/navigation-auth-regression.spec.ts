@@ -184,13 +184,15 @@ test("10-2) 거래 수정 후 삭제까지 이어서 진행할 수 있다", asyn
   await openFirstAccountDetail(page)
   await page.getByText("거래", { exact: true }).last().click()
 
-  await page.getByRole("button", { name: "수정" }).first().click()
+  await page.getByLabel("3월 회비 2026-03-04 거래 메뉴 열기").click()
+  await page.getByRole("button", { name: "수정" }).click()
   await page.getByPlaceholder("예: 회비 입금, 모임 식비").fill("e2e 거래 수정")
   await page.getByRole("button", { name: "거래 수정" }).click()
   await expect(page.getByText("e2e 거래 수정 거래를 수정했습니다.")).toBeVisible()
   await expect(page.getByText("e2e 거래 수정").first()).toBeVisible()
 
-  await page.getByRole("button", { name: "삭제" }).first().click()
+  await page.getByLabel("e2e 거래 수정 2026-03-04 거래 메뉴 열기").click()
+  await page.getByRole("button", { name: "삭제" }).click()
   await page.getByRole("button", { name: "삭제" }).last().click()
   await expect(page.getByText("e2e 거래 수정 거래를 제거했습니다.")).toBeVisible()
 })

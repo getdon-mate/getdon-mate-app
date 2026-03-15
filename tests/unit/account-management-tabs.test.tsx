@@ -588,10 +588,23 @@ describe("account management tabs", () => {
     expect(getByDisplayValue("간식")).toBeTruthy()
   })
 
-  test("transactions tab uses specific delete feedback copy", async () => {
-    const { getAllByText } = render(<TransactionsTab account={defaultAccounts[0]} />)
+  test("transactions expose edit and delete actions from an overflow menu", () => {
+    const { queryByRole, getByLabelText, getByRole } = render(<TransactionsTab account={defaultAccounts[0]} />)
 
-    fireEvent.press(getAllByText("삭제")[0])
+    expect(queryByRole("button", { name: "수정" })).toBeNull()
+    expect(queryByRole("button", { name: "삭제" })).toBeNull()
+
+    fireEvent.press(getByLabelText("3월 회비 2026-03-04 거래 메뉴 열기"))
+
+    expect(getByRole("button", { name: "수정" })).toBeTruthy()
+    expect(getByRole("button", { name: "삭제" })).toBeTruthy()
+  })
+
+  test("transactions tab uses specific delete feedback copy", async () => {
+    const { getByLabelText, getByRole } = render(<TransactionsTab account={defaultAccounts[0]} />)
+
+    fireEvent.press(getByLabelText("3월 회비 2026-03-04 거래 메뉴 열기"))
+    fireEvent.press(getByRole("button", { name: "삭제" }))
 
     await waitFor(() => expect(mockDeleteTransaction).toHaveBeenCalledWith("acc1", "t1"))
     await waitFor(() =>
