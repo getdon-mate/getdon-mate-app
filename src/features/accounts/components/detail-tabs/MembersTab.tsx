@@ -5,6 +5,7 @@ import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText } from "@shared/lib/validation"
 import { ActionChip, Button, InputField, uiColors } from "@shared/ui"
 import { getMemberPaymentRate } from "../../model/member-utils"
+import { getLatestReminderForMember } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
 import { MemberRow } from "../MemberRow"
@@ -263,6 +264,15 @@ export function MembersTab({ account }: { account: GroupAccount }) {
                             },
                           },
                         ]
+                      : undefined
+                  }
+                  reminderNote={
+                    unpaidMemberIds.has(member.id)
+                      ? (() => {
+                          const latestReminder = getLatestReminderForMember(account, member.id)
+                          if (!latestReminder) return undefined
+                          return `최근 안내 · ${latestReminder.type === "payment-reminder" ? "납부 안내" : "송금 요청"}`
+                        })()
                       : undefined
                   }
                 />

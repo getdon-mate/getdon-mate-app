@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native"
 import { formatKRW, formatMonth } from "@shared/lib/format"
 import { uiColors } from "@shared/ui"
-import { getExpenseCategoryBreakdown, getMonthlyTransactionTrend } from "../../model/selectors"
+import { getExpenseCategoryBreakdown, getMonthlyTransactionTrend, getStatisticsSummary } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
 import { SectionCard } from "../SectionCard"
@@ -10,10 +10,25 @@ import { SectionHeader } from "../SectionHeader"
 export function StatisticsTab({ account }: { account: GroupAccount }) {
   const trend = getMonthlyTransactionTrend(account)
   const breakdown = getExpenseCategoryBreakdown(account)
+  const summary = getStatisticsSummary(account)
   const maxAmount = Math.max(...trend.flatMap((item) => [item.income, item.expense]), 1)
 
   return (
     <View style={styles.stack}>
+      <View style={styles.summaryRow}>
+        <SectionCard>
+          <Text style={styles.summaryLabel}>순유입</Text>
+          <Text style={styles.summaryValue}>{formatKRW(summary.net)}</Text>
+        </SectionCard>
+        <SectionCard>
+          <Text style={styles.summaryLabel}>총 출금</Text>
+          <Text style={styles.summaryValue}>{formatKRW(summary.expense)}</Text>
+        </SectionCard>
+        <SectionCard>
+          <Text style={styles.summaryLabel}>미납 인원</Text>
+          <Text style={styles.summaryValue}>{summary.unpaidCount}명</Text>
+        </SectionCard>
+      </View>
       <SectionCard>
         <SectionHeader title="월별 추이" />
         {trend.length > 0 ? (
@@ -71,6 +86,19 @@ const styles = StyleSheet.create({
   chartStack: {
     gap: 12,
     marginTop: 10,
+  },
+  summaryRow: {
+    gap: 8,
+  },
+  summaryLabel: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  summaryValue: {
+    color: uiColors.textStrong,
+    fontSize: 18,
+    fontWeight: "800",
   },
   trendRow: {
     gap: 6,

@@ -1027,27 +1027,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const sendReminder = useCallback(
     async (accountId: string, memberId: string, month: string, type: ReminderType) => {
       await runBusy(async () => {
-        let reminderNotification: NotificationItem | null = null
+        const account = accounts.find((item) => item.id === accountId)
+        const member = account?.members.find((item) => item.id === memberId)
+        if (!member) return
+
+        const reminder = createReminder(memberId, month, type, member.name)
+        const reminderNotification = createReminderNotification(member.name, month, type)
 
         setAccounts((prev) =>
-          prev.map((account) => {
-            if (account.id !== accountId) return account
-            const member = account.members.find((item) => item.id === memberId)
-            if (!member) return account
-            reminderNotification = createReminderNotification(member.name, month, type)
+          prev.map((item) => {
+            if (item.id !== accountId) return item
             return {
-              ...account,
-              reminders: [createReminder(memberId, month, type, member.name), ...account.reminders],
+              ...item,
+              reminders: [reminder, ...item.reminders],
             }
           })
         )
 
-        if (reminderNotification) {
-          setNotifications((prev) => [reminderNotification as NotificationItem, ...prev])
-        }
+        setNotifications((prev) => [reminderNotification, ...prev])
       })
     },
-    [runBusy]
+    [accounts, runBusy]
   )
 
   const sendPaymentReminder = useCallback(
