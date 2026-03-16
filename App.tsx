@@ -1,10 +1,12 @@
 import { useEffect } from "react"
 import { StatusBar } from "expo-status-bar"
 import * as NativeSplashScreen from "expo-splash-screen"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { Platform } from "react-native"
 import { SafeAreaProvider } from "react-native-safe-area-context"
 import { AppErrorBoundary } from "@core/errors/AppErrorBoundary"
 import { AppProvider, useAppRuntime } from "@core/providers/AppProvider"
+import { appQueryClient } from "@core/query/client"
 import { FeedbackProvider } from "@core/providers/FeedbackProvider"
 import { AppRouter } from "@core/AppRouter"
 
@@ -35,11 +37,13 @@ export default function App() {
     <SafeAreaProvider>
       <StatusBar style="dark" />
       <AppErrorBoundary>
-        <FeedbackProvider>
-          <AppProvider>
-            <AppShell />
-          </AppProvider>
-        </FeedbackProvider>
+        <QueryClientProvider client={appQueryClient}>
+          <FeedbackProvider>
+            <AppProvider>
+              <AppShell />
+            </AppProvider>
+          </FeedbackProvider>
+        </QueryClientProvider>
       </AppErrorBoundary>
     </SafeAreaProvider>
   )

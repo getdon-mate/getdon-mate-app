@@ -1,8 +1,15 @@
 const SESSION_STORAGE_KEY = "getdon:session"
 
+interface PersistedUserSnapshot {
+  id: string
+  name: string
+  email: string
+}
+
 interface PersistedSession {
   userId: string | null
   selectedAccountId: string | null
+  currentUser?: PersistedUserSnapshot | null
 }
 
 function canUseStorage() {
@@ -19,6 +26,18 @@ export function readPersistedSession(): PersistedSession | null {
     return {
       userId: typeof parsed.userId === "string" ? parsed.userId : null,
       selectedAccountId: typeof parsed.selectedAccountId === "string" ? parsed.selectedAccountId : null,
+      currentUser:
+        parsed.currentUser &&
+        typeof parsed.currentUser === "object" &&
+        typeof parsed.currentUser.id === "string" &&
+        typeof parsed.currentUser.name === "string" &&
+        typeof parsed.currentUser.email === "string"
+          ? {
+              id: parsed.currentUser.id,
+              name: parsed.currentUser.name,
+              email: parsed.currentUser.email,
+            }
+          : null,
     }
   } catch {
     return null

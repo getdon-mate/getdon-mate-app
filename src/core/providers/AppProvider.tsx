@@ -1,6 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { apiConfig, mapApiFailureToUserMessage, shouldUseRealApi } from "@core/api"
 import { createAccountsBackendV1Adapter, getLastBackendFailure } from "@features/accounts/api"
+import {
+  createMeetingWithSwaggerApi,
+  createRemoteUser,
+  fetchMyMeetings,
+  loginWithSwaggerApi,
+  signupWithSwaggerApi,
+  toGroupAccountSummary,
+} from "@features/accounts/api/swagger-api"
 import { defaultAccounts, defaultUsers } from "@features/accounts/model/fixtures"
 import { appEnv } from "@shared/config/app-env"
 import type {
@@ -28,6 +37,7 @@ import {
   type NotificationPreferences,
 } from "@shared/lib/preferences-storage"
 import { clearPersistedSession, readPersistedSession, writePersistedSession } from "@shared/lib/session-storage"
+import { clearPersistedAuthTokens, readPersistedAuthTokens, writePersistedAuthTokens } from "@shared/lib/auth-token-storage"
 import { memberAccentPalette } from "@shared/ui/palette"
 
 type DataSource = "demo" | "remote"
@@ -376,9 +386,11 @@ function delay(ms: number) {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient()
   const backendAdapter = useMemo(() => createAccountsBackendV1Adapter(), [])
   const prefersRealApi = useMemo(() => shouldUseRealApi(apiConfig), [])
   const initialSession = useMemo(() => readPersistedSession(), [])
+  const initialTokens = useMemo(() => readPersistedAuthTokens(), [])
 
   const [users, setUsers] = useState<AppUser[]>(() => cloneUsers(defaultUsers))
   const [isBootstrapping, setIsBootstrapping] = useState(true)
@@ -395,11 +407,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences>(
     () => readNotificationPreferences() ?? defaultNotificationPreferences
   )
+  const [authTokens, setAuthTokens] = useState(() => initialTokens)
+
+  const remoteMeetingsQuery = useQuery({
+    queryKey: ["swaggerMeetings", authTokens?.accessToken],
+    queryFn: async () => {
+      if (!authTokens?.accessToken) return []
+      return fetchMyMeetings(authTokens.accessToken)
+    },
+    enabled: prefersRealApi && Boolean(authTokens?.accessToken && currentUser),
+  })
+
+  const swaggerLoginMutation = useMutation({
+    mutationFn: loginWithSwaggerApi,
+  })
+
+  const swaggerSignupMutation = useMutation({
+    mutationFn: signupWithSwaggerApi,
+  })
+
+  const swaggerCreateMeetingMutation = useMutation({
+    mutationFn: ({ accessToken, title, bankName, bankAccount }: { accessToken: string; title: string; bankName: string; bankAccount: number }) =>
+      createMeetingWithSwaggerApi(accessToken, { title, bankName, bankAccount }),
+  })
 
   useEffect(() => {
     let cancelled = false
 
     async function loadBootstrap() {
+      if (prefersRealApi) {
+        setLastSyncError(null)
+        setIsBootstrapping(false)
+        return
+      }
+
       await delay(appEnv.uiDemoDelayMs)
       const bootstrap = await backendAdapter.loadBootstrap()
       if (!bootstrap || cancelled) {
@@ -433,7 +474,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     if (persisted.userId) {
-      const restoredUser = users.find((user) => user.id === persisted.userId) ?? null
+      const restoredUser =
+        users.find((user) => user.id === persisted.userId) ??
+        (persisted.currentUser
+          ? {
+              ...persisted.currentUser,
+              password: "",
+            }
+          : null)
       setAuthRecoveryNotice(restoredUser ? null : "저장된 로그인 정보를 복원하지 못해 다시 확인이 필요합니다.")
       setCurrentUser(restoredUser)
     } else {
@@ -462,8 +510,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
     writePersistedSession({
       userId: currentUser?.id ?? null,
       selectedAccountId,
+      currentUser: currentUser
+        ? {
+            id: currentUser.id,
+            name: currentUser.name,
+            email: currentUser.email,
+          }
+        : null,
     })
   }, [currentUser, isBootstrapping, selectedAccountId])
+
+  useEffect(() => {
+    if (!authTokens) {
+      clearPersistedAuthTokens()
+      return
+    }
+
+    writePersistedAuthTokens(authTokens)
+  }, [authTokens])
+
+  useEffect(() => {
+    if (!prefersRealApi || !currentUser) return
+    if (!remoteMeetingsQuery.data) return
+
+    setAccounts(cloneAccounts(remoteMeetingsQuery.data.map((meeting) => toGroupAccountSummary(meeting, currentUser))))
+    setDataSource("remote")
+    setLastSyncError(null)
+  }, [currentUser, prefersRealApi, remoteMeetingsQuery.data])
 
   useEffect(() => {
     writeNotificationPreferences(notificationPreferences)
@@ -485,20 +558,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string) => {
-      const remoteAuth = await backendAdapter.login({ email, password })
-      if (remoteAuth?.user) {
-        setCurrentUser(remoteAuth.user)
-        setDataSource("remote")
-        if (remoteAuth.accounts) {
-          setAccounts(cloneAccounts(remoteAuth.accounts))
+      if (prefersRealApi && apiConfig.baseUrl) {
+        try {
+          const tokens = await swaggerLoginMutation.mutateAsync({ email, password })
+          const remoteUser = createRemoteUser(email)
+          setAuthTokens(tokens)
+          setCurrentUser(remoteUser)
+          setUsers((prev) => {
+            const withoutDup = prev.filter((user) => user.email !== email)
+            return [...withoutDup, remoteUser]
+          })
+          const meetings = await queryClient.fetchQuery({
+            queryKey: ["swaggerMeetings", tokens.accessToken],
+            queryFn: () => fetchMyMeetings(tokens.accessToken),
+          })
+          setAccounts(cloneAccounts(meetings.map((meeting) => toGroupAccountSummary(meeting, remoteUser))))
+          setDataSource("remote")
+          setLastSyncError(null)
+          return true
+        } catch (error) {
+          setLastSyncError(mapApiFailureToUserMessage(getLastBackendFailure()) ?? "실서버 로그인에 실패했습니다.")
         }
-        return true
-      }
-      if (prefersRealApi) {
-        logger.warn({
-          scope: "auth.login",
-          message: "Falling back to demo authentication after remote login failure.",
-        })
       }
 
       const user = users.find((u) => u.email === email && u.password === password)
@@ -512,20 +592,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const signup = useCallback(
     async (name: string, email: string, password: string) => {
-      const remoteAuth = await backendAdapter.signup({ name, email, password })
-      if (remoteAuth?.user) {
-        setCurrentUser(remoteAuth.user)
-        setDataSource("remote")
-        if (remoteAuth.accounts) {
-          setAccounts(cloneAccounts(remoteAuth.accounts))
+      if (prefersRealApi && apiConfig.baseUrl) {
+        try {
+          await swaggerSignupMutation.mutateAsync({ userName: name, email, password })
+          const tokens = await swaggerLoginMutation.mutateAsync({ email, password })
+          const remoteUser = createRemoteUser(email, name)
+          setAuthTokens(tokens)
+          setCurrentUser(remoteUser)
+          setUsers((prev) => {
+            const withoutDup = prev.filter((user) => user.email !== email)
+            return [...withoutDup, remoteUser]
+          })
+          const meetings = await queryClient.fetchQuery({
+            queryKey: ["swaggerMeetings", tokens.accessToken],
+            queryFn: () => fetchMyMeetings(tokens.accessToken),
+          })
+          setAccounts(cloneAccounts(meetings.map((meeting) => toGroupAccountSummary(meeting, remoteUser))))
+          setDataSource("remote")
+          setLastSyncError(null)
+          return true
+        } catch (error) {
+          setLastSyncError(mapApiFailureToUserMessage(getLastBackendFailure()) ?? "실서버 회원가입에 실패했습니다.")
         }
-        return true
-      }
-      if (prefersRealApi) {
-        logger.warn({
-          scope: "auth.signup",
-          message: "Falling back to demo signup after remote signup failure.",
-        })
       }
 
       if (users.some((u) => u.email === email)) return false
@@ -540,7 +628,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setCurrentUser(newUser)
       return true
     },
-    [backendAdapter, prefersRealApi, users]
+    [prefersRealApi, queryClient, swaggerLoginMutation, swaggerSignupMutation, users]
   )
 
   const updateProfile = useCallback(
@@ -562,9 +650,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     setCurrentUser(null)
     setSelectedAccountId(null)
+    setAuthTokens(null)
   }, [])
 
   const refreshAccounts = useCallback(async () => {
+    if (prefersRealApi && authTokens?.accessToken && currentUser) {
+      setIsRefreshingAccounts(true)
+      try {
+        const meetings = await queryClient.fetchQuery({
+          queryKey: ["swaggerMeetings", authTokens.accessToken],
+          queryFn: () => fetchMyMeetings(authTokens.accessToken),
+        })
+        setAccounts(cloneAccounts(meetings.map((meeting) => toGroupAccountSummary(meeting, currentUser))))
+        setDataSource("remote")
+        setLastSyncError(null)
+        return "remote" as const
+      } catch {
+        setLastSyncError("모임 목록을 다시 불러오지 못했습니다.")
+        return "demo" as const
+      } finally {
+        setIsRefreshingAccounts(false)
+      }
+    }
+
     setIsRefreshingAccounts(true)
     try {
       await delay(appEnv.uiDemoDelayMs)
@@ -587,7 +695,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsRefreshingAccounts(false)
     }
-  }, [backendAdapter, prefersRealApi])
+  }, [authTokens?.accessToken, backendAdapter, currentUser, prefersRealApi, queryClient])
 
   const toggleMaskAmounts = useCallback(() => {
     setMaskAmounts((prev) => !prev)
@@ -601,6 +709,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUsers((prev) => prev.filter((u) => u.id !== userId))
     setCurrentUser(null)
     setSelectedAccountId(null)
+    setAuthTokens(null)
 
     void backendAdapter.deleteUser(userId)
   }, [backendAdapter, currentUser])
@@ -618,6 +727,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!currentUser) return
 
       await runBusy(async () => {
+        if (prefersRealApi && authTokens?.accessToken) {
+          await swaggerCreateMeetingMutation.mutateAsync({
+            accessToken: authTokens.accessToken,
+            title: data.groupName,
+            bankName: data.bankName,
+            bankAccount: Number(data.accountNumber.replace(/\D/g, "")) || 0,
+          })
+
+          const meetings = await queryClient.fetchQuery({
+            queryKey: ["swaggerMeetings", authTokens.accessToken],
+            queryFn: () => fetchMyMeetings(authTokens.accessToken),
+          })
+          setAccounts(cloneAccounts(meetings.map((meeting) => toGroupAccountSummary(meeting, currentUser))))
+          setDataSource("remote")
+          return
+        }
+
         const remoteAccount = await backendAdapter.createAccount(data)
         if (remoteAccount) {
           setAccounts((prev) => [...prev, ...cloneAccounts([remoteAccount])])
@@ -628,7 +754,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setAccounts((prev) => [...prev, account])
       })
     },
-    [backendAdapter, currentUser, runBusy]
+    [authTokens?.accessToken, backendAdapter, currentUser, prefersRealApi, queryClient, runBusy, swaggerCreateMeetingMutation]
   )
 
   const deleteAccount = useCallback(
