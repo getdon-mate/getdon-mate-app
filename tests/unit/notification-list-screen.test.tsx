@@ -85,10 +85,11 @@ describe("NotificationListScreen", () => {
   })
 
   test("renders filter chips and narrows to reminder notifications", () => {
-    const { getAllByText, getByText, getByLabelText, getByTestId, queryByText, queryByTestId } = render(<NotificationListScreen />)
+    const { getByRole, getByText, getByLabelText, getByTestId, queryByText, queryByTestId } = render(<NotificationListScreen />)
 
     expect(queryByText("중요한 안내만 빠르게 확인하세요.")).toBeNull()
-    expect(getAllByText("읽음 완료").length).toBeGreaterThan(0)
+    expect(queryByText("읽음 완료")).toBeNull()
+    expect(getByRole("radio", { name: "모임 공지가 등록됐어요 읽음 완료" })).toBeTruthy()
     expect(queryByTestId("notification-summary-row")).toBeNull()
     expect(getByTestId("notification-filter-chip-all-count")).toBeTruthy()
     expect(getByTestId("notification-filter-chip-unread-count")).toBeTruthy()
@@ -114,18 +115,31 @@ describe("NotificationListScreen", () => {
     expect(queryByText("모임 공지가 등록됐어요")).toBeNull()
   })
 
-  test("header clear action calls runtime clearNotifications", () => {
-    const { getByRole } = render(<NotificationListScreen />)
+  test("header actions are exposed from an overflow menu", () => {
+    const { getByRole, queryByRole } = render(<NotificationListScreen />)
+
+    expect(queryByRole("button", { name: "비우기" })).toBeNull()
+
+    fireEvent.press(getByRole("button", { name: "알림 메뉴 열기" }))
 
     fireEvent.press(getByRole("button", { name: "비우기" }))
 
     expect(mockClear).toHaveBeenCalled()
   })
 
-  test("unread action uses a more specific accessibility label", () => {
+  test("header overflow menu can mark all notifications as read", () => {
     const { getByRole } = render(<NotificationListScreen />)
 
-    fireEvent.press(getByRole("button", { name: "납부 안내를 보냈어요 읽음 처리" }))
+    fireEvent.press(getByRole("button", { name: "알림 메뉴 열기" }))
+    fireEvent.press(getByRole("button", { name: "모두 읽음" }))
+
+    expect(mockMarkAll).toHaveBeenCalled()
+  })
+
+  test("unread action is exposed as a radio-style control with a specific accessibility label", () => {
+    const { getByRole } = render(<NotificationListScreen />)
+
+    fireEvent.press(getByRole("radio", { name: "납부 안내를 보냈어요 읽음 처리" }))
 
     expect(mockRead).toHaveBeenCalledWith("notice-reminder")
   })

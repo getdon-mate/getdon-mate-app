@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } fr
 import { useAppRuntime } from "@core/providers/AppProvider"
 import { EmptyStateCard } from "@features/accounts/components/EmptyStateCard"
 import type { RootStackParamList } from "@core/navigation/types"
-import { Button, Card, Icon, PageHeader, uiColors, uiRadius, uiSpacing } from "@shared/ui"
+import { Card, Icon, PageHeader, RadioButton, uiColors, uiRadius, uiSpacing } from "@shared/ui"
 import { getNotificationCategory, type NotificationItem } from "@shared/lib/notification-state"
 
 type NotificationFilter = "all" | "unread" | "reminder" | "notice"
@@ -86,6 +86,7 @@ export function NotificationListScreen() {
     markNotificationRead,
   } = useAppRuntime()
   const [filter, setFilter] = useState<NotificationFilter>("all")
+  const [menuOpen, setMenuOpen] = useState(false)
   const filteredNotifications = useMemo(() => filterNotifications(notifications, filter), [filter, notifications])
   const filterSummary = getFilterSummary(filter)
   const hasNotifications = notifications.length > 0
@@ -98,21 +99,43 @@ export function NotificationListScreen() {
           <Pressable style={styles.backButton} onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="이전 화면으로 이동">
             <Icon name="chevronLeft" size={20} color={uiColors.text} />
           </Pressable>
-          <View style={[styles.headerActions, narrow && styles.headerActionsCompact]}>
-            <Button
-              label={narrow ? "읽음" : "모두 읽음"}
-              variant="ghost"
-              onPress={() => void markAllNotificationsRead()}
-              style={[styles.headerActionButton, narrow && styles.headerActionButtonCompact]}
-              disabled={unreadNotificationCount === 0}
-            />
-            <Button
-              label="비우기"
-              variant="ghost"
-              onPress={() => void clearNotifications()}
-              style={[styles.headerActionButton, narrow && styles.headerActionButtonCompact]}
-              disabled={!hasNotifications}
-            />
+          <View style={styles.headerMenuWrap}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="알림 메뉴 열기"
+              onPress={() => setMenuOpen((prev) => !prev)}
+              style={[styles.headerMenuButton, menuOpen && styles.headerMenuButtonActive]}
+            >
+              <Icon name="ellipsis" size={18} color={uiColors.textStrong} />
+            </Pressable>
+            {menuOpen ? (
+              <View style={styles.headerMenuPanel}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={narrow ? "읽음" : "모두 읽음"}
+                  disabled={unreadNotificationCount === 0}
+                  onPress={() => {
+                    setMenuOpen(false)
+                    void markAllNotificationsRead()
+                  }}
+                  style={[styles.headerMenuItem, unreadNotificationCount === 0 && styles.headerMenuItemDisabled]}
+                >
+                  <Text style={styles.headerMenuText}>{narrow ? "읽음" : "모두 읽음"}</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="비우기"
+                  disabled={!hasNotifications}
+                  onPress={() => {
+                    setMenuOpen(false)
+                    void clearNotifications()
+                  }}
+                  style={[styles.headerMenuItem, styles.headerMenuItemDivider, !hasNotifications && styles.headerMenuItemDisabled]}
+                >
+                  <Text style={styles.headerMenuText}>비우기</Text>
+                </Pressable>
+              </View>
+            ) : null}
           </View>
         </View>
         <View style={styles.headerCopy}>
@@ -173,20 +196,19 @@ export function NotificationListScreen() {
                   <Text style={styles.noticeCategory}>{getCategoryLabel(item)}</Text>
                   <Text style={styles.noticeTitle}>{item.title}</Text>
                 </View>
-                <Text style={styles.noticeTime}>{item.time}</Text>
+                <View style={styles.noticeStatusSlot}>
+                  <RadioButton
+                    checked={!item.unread}
+                    disabled={!item.unread}
+                    onPress={item.unread ? () => void markNotificationRead(item.id) : undefined}
+                    accessibilityLabel={`${item.title} ${item.unread ? unreadActionLabel : "읽음 완료"}`}
+                    style={styles.readControl}
+                  />
+                </View>
               </View>
               <Text style={styles.noticeBody}>{item.body}</Text>
               <View style={styles.noticeFooter}>
-                {item.unread ? <View style={styles.unreadDot} /> : <Text style={styles.readLabel}>읽음 완료</Text>}
-                {item.unread ? (
-                  <Button
-                    label={unreadActionLabel}
-                    variant="secondary"
-                    onPress={() => void markNotificationRead(item.id)}
-                    accessibilityLabel={`${item.title} ${unreadActionLabel}`}
-                    style={[styles.readButton, compact && styles.readButtonCompact, narrow && styles.readButtonNarrow]}
-                  />
-                ) : null}
+                <Text style={styles.noticeTime}>{item.time}</Text>
               </View>
             </Card>
           ))}
@@ -213,23 +235,56 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: uiSpacing.md,
+    position: "relative",
+    zIndex: 20,
   },
-  headerActions: {
-    flexDirection: "row",
-    gap: uiSpacing.sm,
-    flexWrap: "wrap",
-    justifyContent: "flex-end",
+  headerMenuWrap: {
+    position: "relative",
+    alignItems: "flex-end",
+    zIndex: 30,
   },
-  headerActionsCompact: {
-    gap: 6,
+  headerMenuButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surface,
   },
-  headerActionButton: {
-    minWidth: 86,
-    minHeight: 38,
+  headerMenuButtonActive: {
+    borderColor: uiColors.primaryBorder,
+    backgroundColor: uiColors.primarySoft,
   },
-  headerActionButtonCompact: {
-    minWidth: 72,
-    minHeight: 34,
+  headerMenuPanel: {
+    position: "absolute",
+    top: 46,
+    right: 0,
+    minWidth: 124,
+    borderRadius: uiRadius.xl,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    backgroundColor: uiColors.surface,
+    overflow: "hidden",
+    zIndex: 10,
+    elevation: 4,
+  },
+  headerMenuItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  headerMenuItemDivider: {
+    borderTopWidth: 1,
+    borderTopColor: uiColors.border,
+  },
+  headerMenuItemDisabled: {
+    opacity: 0.45,
+  },
+  headerMenuText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: uiColors.textStrong,
   },
   headerCopy: {
     gap: 6,
@@ -297,10 +352,10 @@ const styles = StyleSheet.create({
     gap: uiSpacing.md,
   },
   noticeCard: {
-    gap: uiSpacing.sm,
+    gap: 10,
   },
   noticeCardCompact: {
-    gap: 10,
+    gap: 8,
   },
   noticeCardUnread: {
     borderColor: uiColors.primaryBorder,
@@ -309,11 +364,16 @@ const styles = StyleSheet.create({
   noticeTopRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: uiSpacing.md,
+    alignItems: "flex-start",
+    gap: uiSpacing.sm,
   },
   noticeTitleWrap: {
     flex: 1,
-    gap: 6,
+    gap: 4,
+  },
+  noticeStatusSlot: {
+    width: 28,
+    alignItems: "flex-end",
   },
   noticeCategory: {
     alignSelf: "flex-start",
@@ -329,7 +389,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   noticeTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
     color: uiColors.text,
   },
@@ -339,38 +399,17 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   noticeBody: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 12,
+    lineHeight: 18,
     color: uiColors.textMuted,
   },
   noticeFooter: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: uiSpacing.md,
-    marginTop: 4,
+    justifyContent: "flex-start",
+    marginTop: 2,
   },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: uiColors.primary,
-  },
-  readLabel: {
-    color: uiColors.textSoft,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  readButton: {
-    minHeight: 36,
-    borderRadius: uiRadius.full,
-  },
-  readButtonCompact: {
-    minWidth: 78,
-    minHeight: 34,
-  },
-  readButtonNarrow: {
-    minWidth: 62,
-    paddingHorizontal: 10,
+  readControl: {
+    marginLeft: "auto",
   },
 })
