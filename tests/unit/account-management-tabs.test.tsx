@@ -405,12 +405,52 @@ describe("account management tabs", () => {
   })
 
   test("statistics tab can focus a single month from the period chips", () => {
-    const { getByText, queryByText } = render(<StatisticsTab account={defaultAccounts[0]} />)
+    const { getByText, getByLabelText, queryByText } = render(<StatisticsTab account={defaultAccounts[0]} />)
 
-    fireEvent.press(getByText("2026년 2월"))
+    fireEvent.press(getByLabelText("2026년 2월 기간 필터"))
 
     expect(getByText("선택 기간 · 2026년 2월")).toBeTruthy()
-    expect(queryByText("2026년 3월")).toBeNull()
+    expect(queryByText("2026년 3월")).toBeTruthy()
+  })
+
+  test("statistics tab renders dashboard-style trend and category visuals", () => {
+    const { getByTestId, getByText } = render(<StatisticsTab account={defaultAccounts[0]} />)
+
+    expect(getByTestId("statistics-trend-board")).toBeTruthy()
+    expect(getByTestId("statistics-breakdown-board")).toBeTruthy()
+    expect(getByText("순변동 추이")).toBeTruthy()
+    expect(getByText("출금 최다")).toBeTruthy()
+  })
+
+  test("statistics tab keeps a stable detail slot before and after selecting a month", () => {
+    const { getByText, getByLabelText } = render(<StatisticsTab account={defaultAccounts[0]} />)
+
+    expect(getByText("월을 누르면 세부 금액이 여기에 고정됩니다.")).toBeTruthy()
+
+    fireEvent.press(getByLabelText("2026년 3월 추이 보기"))
+
+    expect(getByText("2026년 3월 세부 금액")).toBeTruthy()
+  })
+
+  test("statistics tab does not draw a fake bar for zero-valued metrics", () => {
+    const zeroMetricAccount = {
+      ...defaultAccounts[0],
+      transactions: [
+        {
+          id: "tx-zero-income",
+          type: "income" as const,
+          amount: 50000,
+          category: "회비",
+          description: "2월 회비",
+          date: "2026-02-10",
+          createdAt: "2026-02-10T10:00:00.000Z",
+        },
+      ],
+    }
+
+    const { getByTestId } = render(<StatisticsTab account={zeroMetricAccount} />)
+
+    expect(getByTestId("trend-expense-bar-2026-02")).toHaveStyle({ height: 0 })
   })
 
   test("statistics tab shows a tooltip when a trend row is pressed", () => {
@@ -424,11 +464,11 @@ describe("account management tabs", () => {
   })
 
   test("statistics tab can focus a single category from the breakdown rows", () => {
-    const { getByText } = render(<StatisticsTab account={defaultAccounts[0]} />)
+    const { getByText, getByLabelText } = render(<StatisticsTab account={defaultAccounts[0]} />)
 
     expect(getByText("가장 큰 지출 · 장소")).toBeTruthy()
 
-    fireEvent.press(getByText("장소"))
+    fireEvent.press(getByLabelText("장소 비중 보기"))
 
     expect(getByText("선택 카테고리 · 장소")).toBeTruthy()
     expect(getByText("해당 카테고리 지출 53%")).toBeTruthy()
