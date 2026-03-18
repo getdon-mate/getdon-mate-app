@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { apiConfig, mapApiFailureToUserMessage, shouldUseRealApi } from "@core/api"
+import { apiConfig, isApiError, mapApiFailureToUserMessage, shouldUseRealApi } from "@core/api"
 import { createAccountsBackendV1Adapter, getLastBackendFailure } from "@features/accounts/api"
 import {
   createMeetingWithSwaggerApi,
@@ -540,6 +540,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [currentUser, prefersRealApi, remoteMeetingsQuery.data])
 
   useEffect(() => {
+    if (!remoteMeetingsQuery.error) return
+    if (isApiError(remoteMeetingsQuery.error) && remoteMeetingsQuery.error.status === 401) {
+      setAuthTokens(null)
+      setCurrentUser(null)
+      setSelectedAccountId(null)
+      setAuthRecoveryNotice("로그인이 만료되었습니다. 다시 로그인해주세요.")
+    }
+  }, [remoteMeetingsQuery.error])
+
+  useEffect(() => {
     writeNotificationPreferences(notificationPreferences)
   }, [notificationPreferences])
 
@@ -585,7 +595,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       return false
     },
-    [backendAdapter, prefersRealApi, users]
+    [prefersRealApi, queryClient, swaggerLoginMutation]
   )
 
   const signup = useCallback(
@@ -654,7 +664,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setDataSource("remote")
         setLastSyncError(null)
         return "remote" as const
-      } catch {
+      } catch (err) {
+        if (isApiError(err) && err.status === 401) {
+          setAuthTokens(null)
+          setCurrentUser(null)
+          setSelectedAccountId(null)
+          setAuthRecoveryNotice("로그인이 만료되었습니다. 다시 로그인해주세요.")
+          return "remote" as const
+        }
         setLastSyncError("모임 목록을 다시 불러오지 못했습니다.")
         return "remote" as const
       } finally {
