@@ -115,6 +115,8 @@ interface AppRuntimeContextType {
   isRefreshingAccounts: boolean
   isMutating: boolean
   lastSyncError: string | null
+  lastMutationError: string | null
+  clearMutationError: () => void
   authRecoveryNotice: string | null
   dataSource: DataSource
   prefersRealApi: boolean
@@ -409,6 +411,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => readNotificationPreferences() ?? defaultNotificationPreferences
   )
   const [authTokens, setAuthTokens] = useState(() => initialTokens)
+  const [lastMutationError, setLastMutationError] = useState<string | null>(null)
 
   const remoteMeetingsQuery = useQuery({
     queryKey: ["swaggerMeetings", authTokens?.accessToken],
@@ -557,11 +560,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     writeAmountMaskPreference(maskAmounts)
   }, [maskAmounts])
 
+  const clearMutationError = useCallback(() => {
+    setLastMutationError(null)
+  }, [])
+
   const runBusy = useCallback(async <T,>(task: () => Promise<T>) => {
     setBusyCount((prev) => prev + 1)
     try {
       await delay(appEnv.uiDemoDelayMs)
       return await task()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "작업 처리 중 오류가 발생했습니다."
+      setLastMutationError(message)
+      throw err
     } finally {
       setBusyCount((prev) => Math.max(0, prev - 1))
     }
@@ -1456,6 +1467,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isRefreshingAccounts,
       isMutating: busyCount > 0,
       lastSyncError,
+      lastMutationError,
+      clearMutationError,
       authRecoveryNotice,
       dataSource,
       prefersRealApi,
@@ -1475,12 +1488,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }),
     [
       busyCount,
+      clearMutationError,
       clearNotifications,
       dataSource,
       defaultNotificationPreferences,
       authRecoveryNotice,
       isBootstrapping,
       isRefreshingAccounts,
+      lastMutationError,
       lastSyncError,
       maskAmounts,
       markAllNotificationsRead,
