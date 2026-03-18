@@ -1,6 +1,7 @@
 import { memo } from "react"
 import { StyleSheet, Text, View } from "react-native"
 import { formatDate, formatKRW } from "@shared/lib/format"
+import { uiColors } from "@shared/ui"
 import { getMemberById } from "../model/member-utils"
 import type { GroupAccount, Transaction } from "../model/types"
 
@@ -53,6 +54,6 @@ const styles = StyleSheet.create({
     color: "#16a34a",
   },
   expenseText: {
-    color: "#0f172a",
+    color: uiColors.textStrong,
   },
 })

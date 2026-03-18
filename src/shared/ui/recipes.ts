@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native"
-import { uiColors, uiRadius, uiSpacing } from "./tokens"
+import { uiColors, uiRadius, uiSpacing, uiTypography } from "./tokens"
 
 export const uiRecipes = StyleSheet.create({
   rowBetween: {
@@ -15,14 +15,11 @@ export const uiRecipes = StyleSheet.create({
     marginBottom: uiSpacing.xs,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: uiColors.text,
+    ...uiTypography.section,
   },
   metricLabel: {
+    ...uiTypography.caption,
     color: uiColors.textMuted,
-    fontSize: 12,
-    fontWeight: "600",
   },
   metricValue: {
     color: uiColors.textStrong,
@@ -36,5 +33,9 @@ export const uiRecipes = StyleSheet.create({
     backgroundColor: uiColors.surfaceMuted,
     padding: uiSpacing.md,
     gap: uiSpacing.xs,
+  },
+  screenBackground: {
+    flex: 1,
+    backgroundColor: uiColors.backgroundScreen,
   },
 })

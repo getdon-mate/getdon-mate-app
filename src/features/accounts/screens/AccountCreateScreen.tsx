@@ -96,7 +96,7 @@ export function AccountCreateScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: uiColors.backgroundScreen,
   },
   content: {
     paddingHorizontal: 16,

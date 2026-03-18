@@ -1,6 +1,7 @@
 export const uiPalette = {
   canvas: "#ffffff",
   canvasRaised: "#ffffff",
+  canvasScreen: "#f8fafc",
   surface: "#ffffff",
   surfaceMuted: "#ffffff",
   surfaceStrong: "#ffffff",

@@ -3,6 +3,7 @@ import { uiPalette } from "./palette"
 export const uiColors = {
   background: uiPalette.canvas,
   backgroundRaised: uiPalette.canvasRaised,
+  backgroundScreen: uiPalette.canvasScreen,
   surface: uiPalette.surface,
   surfaceMuted: uiPalette.surfaceMuted,
   surfaceStrong: uiPalette.surfaceStrong,
