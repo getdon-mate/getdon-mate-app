@@ -13,7 +13,7 @@ import { AccountCreatePanel } from "../components/AccountCreatePanel"
 export function AccountCreateScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const { createAccount } = useApp()
-  const { showToast } = useFeedback()
+  const { showToast, showError } = useFeedback()
 
   const [groupName, setGroupName] = useState("")
   const [bankName, setBankName] = useState("")
@@ -41,15 +41,23 @@ export function AccountCreateScreen() {
     }
 
     setSubmitting(true)
-    await createAccount({
-      groupName: groupName.trim(),
-      bankName: bankName.trim(),
-      accountNumber: accountNumber.trim(),
-      monthlyDuesAmount: Number(monthlyDues),
-      dueDay: Number(dueDay),
-    })
-    showToast({ tone: "success", title: "개설 완료", message: "새 모임통장을 만들었습니다." })
-    navigation.navigate(ROUTES.AccountList)
+    try {
+      await createAccount({
+        groupName: groupName.trim(),
+        bankName: bankName.trim(),
+        accountNumber: accountNumber.trim(),
+        monthlyDuesAmount: Number(monthlyDues),
+        dueDay: Number(dueDay),
+      })
+      showToast({ tone: "success", title: "개설 완료", message: "새 모임통장을 만들었습니다." })
+      navigation.navigate(ROUTES.AccountList)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "모임통장을 개설하지 못했습니다."
+      setError(message)
+      showError(message, "개설 실패")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (

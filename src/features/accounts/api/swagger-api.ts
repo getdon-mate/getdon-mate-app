@@ -21,7 +21,7 @@ interface SwaggerLoginResponse {
   refreshToken: string
 }
 
-interface SwaggerMeetingSummary {
+export interface SwaggerMeetingSummary {
   meetingId: number
   title: string
   bankName: string

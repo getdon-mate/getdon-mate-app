@@ -9,6 +9,7 @@ import {
   loginWithSwaggerApi,
   signupWithSwaggerApi,
   toGroupAccountSummary,
+  type SwaggerMeetingSummary,
 } from "@features/accounts/api/swagger-api"
 import { defaultAccounts, defaultUsers } from "@features/accounts/model/fixtures"
 import { appEnv } from "@shared/config/app-env"
@@ -533,7 +534,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!prefersRealApi || !currentUser) return
     if (!remoteMeetingsQuery.data) return
 
-    setAccounts(cloneAccounts(remoteMeetingsQuery.data.map((meeting: any) => toGroupAccountSummary(meeting, currentUser))))
+    setAccounts(cloneAccounts(remoteMeetingsQuery.data.map((meeting: SwaggerMeetingSummary) => toGroupAccountSummary(meeting, currentUser))))
     setDataSource("remote")
     setLastSyncError(null)
   }, [currentUser, prefersRealApi, remoteMeetingsQuery.data])
@@ -572,7 +573,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             queryKey: ["swaggerMeetings", tokens.accessToken],
             queryFn: () => fetchMyMeetings(tokens.accessToken),
           })
-          setAccounts(cloneAccounts(meetings.map((meeting: any) => toGroupAccountSummary(meeting, remoteUser))))
+          setAccounts(cloneAccounts(meetings.map((meeting: SwaggerMeetingSummary) => toGroupAccountSummary(meeting, remoteUser))))
           setDataSource("remote")
           setLastSyncError(null)
           return true
@@ -604,7 +605,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             queryKey: ["swaggerMeetings", tokens.accessToken],
             queryFn: () => fetchMyMeetings(tokens.accessToken),
           })
-          setAccounts(cloneAccounts(meetings.map((meeting: any) => toGroupAccountSummary(meeting, remoteUser))))
+          setAccounts(cloneAccounts(meetings.map((meeting: SwaggerMeetingSummary) => toGroupAccountSummary(meeting, remoteUser))))
           setDataSource("remote")
           setLastSyncError(null)
           return true
@@ -649,7 +650,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           queryKey: ["swaggerMeetings", authTokens.accessToken],
           queryFn: () => fetchMyMeetings(authTokens.accessToken),
         })
-        setAccounts(cloneAccounts(meetings.map((meeting: any) => toGroupAccountSummary(meeting, currentUser))))
+        setAccounts(cloneAccounts(meetings.map((meeting: SwaggerMeetingSummary) => toGroupAccountSummary(meeting, currentUser))))
         setDataSource("remote")
         setLastSyncError(null)
         return "remote" as const
@@ -727,12 +728,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
             queryKey: ["swaggerMeetings", authTokens.accessToken],
             queryFn: () => fetchMyMeetings(authTokens.accessToken),
           })
-          setAccounts(cloneAccounts(meetings.map((meeting: any) => toGroupAccountSummary(meeting, currentUser))))
+          setAccounts(cloneAccounts(meetings.map((meeting: SwaggerMeetingSummary) => toGroupAccountSummary(meeting, currentUser))))
           setDataSource("remote")
           return
         }
-        
-        throw new Error("API 연결이 필요합니다.")
+
+        // 데모/로컬 모드: 로컬에서 계정 생성
+        const newAccount = createLocalAccount(data, currentUser)
+        setAccounts((prev) => [...prev, newAccount])
       })
     },
     [authTokens?.accessToken, backendAdapter, currentUser, prefersRealApi, queryClient, runBusy, swaggerCreateMeetingMutation]
