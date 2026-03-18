@@ -6,6 +6,7 @@ import { ROUTES } from "@core/navigation/routes"
 import type { RootStackParamList } from "@core/navigation/types"
 import { useApp } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
+import { getErrorMessage } from "@core/api"
 import { requireText, validateDayOfMonth, validatePositiveNumber } from "@shared/lib/validation"
 import { Icon, PageHeader, uiColors } from "@shared/ui"
 import { AccountCreatePanel } from "../components/AccountCreatePanel"
@@ -52,7 +53,7 @@ export function AccountCreateScreen() {
       showToast({ tone: "success", title: "개설 완료", message: "새 모임통장을 만들었습니다." })
       navigation.navigate(ROUTES.AccountList)
     } catch (err) {
-      const message = err instanceof Error ? err.message : "모임통장을 개설하지 못했습니다."
+      const message = getErrorMessage(err, "모임통장을 개설하지 못했습니다.")
       setError(message)
       showError(message, "개설 실패")
     } finally {

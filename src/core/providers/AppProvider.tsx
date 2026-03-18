@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { apiConfig, isApiError, mapApiFailureToUserMessage, shouldUseRealApi } from "@core/api"
+import { apiConfig, getErrorMessage, isApiError, mapApiFailureToUserMessage, shouldUseRealApi } from "@core/api"
 import { createAccountsBackendV1Adapter, getLastBackendFailure } from "@features/accounts/api"
 import {
   createMeetingWithSwaggerApi,
@@ -333,8 +333,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       await delay(appEnv.uiDemoDelayMs)
       return await task()
     } catch (err) {
-      const message = err instanceof Error ? err.message : "작업 처리 중 오류가 발생했습니다."
-      setLastMutationError(message)
+      setLastMutationError(getErrorMessage(err, "작업 처리 중 오류가 발생했습니다."))
       throw err
     } finally {
       setBusyCount((prev) => Math.max(0, prev - 1))
