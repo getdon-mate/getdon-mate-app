@@ -369,9 +369,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return false
         }
       }
+      // Mock/local mode: authenticate against local fixture users
+      const localUser = users.find((u) => u.email === email && u.password === password)
+      if (localUser) {
+        setCurrentUser(localUser)
+        setAccounts(cloneAccounts(defaultAccounts))
+        setDataSource("demo")
+        setLastSyncError(null)
+        return true
+      }
+      setLastSyncError("이메일 또는 비밀번호가 올바르지 않습니다.")
       return false
     },
-    [prefersRealApi, queryClient, swaggerLoginMutation]
+    [prefersRealApi, queryClient, swaggerLoginMutation, users]
   )
 
   const signup = useCallback(

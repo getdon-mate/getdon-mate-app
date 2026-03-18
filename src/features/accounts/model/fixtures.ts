@@ -1,6 +1,16 @@
+import { memberAccentPalette } from "@shared/ui/palette"
 import type { AppUser, BoardPost, DuesRecord, GroupAccount, Member, ReminderItem, Transaction } from "./types"
 
-export const defaultUsers: AppUser[] = []
+export const defaultUsers: AppUser[] = [
+  { id: "u1", name: "김지현", email: "test@test.com", password: "password" },
+]
+
+const studyMembers: Member[] = [
+  { id: "m1", userId: "u1", name: "김지현", role: "총무", initials: "지현", phone: "010-1234-5678", joinDate: "2025-01-01", color: memberAccentPalette[0] },
+  { id: "m2", name: "이승우", role: "멤버", initials: "승우", phone: "010-2222-3333", joinDate: "2025-01-01", color: memberAccentPalette[1] },
+  { id: "m3", name: "박민지", role: "멤버", initials: "민지", phone: "010-4444-5555", joinDate: "2025-02-01", color: memberAccentPalette[2] },
+  { id: "m4", name: "최현수", role: "멤버", initials: "현수", phone: "010-6666-7777", joinDate: "2025-02-01", color: memberAccentPalette[3] },
+]
 
 const hikingMembers: Member[] = [
   { id: "h1", userId: "u1", name: "김지현", role: "총무", initials: "지현", phone: "010-1234-5678", joinDate: "2025-03-01", color: memberAccentPalette[0] },
@@ -109,7 +119,39 @@ const hikingBoardPosts: BoardPost[] = [
   },
 ]
 
-export const defaultAccounts: GroupAccount[] = []
+export const defaultAccounts: GroupAccount[] = [
+  {
+    id: "acc1",
+    groupName: "개발자 스터디",
+    bankName: "카카오뱅크",
+    accountNumber: "3333-12-3456789",
+    balance: 284500,
+    monthlyDuesAmount: 50000,
+    dueDay: 5,
+    members: studyMembers,
+    duesRecords: studyDuesRecords,
+    transactions: studyTransactions,
+    autoTransfer: { enabled: false, dayOfMonth: 5, amount: 50000, fromAccount: "" },
+    oneTimeDues: [],
+    reminders: studyReminders,
+    boardPosts: studyBoardPosts,
+  },
+  {
+    id: "acc2",
+    groupName: "주말 등산 모임",
+    bankName: "토스뱅크",
+    accountNumber: "1000-2345-6789",
+    balance: 120000,
+    monthlyDuesAmount: 30000,
+    dueDay: 1,
+    members: hikingMembers,
+    duesRecords: hikingDuesRecords,
+    transactions: hikingTransactions,
+    autoTransfer: { enabled: false, dayOfMonth: 1, amount: 30000, fromAccount: "" },
+    oneTimeDues: [],
+    reminders: hikingReminders,
+    boardPosts: hikingBoardPosts,
+  },
+]
 
 export const availableMonths = ["2026-03", "2026-02"]
-import { memberAccentPalette } from "@shared/ui/palette"
