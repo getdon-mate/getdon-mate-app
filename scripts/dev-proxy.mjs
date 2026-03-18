@@ -14,7 +14,7 @@ import http from "node:http"
 import https from "node:https"
 import { URL } from "node:url"
 
-const TARGET = process.env.PROXY_TARGET ?? "http://getdon-api.duckDNS.org"
+const TARGET = process.env.PROXY_TARGET ?? "http://getdon-api.duckDNS.org:8080"
 const PORT = Number(process.env.PROXY_PORT ?? 3001)
 
 const ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]

@@ -74,6 +74,25 @@ export class ApiClient {
     return Boolean(this.config.baseUrl)
   }
 
+  /**
+   * HTTPS 페이지에서 HTTP API를 직접 호출하면 브라우저가 Mixed Content로 차단.
+   * 이 경우 baseUrl을 무시하고 same-origin 상대 경로를 사용 → Vercel 프록시 경유.
+   */
+  private resolveBaseUrl(): string | null {
+    const baseUrl = this.config.baseUrl
+    if (!baseUrl) return null
+
+    if (
+      typeof window !== "undefined" &&
+      window.location.protocol === "https:" &&
+      baseUrl.startsWith("http://")
+    ) {
+      return null // Vercel 프록시 모드: /api/* → 백엔드
+    }
+
+    return baseUrl
+  }
+
   async request<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
     const controller = new AbortController()
     const timeoutMs = options.timeoutMs ?? this.config.timeoutMs
@@ -82,8 +101,8 @@ export class ApiClient {
 
     try {
       const { body, query, headers, timeoutMs: _timeoutMs, ...rest } = options
-      // baseUrl이 null이면 same-origin 상대 경로 사용 (Vercel 프록시 모드)
-      const url = buildUrl(this.config.baseUrl, path, query)
+      // HTTPS 환경에서 HTTP baseUrl은 자동으로 same-origin 상대 경로로 전환
+      const url = buildUrl(this.resolveBaseUrl(), path, query)
       const requestHeaders = new Headers(headers)
 
       let requestBody: BodyInit | undefined
