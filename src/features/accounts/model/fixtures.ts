@@ -1,20 +1,6 @@
 import type { AppUser, BoardPost, DuesRecord, GroupAccount, Member, ReminderItem, Transaction } from "./types"
 
-export const defaultUsers: AppUser[] = [
-  {
-    id: "u1",
-    name: "김지현",
-    email: "test@test.com",
-    password: "password",
-  },
-]
-
-const studyMembers: Member[] = [
-  { id: "m1", userId: "u1", name: "김지현", role: "총무", initials: "지현", phone: "010-1234-5678", joinDate: "2025-06-01", color: memberAccentPalette[0] },
-  { id: "m2", name: "이승우", role: "멤버", initials: "승우", phone: "010-2345-6789", joinDate: "2025-06-01", color: memberAccentPalette[1] },
-  { id: "m3", name: "박소연", role: "멤버", initials: "소연", phone: "010-3456-7890", joinDate: "2025-06-15", color: memberAccentPalette[2] },
-  { id: "m4", name: "정민호", role: "멤버", initials: "민호", phone: "010-4567-8901", joinDate: "2025-07-01", color: memberAccentPalette[3] },
-]
+export const defaultUsers: AppUser[] = []
 
 const hikingMembers: Member[] = [
   { id: "h1", userId: "u1", name: "김지현", role: "총무", initials: "지현", phone: "010-1234-5678", joinDate: "2025-03-01", color: memberAccentPalette[0] },
@@ -123,40 +109,7 @@ const hikingBoardPosts: BoardPost[] = [
   },
 ]
 
-export const defaultAccounts: GroupAccount[] = [
-  {
-    id: "acc1",
-    groupName: "개발자 스터디 모임",
-    bankName: "토스뱅크",
-    accountNumber: "1234-5678-9012",
-    balance: 1850000,
-    monthlyDuesAmount: 50000,
-    dueDay: 10,
-    members: studyMembers,
-    duesRecords: studyDuesRecords,
-    transactions: studyTransactions,
-    autoTransfer: { enabled: false, dayOfMonth: 10, amount: 50000, fromAccount: "" },
-    oneTimeDues: [],
-    reminders: studyReminders,
-    boardPosts: studyBoardPosts,
-  },
-  {
-    id: "acc2",
-    groupName: "주말 산악회",
-    bankName: "카카오뱅크",
-    accountNumber: "3333-01-1234567",
-    balance: 520000,
-    monthlyDuesAmount: 30000,
-    dueDay: 5,
-    members: hikingMembers,
-    duesRecords: hikingDuesRecords,
-    transactions: hikingTransactions,
-    autoTransfer: { enabled: true, dayOfMonth: 5, amount: 30000, fromAccount: "국민 123-456-789" },
-    oneTimeDues: [],
-    reminders: hikingReminders,
-    boardPosts: hikingBoardPosts,
-  },
-]
+export const defaultAccounts: GroupAccount[] = []
 
 export const availableMonths = ["2026-03", "2026-02"]
 import { memberAccentPalette } from "@shared/ui/palette"

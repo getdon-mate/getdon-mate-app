@@ -533,7 +533,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!prefersRealApi || !currentUser) return
     if (!remoteMeetingsQuery.data) return
 
-    setAccounts(cloneAccounts(remoteMeetingsQuery.data.map((meeting) => toGroupAccountSummary(meeting, currentUser))))
+    setAccounts(cloneAccounts(remoteMeetingsQuery.data.map((meeting: any) => toGroupAccountSummary(meeting, currentUser))))
     setDataSource("remote")
     setLastSyncError(null)
   }, [currentUser, prefersRealApi, remoteMeetingsQuery.data])
@@ -572,20 +572,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
             queryKey: ["swaggerMeetings", tokens.accessToken],
             queryFn: () => fetchMyMeetings(tokens.accessToken),
           })
-          setAccounts(cloneAccounts(meetings.map((meeting) => toGroupAccountSummary(meeting, remoteUser))))
+          setAccounts(cloneAccounts(meetings.map((meeting: any) => toGroupAccountSummary(meeting, remoteUser))))
           setDataSource("remote")
           setLastSyncError(null)
           return true
         } catch (error) {
           setLastSyncError(mapApiFailureToUserMessage(getLastBackendFailure()) ?? "실서버 로그인에 실패했습니다.")
+          return false
         }
       }
 
-      const user = users.find((u) => u.email === email && u.password === password)
-      if (!user) return false
-      setDataSource("demo")
-      setCurrentUser(user)
-      return true
+      return false
     },
     [backendAdapter, prefersRealApi, users]
   )
@@ -607,26 +604,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
             queryKey: ["swaggerMeetings", tokens.accessToken],
             queryFn: () => fetchMyMeetings(tokens.accessToken),
           })
-          setAccounts(cloneAccounts(meetings.map((meeting) => toGroupAccountSummary(meeting, remoteUser))))
+          setAccounts(cloneAccounts(meetings.map((meeting: any) => toGroupAccountSummary(meeting, remoteUser))))
           setDataSource("remote")
           setLastSyncError(null)
           return true
         } catch (error) {
           setLastSyncError(mapApiFailureToUserMessage(getLastBackendFailure()) ?? "실서버 회원가입에 실패했습니다.")
+          return false
         }
       }
 
-      if (users.some((u) => u.email === email)) return false
-      const newUser: AppUser = {
-        id: `u${Date.now()}`,
-        name,
-        email,
-        password,
-      }
-      setUsers((prev) => [...prev, newUser])
-      setDataSource("demo")
-      setCurrentUser(newUser)
-      return true
+      return false
     },
     [prefersRealApi, queryClient, swaggerLoginMutation, swaggerSignupMutation, users]
   )
@@ -661,13 +649,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           queryKey: ["swaggerMeetings", authTokens.accessToken],
           queryFn: () => fetchMyMeetings(authTokens.accessToken),
         })
-        setAccounts(cloneAccounts(meetings.map((meeting) => toGroupAccountSummary(meeting, currentUser))))
+        setAccounts(cloneAccounts(meetings.map((meeting: any) => toGroupAccountSummary(meeting, currentUser))))
         setDataSource("remote")
         setLastSyncError(null)
         return "remote" as const
       } catch {
         setLastSyncError("모임 목록을 다시 불러오지 못했습니다.")
-        return "demo" as const
+        return "remote" as const
       } finally {
         setIsRefreshingAccounts(false)
       }
@@ -739,19 +727,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
             queryKey: ["swaggerMeetings", authTokens.accessToken],
             queryFn: () => fetchMyMeetings(authTokens.accessToken),
           })
-          setAccounts(cloneAccounts(meetings.map((meeting) => toGroupAccountSummary(meeting, currentUser))))
+          setAccounts(cloneAccounts(meetings.map((meeting: any) => toGroupAccountSummary(meeting, currentUser))))
           setDataSource("remote")
           return
         }
-
-        const remoteAccount = await backendAdapter.createAccount(data)
-        if (remoteAccount) {
-          setAccounts((prev) => [...prev, ...cloneAccounts([remoteAccount])])
-          return
-        }
-
-        const account = createLocalAccount(data, currentUser)
-        setAccounts((prev) => [...prev, account])
+        
+        throw new Error("API 연결이 필요합니다.")
       })
     },
     [authTokens?.accessToken, backendAdapter, currentUser, prefersRealApi, queryClient, runBusy, swaggerCreateMeetingMutation]

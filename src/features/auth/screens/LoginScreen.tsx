@@ -8,7 +8,6 @@ import {
 import { useAppAuth, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { appEnv } from "@shared/config/app-env"
-import { TEST_ACCOUNT } from "@shared/constants/copy"
 import { Card, SkeletonBlock, StatusBanner, uiSpacing } from "@shared/ui"
 import { AuthFormCard } from "../components/AuthFormCard"
 import { AuthHero } from "../components/AuthHero"
@@ -22,24 +21,6 @@ export function LoginScreen() {
   const isWide = width >= 900
   const { isSignup, name, email, password, error, submitting, setName, setEmail, setPassword, handleSubmit, resetForm } =
     useAuthForm({ login, signup, showError })
-
-  async function handleSocialLogin(provider: "google" | "kakao") {
-    const ok = await login("test@test.com", "password")
-    if (!ok) {
-      showError("소셜 로그인 데모 계정에 연결하지 못했습니다.")
-      return
-    }
-    showToast({ tone: "success", title: `${provider === "google" ? "Google" : "카카오"} 로그인`, message: "데모 계정으로 바로 이어집니다." })
-  }
-
-  async function handleContinueAsGuest() {
-    const ok = await login(TEST_ACCOUNT.email, TEST_ACCOUNT.password)
-    if (!ok) {
-      showError("둘러보기를 시작하지 못했습니다. 잠시 후 다시 시도해주세요.")
-      return
-    }
-    showToast({ tone: "success", title: "둘러보기 시작", message: "데모 계정으로 주요 화면을 바로 확인할 수 있습니다." })
-  }
 
   return (
     <KeyboardAvoidingView
@@ -91,8 +72,6 @@ export function LoginScreen() {
               onChangeEmail={setEmail}
               onChangePassword={setPassword}
               onSubmit={handleSubmit}
-              onSocialLogin={handleSocialLogin}
-              onContinueAsGuest={handleContinueAsGuest}
               onToggleMode={() => resetForm(!isSignup)}
               submitting={submitting}
               showTestAccountHint={appEnv.showTestCredentials}

@@ -6,11 +6,11 @@
   "main": "expo/AppEntry",
   "scripts": {
     "check:ios-dev-env": "node scripts/check-ios-dev-env.mjs",
-    "start": "expo start",
+    "start": "expo start --port 3000",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "ios:dev": "export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 && pnpm run check:ios-dev-env && expo run:ios",
-    "web": "expo start --web",
+    "web": "expo start --web --port 3000",
     "export:web": "expo export --platform web",
     "typecheck": "tsc --noEmit",
     "ci:web": "pnpm run typecheck && pnpm run export:web",
