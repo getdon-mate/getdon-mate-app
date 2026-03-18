@@ -14,16 +14,20 @@ export interface ApiRequestOptions extends Omit<RequestInit, "body"> {
   timeoutMs?: number
 }
 
-function buildUrl(baseUrl: string, path: string, query: Record<string, QueryValue> = {}): string {
+function buildUrl(baseUrl: string | null, path: string, query: Record<string, QueryValue> = {}): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`
-  const url = new URL(`${baseUrl}${normalizedPath}`)
+
+  // baseUrl이 없으면 same-origin 상대 경로 사용 (Vercel 프록시 모드)
+  const origin = baseUrl ?? (typeof window !== "undefined" ? window.location.origin : "http://localhost")
+  const url = new URL(`${origin}${normalizedPath}`)
 
   Object.entries(query).forEach(([key, value]) => {
     if (value === null || value === undefined) return
     url.searchParams.set(key, String(value))
   })
 
-  return url.toString()
+  // same-origin 모드에서는 경로+쿼리만 반환 (절대 URL 불필요)
+  return baseUrl ? url.toString() : `${url.pathname}${url.search}`
 }
 
 function hasEnvelope<T>(payload: unknown): payload is ApiEnvelope<T> {
@@ -71,10 +75,6 @@ export class ApiClient {
   }
 
   async request<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
-    if (!this.config.baseUrl) {
-      throw new ApiError("API base URL is not configured.", { code: "API_BASE_URL_MISSING" })
-    }
-
     const controller = new AbortController()
     const timeoutMs = options.timeoutMs ?? this.config.timeoutMs
     const method = options.method ?? "GET"
@@ -82,6 +82,7 @@ export class ApiClient {
 
     try {
       const { body, query, headers, timeoutMs: _timeoutMs, ...rest } = options
+      // baseUrl이 null이면 same-origin 상대 경로 사용 (Vercel 프록시 모드)
       const url = buildUrl(this.config.baseUrl, path, query)
       const requestHeaders = new Headers(headers)
 

@@ -343,7 +343,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // ─── Auth operations ─────────────────────────────────────────────────────────
   const login = useCallback(
     async (email: string, password: string) => {
-      if (prefersRealApi && apiConfig.baseUrl) {
+      if (prefersRealApi) {
         try {
           const tokens = await swaggerLoginMutation.mutateAsync({ email, password })
           const remoteUser = createRemoteUser(email)
@@ -374,7 +374,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const signup = useCallback(
     async (name: string, email: string, password: string) => {
-      if (prefersRealApi && apiConfig.baseUrl) {
+      if (prefersRealApi) {
         try {
           await swaggerSignupMutation.mutateAsync({ userName: name, email, password })
           const tokens = await swaggerLoginMutation.mutateAsync({ email, password })
