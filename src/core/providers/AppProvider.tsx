@@ -13,21 +13,7 @@ import {
 } from "@features/accounts/api/swagger-api"
 import { defaultAccounts, defaultUsers } from "@features/accounts/model/fixtures"
 import { appEnv } from "@shared/config/app-env"
-import type {
-  AppUser,
-  AutoTransfer,
-  BoardComment,
-  BoardPost,
-  GroupAccount,
-  Member,
-  MemberRole,
-  OneTimeDues,
-  OneTimeDuesRecord,
-  ReminderItem,
-  ReminderType,
-  Transaction,
-  TransactionType,
-} from "@features/accounts/model/types"
+import type { AppUser, AutoTransfer, GroupAccount } from "@features/accounts/model/types"
 import { logger } from "@shared/lib/logger"
 import { defaultNotificationPreferences, initialNotifications, type NotificationItem } from "@shared/lib/notification-state"
 import {
@@ -39,11 +25,26 @@ import {
 } from "@shared/lib/preferences-storage"
 import { clearPersistedSession, readPersistedSession, writePersistedSession } from "@shared/lib/session-storage"
 import { clearPersistedAuthTokens, readPersistedAuthTokens, writePersistedAuthTokens } from "@shared/lib/auth-token-storage"
-import { memberAccentPalette } from "@shared/ui/palette"
+import {
+  cloneAccounts,
+  cloneUsers,
+  delay,
+  type CreateAccountInput,
+  type CreateBoardCommentInput,
+  type CreateBoardPostInput,
+  type UpsertMemberInput,
+  type UpsertTransactionInput,
+} from "./helpers"
+import { useAccountsOperations } from "./hooks/useAccountsOperations"
 
 type DataSource = "demo" | "remote"
 
-interface CreateAccountInput {
+interface UpdateProfileInput {
+  name: string
+  email: string
+}
+
+interface UpdateAccountInput {
   groupName: string
   bankName: string
   accountNumber: string
@@ -63,21 +64,6 @@ interface UpdateOneTimeDuesInput {
   dueDate: string
 }
 
-interface UpdateProfileInput {
-  name: string
-  email: string
-}
-
-interface CreateBoardPostInput {
-  title: string
-  body: string
-  pinned: boolean
-}
-
-interface CreateBoardCommentInput {
-  body: string
-}
-
 interface UpdateBoardPostInput {
   title: string
   body: string
@@ -88,27 +74,7 @@ interface UpdateBoardCommentInput {
   body: string
 }
 
-interface UpdateAccountInput {
-  groupName: string
-  bankName: string
-  accountNumber: string
-  monthlyDuesAmount: number
-  dueDay: number
-}
-
-interface UpsertMemberInput {
-  name: string
-  phone: string
-  role: MemberRole
-}
-
-interface UpsertTransactionInput {
-  type: TransactionType
-  amount: number
-  description: string
-  date: string
-  category: string
-}
+// ─── Context types ────────────────────────────────────────────────────────────
 
 interface AppRuntimeContextType {
   isBootstrapping: boolean
@@ -180,31 +146,27 @@ interface AppAccountsContextType {
 
 interface AppContextType extends AppRuntimeContextType, AppAuthContextType, AppAccountsContextType {}
 
+// ─── Contexts & hooks ─────────────────────────────────────────────────────────
+
 const AppRuntimeContext = createContext<AppRuntimeContextType | null>(null)
 const AppAuthContext = createContext<AppAuthContextType | null>(null)
 const AppAccountsContext = createContext<AppAccountsContextType | null>(null)
 
 export function useAppRuntime() {
   const ctx = useContext(AppRuntimeContext)
-  if (!ctx) {
-    throw new Error("useAppRuntime must be used within AppProvider")
-  }
+  if (!ctx) throw new Error("useAppRuntime must be used within AppProvider")
   return ctx
 }
 
 export function useAppAuth() {
   const ctx = useContext(AppAuthContext)
-  if (!ctx) {
-    throw new Error("useAppAuth must be used within AppProvider")
-  }
+  if (!ctx) throw new Error("useAppAuth must be used within AppProvider")
   return ctx
 }
 
 export function useAppAccounts() {
   const ctx = useContext(AppAccountsContext)
-  if (!ctx) {
-    throw new Error("useAppAccounts must be used within AppProvider")
-  }
+  if (!ctx) throw new Error("useAppAccounts must be used within AppProvider")
   return ctx
 }
 
@@ -215,178 +177,7 @@ export function useApp(): AppContextType {
   return useMemo(() => ({ ...runtime, ...auth, ...accounts }), [runtime, auth, accounts])
 }
 
-function cloneUsers(source: AppUser[]): AppUser[] {
-  return source.map((user) => ({ ...user }))
-}
-
-function cloneAccounts(source: GroupAccount[]): GroupAccount[] {
-  return source.map((account) => ({
-    ...account,
-    members: normalizeMemberRoles(account.members.map((member) => ({ ...member }))),
-    duesRecords: account.duesRecords.map((record) => ({ ...record })),
-    transactions: account.transactions.map((tx) => ({ ...tx })),
-    autoTransfer: { ...account.autoTransfer },
-    oneTimeDues: account.oneTimeDues.map((dues) => ({
-      ...dues,
-      status: dues.status ?? "active",
-      records: dues.records.map((record) => ({ ...record })),
-    })),
-    reminders: account.reminders.map((item) => ({ ...item })),
-    boardPosts: account.boardPosts.map((post) => ({
-      ...post,
-      likedByUserIds: [...(post.likedByUserIds ?? [])],
-      comments: post.comments.map((comment) => ({ ...comment })),
-    })),
-  }))
-}
-
-function createLocalAccount(data: CreateAccountInput, currentUser: AppUser): GroupAccount {
-  const timestamp = Date.now()
-
-  return {
-    id: `acc${timestamp}`,
-    groupName: data.groupName,
-    bankName: data.bankName,
-    accountNumber: data.accountNumber,
-    balance: 0,
-    monthlyDuesAmount: data.monthlyDuesAmount,
-    dueDay: data.dueDay,
-    members: [
-      {
-        id: `mem${timestamp}`,
-        userId: currentUser.id,
-        name: currentUser.name,
-        role: "총무",
-        initials: currentUser.name.slice(-2),
-        phone: "010-0000-0000",
-        joinDate: new Date().toISOString().split("T")[0],
-        color: "#3b82f6",
-      },
-    ],
-    duesRecords: [],
-    transactions: [],
-    autoTransfer: { enabled: false, dayOfMonth: data.dueDay, amount: data.monthlyDuesAmount, fromAccount: "" },
-    oneTimeDues: [],
-    reminders: [],
-    boardPosts: [],
-  }
-}
-
-function buildMemberInitials(name: string) {
-  return name.trim().slice(-2) || "멤버"
-}
-
-function pickMemberColor(index: number) {
-  return memberAccentPalette[index % memberAccentPalette.length]
-}
-
-function createLocalMember(data: UpsertMemberInput, memberCount: number): Member {
-  return {
-    id: `mem${Date.now()}`,
-    name: data.name,
-    role: data.role,
-    initials: buildMemberInitials(data.name),
-    phone: data.phone,
-    joinDate: new Date().toISOString().split("T")[0],
-    color: pickMemberColor(memberCount),
-  }
-}
-
-function normalizeMemberRoles(members: Member[], preferredManagerId?: string): Member[] {
-  if (members.length === 0) return members
-
-  const chosenManagerId =
-    (preferredManagerId && members.some((member) => member.id === preferredManagerId) && preferredManagerId) ||
-    members.find((member) => member.role === "총무")?.id ||
-    members[0]?.id
-
-  return members.map((member) => ({
-    ...member,
-    role: member.id === chosenManagerId ? "총무" : "멤버",
-  }))
-}
-
-function sortTransactions(transactions: Transaction[]) {
-  return [...transactions].sort((a, b) => {
-    const dateCompare = b.date.localeCompare(a.date)
-    if (dateCompare !== 0) return dateCompare
-    return b.id.localeCompare(a.id)
-  })
-}
-
-function getTransactionImpact(transaction: Pick<Transaction, "type" | "amount">) {
-  return transaction.type === "income" ? transaction.amount : -transaction.amount
-}
-
-function createLocalTransaction(data: UpsertTransactionInput): Transaction {
-  return {
-    id: `tx${Date.now()}`,
-    type: data.type,
-    amount: data.amount,
-    description: data.description,
-    date: data.date,
-    category: data.category,
-  }
-}
-
-function createReminder(memberId: string, month: string, type: ReminderType, memberName: string): ReminderItem {
-  return {
-    id: `rem${Date.now()}`,
-    memberId,
-    month,
-    type,
-    message:
-      type === "payment-reminder"
-        ? `${memberName}님께 ${month} 회비 납부 안내를 보냈습니다.`
-        : `${memberName}님께 ${month} 회비 송금 요청을 보냈습니다.`,
-    createdAt: new Date().toISOString(),
-  }
-}
-
-function createReminderNotification(memberName: string, month: string, type: ReminderType): NotificationItem {
-  return {
-    id: `notice-${Date.now()}`,
-    title: type === "payment-reminder" ? "납부 안내를 보냈어요" : "송금 요청을 보냈어요",
-    body:
-      type === "payment-reminder"
-        ? `${memberName}님에게 ${month} 회비 납부 안내를 전송했습니다.`
-        : `${memberName}님에게 ${month} 회비 송금 요청을 전송했습니다.`,
-    time: "방금 전",
-    unread: true,
-  }
-}
-
-function createBoardPost(data: CreateBoardPostInput, authorId: string, authorName: string): BoardPost {
-  return {
-    id: `post${Date.now()}`,
-    title: data.title.trim(),
-    body: data.body.trim(),
-    pinned: data.pinned,
-    createdAt: new Date().toISOString(),
-    authorUserId: authorId,
-    authorName,
-    likedByUserIds: [],
-    comments: [],
-  }
-}
-
-function createBoardComment(data: CreateBoardCommentInput, authorId: string, authorName: string): BoardComment {
-  return {
-    id: `comment${Date.now()}`,
-    authorUserId: authorId,
-    authorName,
-    body: data.body.trim(),
-    createdAt: new Date().toISOString(),
-  }
-}
-
-function delay(ms: number) {
-  if (ms <= 0) return Promise.resolve()
-
-  return new Promise<void>((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
+// ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
@@ -395,11 +186,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const initialSession = useMemo(() => readPersistedSession(), [])
   const initialTokens = useMemo(() => readPersistedAuthTokens(), [])
 
+  // ─── Shared state ───────────────────────────────────────────────────────────
   const [users, setUsers] = useState<AppUser[]>(() => cloneUsers(defaultUsers))
   const [isBootstrapping, setIsBootstrapping] = useState(true)
   const [isRefreshingAccounts, setIsRefreshingAccounts] = useState(false)
   const [busyCount, setBusyCount] = useState(0)
   const [lastSyncError, setLastSyncError] = useState<string | null>(null)
+  const [lastMutationError, setLastMutationError] = useState<string | null>(null)
   const [authRecoveryNotice, setAuthRecoveryNotice] = useState<string | null>(null)
   const [dataSource, setDataSource] = useState<DataSource>(prefersRealApi ? "remote" : "demo")
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null)
@@ -411,8 +204,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => readNotificationPreferences() ?? defaultNotificationPreferences
   )
   const [authTokens, setAuthTokens] = useState(() => initialTokens)
-  const [lastMutationError, setLastMutationError] = useState<string | null>(null)
 
+  // ─── Remote data queries ────────────────────────────────────────────────────
   const remoteMeetingsQuery = useQuery({
     queryKey: ["swaggerMeetings", authTokens?.accessToken],
     queryFn: async () => {
@@ -422,19 +215,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     enabled: prefersRealApi && Boolean(authTokens?.accessToken && currentUser),
   })
 
-  const swaggerLoginMutation = useMutation({
-    mutationFn: loginWithSwaggerApi,
-  })
-
-  const swaggerSignupMutation = useMutation({
-    mutationFn: signupWithSwaggerApi,
-  })
-
+  const swaggerLoginMutation = useMutation({ mutationFn: loginWithSwaggerApi })
+  const swaggerSignupMutation = useMutation({ mutationFn: signupWithSwaggerApi })
   const swaggerCreateMeetingMutation = useMutation({
     mutationFn: ({ accessToken, title, bankName, bankAccount }: { accessToken: string; title: string; bankName: string; bankAccount: number }) =>
       createMeetingWithSwaggerApi(accessToken, { title, bankName, bankAccount }),
   })
 
+  // ─── Bootstrap ──────────────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false
 
@@ -444,7 +232,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIsBootstrapping(false)
         return
       }
-
       await delay(appEnv.uiDemoDelayMs)
       const bootstrap = await backendAdapter.loadBootstrap()
       if (!bootstrap || cancelled) {
@@ -453,7 +240,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIsBootstrapping(false)
         return
       }
-
       setUsers(cloneUsers(bootstrap.users))
       setAccounts(cloneAccounts(bootstrap.accounts))
       setDataSource("remote")
@@ -462,36 +248,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     void loadBootstrap()
-
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [backendAdapter, prefersRealApi])
 
+  // ─── Session restore ────────────────────────────────────────────────────────
   useEffect(() => {
     if (isBootstrapping) return
-
     const persisted = readPersistedSession()
     if (!persisted) {
       setAuthRecoveryNotice(null)
       return
     }
-
     if (persisted.userId) {
       const restoredUser =
         users.find((user) => user.id === persisted.userId) ??
-        (persisted.currentUser
-          ? {
-              ...persisted.currentUser,
-              password: "",
-            }
-          : null)
+        (persisted.currentUser ? { ...persisted.currentUser, password: "" } : null)
       setAuthRecoveryNotice(restoredUser ? null : "저장된 로그인 정보를 복원하지 못해 다시 확인이 필요합니다.")
       setCurrentUser(restoredUser)
     } else {
       setAuthRecoveryNotice(null)
     }
-
     if (persisted.selectedAccountId && accounts.some((account) => account.id === persisted.selectedAccountId)) {
       setSelectedAccountId(persisted.selectedAccountId)
     }
@@ -503,24 +279,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSelectedAccountId(null)
   }, [accounts, selectedAccountId])
 
+  // ─── Session persistence ─────────────────────────────────────────────────────
   useEffect(() => {
     if (isBootstrapping) return
-
     if (!currentUser && !selectedAccountId) {
       clearPersistedSession()
       return
     }
-
     writePersistedSession({
       userId: currentUser?.id ?? null,
       selectedAccountId,
-      currentUser: currentUser
-        ? {
-            id: currentUser.id,
-            name: currentUser.name,
-            email: currentUser.email,
-          }
-        : null,
+      currentUser: currentUser ? { id: currentUser.id, name: currentUser.name, email: currentUser.email } : null,
     })
   }, [currentUser, isBootstrapping, selectedAccountId])
 
@@ -529,14 +298,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       clearPersistedAuthTokens()
       return
     }
-
     writePersistedAuthTokens(authTokens)
   }, [authTokens])
 
+  // ─── Remote meetings sync ────────────────────────────────────────────────────
   useEffect(() => {
     if (!prefersRealApi || !currentUser) return
     if (!remoteMeetingsQuery.data) return
-
     setAccounts(cloneAccounts(remoteMeetingsQuery.data.map((meeting: SwaggerMeetingSummary) => toGroupAccountSummary(meeting, currentUser))))
     setDataSource("remote")
     setLastSyncError(null)
@@ -552,17 +320,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [remoteMeetingsQuery.error])
 
-  useEffect(() => {
-    writeNotificationPreferences(notificationPreferences)
-  }, [notificationPreferences])
+  // ─── Preferences persistence ─────────────────────────────────────────────────
+  useEffect(() => { writeNotificationPreferences(notificationPreferences) }, [notificationPreferences])
+  useEffect(() => { writeAmountMaskPreference(maskAmounts) }, [maskAmounts])
 
-  useEffect(() => {
-    writeAmountMaskPreference(maskAmounts)
-  }, [maskAmounts])
-
-  const clearMutationError = useCallback(() => {
-    setLastMutationError(null)
-  }, [])
+  // ─── Core utilities ───────────────────────────────────────────────────────────
+  const clearMutationError = useCallback(() => { setLastMutationError(null) }, [])
 
   const runBusy = useCallback(async <T,>(task: () => Promise<T>) => {
     setBusyCount((prev) => prev + 1)
@@ -578,6 +341,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // ─── Auth operations ─────────────────────────────────────────────────────────
   const login = useCallback(
     async (email: string, password: string) => {
       if (prefersRealApi && apiConfig.baseUrl) {
@@ -599,11 +363,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setLastSyncError(null)
           return true
         } catch (error) {
+          logger.error({ scope: "auth.login", message: "Login failed", details: error })
           setLastSyncError(mapApiFailureToUserMessage(getLastBackendFailure()) ?? "실서버 로그인에 실패했습니다.")
           return false
         }
       }
-
       return false
     },
     [prefersRealApi, queryClient, swaggerLoginMutation]
@@ -631,14 +395,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setLastSyncError(null)
           return true
         } catch (error) {
+          logger.error({ scope: "auth.signup", message: "Signup failed", details: error })
           setLastSyncError(mapApiFailureToUserMessage(getLastBackendFailure()) ?? "실서버 회원가입에 실패했습니다.")
           return false
         }
       }
-
       return false
     },
-    [prefersRealApi, queryClient, swaggerLoginMutation, swaggerSignupMutation, users]
+    [prefersRealApi, queryClient, swaggerLoginMutation, swaggerSignupMutation]
   )
 
   const updateProfile = useCallback(
@@ -663,6 +427,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAuthTokens(null)
   }, [])
 
+  const withdraw = useCallback(() => {
+    if (!currentUser) return
+    const userId = currentUser.id
+    setUsers((prev) => prev.filter((u) => u.id !== userId))
+    setCurrentUser(null)
+    setSelectedAccountId(null)
+    setAuthTokens(null)
+    void backendAdapter.deleteUser(userId)
+  }, [backendAdapter, currentUser])
+
+  // ─── Runtime operations ───────────────────────────────────────────────────────
   const refreshAccounts = useCallback(async () => {
     if (prefersRealApi && authTokens?.accessToken && currentUser) {
       setIsRefreshingAccounts(true)
@@ -699,7 +474,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setLastSyncError(prefersRealApi ? mapApiFailureToUserMessage(getLastBackendFailure()) : null)
         return "demo" as const
       }
-
       setUsers(cloneUsers(bootstrap.users))
       setAccounts(cloneAccounts(bootstrap.accounts))
       setCurrentUser((prev) => {
@@ -714,712 +488,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [authTokens?.accessToken, backendAdapter, currentUser, prefersRealApi, queryClient])
 
-  const toggleMaskAmounts = useCallback(() => {
-    setMaskAmounts((prev) => !prev)
-  }, [])
+  const toggleMaskAmounts = useCallback(() => { setMaskAmounts((prev) => !prev) }, [])
 
-  const withdraw = useCallback(() => {
-    if (!currentUser) return
-
-    const userId = currentUser.id
-
-    setUsers((prev) => prev.filter((u) => u.id !== userId))
-    setCurrentUser(null)
-    setSelectedAccountId(null)
-    setAuthTokens(null)
-
-    void backendAdapter.deleteUser(userId)
-  }, [backendAdapter, currentUser])
-
-  const selectAccount = useCallback((id: string) => {
-    setSelectedAccountId(id)
-  }, [])
-
-  const clearSelectedAccount = useCallback(() => {
-    setSelectedAccountId(null)
-  }, [])
-
-  const createAccount = useCallback(
-    async (data: CreateAccountInput) => {
-      if (!currentUser) return
-
-      await runBusy(async () => {
-        if (prefersRealApi && authTokens?.accessToken) {
-          await swaggerCreateMeetingMutation.mutateAsync({
-            accessToken: authTokens.accessToken,
-            title: data.groupName,
-            bankName: data.bankName,
-            bankAccount: Number(data.accountNumber.replace(/\D/g, "")) || 0,
-          })
-
-          const meetings = await queryClient.fetchQuery({
-            queryKey: ["swaggerMeetings", authTokens.accessToken],
-            queryFn: () => fetchMyMeetings(authTokens.accessToken),
-          })
-          setAccounts(cloneAccounts(meetings.map((meeting: SwaggerMeetingSummary) => toGroupAccountSummary(meeting, currentUser))))
-          setDataSource("remote")
-          return
-        }
-
-        // 데모/로컬 모드: 로컬에서 계정 생성
-        const newAccount = createLocalAccount(data, currentUser)
-        setAccounts((prev) => [...prev, newAccount])
-      })
-    },
-    [authTokens?.accessToken, backendAdapter, currentUser, prefersRealApi, queryClient, runBusy, swaggerCreateMeetingMutation]
-  )
-
-  const deleteAccount = useCallback(
-    async (id: string) => {
-      await runBusy(async () => {
-        setAccounts((prev) => prev.filter((acc) => acc.id !== id))
-        setSelectedAccountId((prev) => (prev === id ? null : prev))
-
-        await backendAdapter.deleteAccount(id)
-      })
-    },
-    [backendAdapter, runBusy]
-  )
-
-  const toggleDues = useCallback(
-    async (memberId: string, month: string) => {
-      if (!selectedAccountId) return
-
-      await runBusy(async () => {
-        setAccounts((prev) =>
-          prev.map((acc) => {
-            if (acc.id !== selectedAccountId) return acc
-            return {
-              ...acc,
-              duesRecords: acc.duesRecords.map((r) => {
-                if (r.memberId !== memberId || r.month !== month) return r
-                if (r.status === "unpaid") {
-                  return {
-                    ...r,
-                    status: "paid" as const,
-                    paidDate: new Date().toISOString().split("T")[0],
-                    amount: acc.monthlyDuesAmount,
-                  }
-                }
-                if (r.status === "paid") {
-                  return {
-                    ...r,
-                    status: "unpaid" as const,
-                    paidDate: undefined,
-                  }
-                }
-                return r
-              }),
-            }
-          })
-        )
-
-        await backendAdapter.toggleDues(selectedAccountId, memberId, month)
-      })
-    },
-    [backendAdapter, runBusy, selectedAccountId]
-  )
-
-  const updateAutoTransfer = useCallback(
-    async (accountId: string, autoTransfer: AutoTransfer) => {
-      await runBusy(async () => {
-        setAccounts((prev) => prev.map((acc) => (acc.id === accountId ? { ...acc, autoTransfer } : acc)))
-        await backendAdapter.updateAutoTransfer(accountId, autoTransfer)
-      })
-    },
-    [backendAdapter, runBusy]
-  )
-
-  const updateAccount = useCallback(
-    async (accountId: string, data: UpdateAccountInput) => {
-      await runBusy(async () => {
-        setAccounts((prev) =>
-          prev.map((acc) =>
-            acc.id === accountId
-              ? {
-                  ...acc,
-                  groupName: data.groupName,
-                  bankName: data.bankName,
-                  accountNumber: data.accountNumber,
-                  monthlyDuesAmount: data.monthlyDuesAmount,
-                  dueDay: data.dueDay,
-                  autoTransfer: {
-                    ...acc.autoTransfer,
-                    dayOfMonth: data.dueDay,
-                    amount: acc.autoTransfer.enabled ? acc.autoTransfer.amount : data.monthlyDuesAmount,
-                  },
-                }
-              : acc
-          )
-        )
-
-        await backendAdapter.updateAccount(accountId, data)
-      })
-    },
-    [backendAdapter, runBusy]
-  )
-
-  const createOneTimeDues = useCallback(
-    async (accountId: string, data: CreateOneTimeDuesInput) => {
-      await runBusy(async () => {
-        setAccounts((prev) =>
-          prev.map((acc) => {
-            if (acc.id !== accountId) return acc
-            const records: OneTimeDuesRecord[] = acc.members.map((m) => ({ memberId: m.id, status: "unpaid" as const }))
-            const newDues: OneTimeDues = {
-              id: `otd${Date.now()}`,
-              title: data.title,
-              amount: data.amount,
-              dueDate: data.dueDate,
-              status: "active",
-              records,
-            }
-            return { ...acc, oneTimeDues: [...acc.oneTimeDues, newDues] }
-          })
-        )
-
-        await backendAdapter.createOneTimeDues(accountId, data)
-      })
-    },
-    [backendAdapter, runBusy]
-  )
-
-  const updateOneTimeDues = useCallback(
-    async (accountId: string, duesId: string, data: UpdateOneTimeDuesInput) => {
-      setAccounts((prev) =>
-        prev.map((acc) => {
-          if (acc.id !== accountId) return acc
-          return {
-            ...acc,
-            oneTimeDues: acc.oneTimeDues.map((dues) =>
-              dues.id === duesId
-                ? {
-                    ...dues,
-                    title: data.title,
-                    amount: data.amount,
-                    dueDate: data.dueDate,
-                  }
-                : dues
-            ),
-          }
-        })
-      )
-    },
-    []
-  )
-
-  const closeOneTimeDues = useCallback(
-    async (accountId: string, duesId: string, closed: boolean) => {
-      setAccounts((prev) =>
-        prev.map((acc) => {
-          if (acc.id !== accountId) return acc
-          return {
-            ...acc,
-            oneTimeDues: acc.oneTimeDues.map((dues) =>
-              dues.id === duesId
-                ? {
-                    ...dues,
-                    status: closed ? "closed" : "active",
-                  }
-                : dues
-            ),
-          }
-        })
-      )
-    },
-    []
-  )
-
-  const deleteOneTimeDues = useCallback(async (accountId: string, duesId: string) => {
-    setAccounts((prev) =>
-      prev.map((acc) =>
-        acc.id === accountId
-          ? {
-              ...acc,
-              oneTimeDues: acc.oneTimeDues.filter((dues) => dues.id !== duesId),
-            }
-          : acc
-      )
-    )
-  }, [])
-
-  const toggleOneTimeDuesRecord = useCallback(
-    async (accountId: string, duesId: string, memberId: string) => {
-      await runBusy(async () => {
-        setAccounts((prev) =>
-          prev.map((acc) => {
-            if (acc.id !== accountId) return acc
-            return {
-              ...acc,
-              oneTimeDues: acc.oneTimeDues.map((dues) => {
-                if (dues.id !== duesId) return dues
-                if (dues.status === "closed") return dues
-                return {
-                  ...dues,
-                  records: dues.records.map((record) => {
-                    if (record.memberId !== memberId) return record
-                    if (record.status === "unpaid") {
-                      return {
-                        ...record,
-                        status: "paid" as const,
-                        paidDate: new Date().toISOString().split("T")[0],
-                      }
-                    }
-                    return {
-                      ...record,
-                      status: "unpaid" as const,
-                      paidDate: undefined,
-                    }
-                  }),
-                }
-              }),
-            }
-          })
-        )
-
-        await backendAdapter.toggleOneTimeDuesRecord(accountId, duesId, memberId)
-      })
-    },
-    [backendAdapter, runBusy]
-  )
-
-  const createMember = useCallback(
-    async (accountId: string, data: UpsertMemberInput) => {
-      await runBusy(async () => {
-        const remoteMember = await backendAdapter.createMember(accountId, data)
-
-        setAccounts((prev) =>
-          prev.map((acc) => {
-            if (acc.id !== accountId) return acc
-            const nextMember = remoteMember ?? createLocalMember(data, acc.members.length)
-            const nextDues = acc.oneTimeDues.map((dues) => ({
-              ...dues,
-              records: [...dues.records, { memberId: nextMember.id, status: "unpaid" as const }],
-            }))
-
-            return {
-              ...acc,
-              members: normalizeMemberRoles([...acc.members, nextMember], nextMember.role === "총무" ? nextMember.id : undefined),
-              duesRecords: [
-                ...acc.duesRecords,
-                {
-                  memberId: nextMember.id,
-                  month: new Date().toISOString().slice(0, 7),
-                  status: "unpaid" as const,
-                  amount: acc.monthlyDuesAmount,
-                },
-              ],
-              oneTimeDues: nextDues,
-            }
-          })
-        )
-      })
-    },
-    [backendAdapter, runBusy]
-  )
-
-  const updateMember = useCallback(
-    async (accountId: string, memberId: string, data: UpsertMemberInput) => {
-      await runBusy(async () => {
-        setAccounts((prev) =>
-          prev.map((acc) => {
-            if (acc.id !== accountId) return acc
-            const nextMembers = acc.members.map((member) =>
-              member.id === memberId
-                ? {
-                    ...member,
-                    name: data.name,
-                    phone: data.phone,
-                    role: data.role,
-                    initials: buildMemberInitials(data.name),
-                  }
-                : member
-            )
-            return {
-              ...acc,
-              members: normalizeMemberRoles(nextMembers, data.role === "총무" ? memberId : undefined),
-            }
-          })
-        )
-
-        await backendAdapter.updateMember(accountId, memberId, data)
-      })
-    },
-    [backendAdapter, runBusy]
-  )
-
-  const delegateManager = useCallback(
-    async (accountId: string, targetMemberId: string) => {
-      await runBusy(async () => {
-        const snapshot = accounts.find((account) => account.id === accountId)
-
-        setAccounts((prev) =>
-          prev.map((acc) =>
-            acc.id === accountId
-              ? {
-                  ...acc,
-                  members: normalizeMemberRoles(acc.members, targetMemberId),
-                }
-              : acc
-          )
-        )
-
-        const currentManager = snapshot?.members.find((member) => member.role === "총무")
-        const targetMember = snapshot?.members.find((member) => member.id === targetMemberId)
-
-        if (currentManager && currentManager.id !== targetMemberId) {
-          await backendAdapter.updateMember(accountId, currentManager.id, {
-            name: currentManager.name,
-            phone: currentManager.phone,
-            role: "멤버",
-          })
-        }
-
-        if (targetMember) {
-          await backendAdapter.updateMember(accountId, targetMember.id, {
-            name: targetMember.name,
-            phone: targetMember.phone,
-            role: "총무",
-          })
-        }
-      })
-    },
-    [accounts, backendAdapter, runBusy]
-  )
-
-  const deleteMember = useCallback(
-    async (accountId: string, memberId: string) => {
-      await runBusy(async () => {
-        setAccounts((prev) =>
-          prev.map((acc) => {
-            if (acc.id !== accountId) return acc
-            const nextMembers = acc.members.filter((member) => member.id !== memberId)
-            return {
-              ...acc,
-              members: normalizeMemberRoles(nextMembers),
-              duesRecords: acc.duesRecords.filter((record) => record.memberId !== memberId),
-              oneTimeDues: acc.oneTimeDues.map((dues) => ({
-                ...dues,
-                records: dues.records.filter((record) => record.memberId !== memberId),
-              })),
-            }
-          })
-        )
-
-        await backendAdapter.deleteMember(accountId, memberId)
-      })
-    },
-    [backendAdapter, runBusy]
-  )
-
-  const createTransaction = useCallback(
-    async (accountId: string, data: UpsertTransactionInput) => {
-      await runBusy(async () => {
-        const remoteTransaction = await backendAdapter.createTransaction(accountId, data)
-        const nextTransaction = remoteTransaction ?? createLocalTransaction(data)
-
-        setAccounts((prev) =>
-          prev.map((acc) => {
-            if (acc.id !== accountId) return acc
-            return {
-              ...acc,
-              balance: acc.balance + getTransactionImpact(nextTransaction),
-              transactions: sortTransactions([nextTransaction, ...acc.transactions]),
-            }
-          })
-        )
-      })
-    },
-    [backendAdapter, runBusy]
-  )
-
-  const updateTransaction = useCallback(
-    async (accountId: string, transactionId: string, data: UpsertTransactionInput) => {
-      await runBusy(async () => {
-        setAccounts((prev) =>
-          prev.map((acc) => {
-            if (acc.id !== accountId) return acc
-            const currentTransaction = acc.transactions.find((tx) => tx.id === transactionId)
-            if (!currentTransaction) return acc
-
-            const nextTransaction: Transaction = {
-              ...currentTransaction,
-              ...data,
-            }
-
-            return {
-              ...acc,
-              balance:
-                acc.balance -
-                getTransactionImpact(currentTransaction) +
-                getTransactionImpact(nextTransaction),
-              transactions: sortTransactions(
-                acc.transactions.map((tx) => (tx.id === transactionId ? nextTransaction : tx))
-              ),
-            }
-          })
-        )
-
-        await backendAdapter.updateTransaction(accountId, transactionId, data)
-      })
-    },
-    [backendAdapter, runBusy]
-  )
-
-  const deleteTransaction = useCallback(
-    async (accountId: string, transactionId: string) => {
-      await runBusy(async () => {
-        setAccounts((prev) =>
-          prev.map((acc) => {
-            if (acc.id !== accountId) return acc
-            const currentTransaction = acc.transactions.find((tx) => tx.id === transactionId)
-            if (!currentTransaction) return acc
-
-            return {
-              ...acc,
-              balance: acc.balance - getTransactionImpact(currentTransaction),
-              transactions: acc.transactions.filter((tx) => tx.id !== transactionId),
-            }
-          })
-        )
-
-        await backendAdapter.deleteTransaction(accountId, transactionId)
-      })
-    },
-    [backendAdapter, runBusy]
-  )
-
-  const sendReminder = useCallback(
-    async (accountId: string, memberId: string, month: string, type: ReminderType) => {
-      await runBusy(async () => {
-        const account = accounts.find((item) => item.id === accountId)
-        const member = account?.members.find((item) => item.id === memberId)
-        if (!member) return
-
-        const reminder = createReminder(memberId, month, type, member.name)
-        const reminderNotification = createReminderNotification(member.name, month, type)
-
-        setAccounts((prev) =>
-          prev.map((item) => {
-            if (item.id !== accountId) return item
-            return {
-              ...item,
-              reminders: [reminder, ...item.reminders],
-            }
-          })
-        )
-
-        setNotifications((prev) => [reminderNotification, ...prev])
-      })
-    },
-    [accounts, runBusy]
-  )
-
-  const sendPaymentReminder = useCallback(
-    async (accountId: string, memberId: string, month: string) => sendReminder(accountId, memberId, month, "payment-reminder"),
-    [sendReminder]
-  )
-
-  const sendTransferRequest = useCallback(
-    async (accountId: string, memberId: string, month: string) => sendReminder(accountId, memberId, month, "transfer-request"),
-    [sendReminder]
-  )
-
-  const createBoardPostForAccount = useCallback(
-    async (accountId: string, data: CreateBoardPostInput) => {
-      if (!currentUser) return
-
-      await runBusy(async () => {
-        setAccounts((prev) =>
-          prev.map((account) =>
-            account.id === accountId
-              ? {
-                  ...account,
-                  boardPosts: [
-                    createBoardPost(data, currentUser.id, currentUser.name),
-                    ...account.boardPosts.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.createdAt.localeCompare(a.createdAt)),
-                  ],
-                }
-              : account
-          )
-        )
-        setNotifications((prev) => [
-          {
-            id: `notice-${Date.now()}`,
-            title: "게시판에 새 글이 등록됐어요",
-            body: `${currentUser.name}님이 새 공지를 남겼습니다.`,
-            time: "방금 전",
-            unread: true,
-          },
-          ...prev,
-        ])
-      })
-    },
-    [currentUser, runBusy]
-  )
-
-  const addBoardComment = useCallback(
-    async (accountId: string, postId: string, data: CreateBoardCommentInput) => {
-      if (!currentUser || !data.body.trim()) return
-
-      await runBusy(async () => {
-        setAccounts((prev) =>
-          prev.map((account) => {
-            if (account.id !== accountId) return account
-            return {
-              ...account,
-              boardPosts: account.boardPosts.map((post) =>
-                post.id === postId
-                  ? {
-                      ...post,
-                      comments: [...post.comments, createBoardComment(data, currentUser.id, currentUser.name)],
-                    }
-                  : post
-              ),
-            }
-          })
-        )
-      })
-    },
-    [currentUser, runBusy]
-  )
-
-  const updateBoardPost = useCallback(
-    async (accountId: string, postId: string, data: UpdateBoardPostInput) => {
-      if (!currentUser || !data.title.trim() || !data.body.trim()) return
-
-      await runBusy(async () => {
-        setAccounts((prev) =>
-          prev.map((account) =>
-            account.id === accountId
-              ? {
-                  ...account,
-                  boardPosts: account.boardPosts.map((post) =>
-                    post.id === postId && post.authorUserId === currentUser.id
-                      ? {
-                          ...post,
-                          title: data.title.trim(),
-                          body: data.body.trim(),
-                          pinned: data.pinned,
-                        }
-                      : post
-                  ),
-                }
-              : account
-          )
-        )
-      })
-    },
-    [currentUser, runBusy]
-  )
-
-  const deleteBoardPost = useCallback(
-    async (accountId: string, postId: string) => {
-      if (!currentUser) return
-
-      await runBusy(async () => {
-        setAccounts((prev) =>
-          prev.map((account) =>
-            account.id === accountId
-              ? {
-                  ...account,
-                  boardPosts: account.boardPosts.filter((post) => !(post.id === postId && post.authorUserId === currentUser.id)),
-                }
-              : account
-          )
-        )
-      })
-    },
-    [currentUser, runBusy]
-  )
-
-  const updateBoardComment = useCallback(
-    async (accountId: string, postId: string, commentId: string, data: UpdateBoardCommentInput) => {
-      if (!currentUser || !data.body.trim()) return
-
-      await runBusy(async () => {
-        setAccounts((prev) =>
-          prev.map((account) =>
-            account.id === accountId
-              ? {
-                  ...account,
-                  boardPosts: account.boardPosts.map((post) =>
-                    post.id === postId
-                      ? {
-                          ...post,
-                          comments: post.comments.map((comment) =>
-                            comment.id === commentId && comment.authorUserId === currentUser.id
-                              ? { ...comment, body: data.body.trim() }
-                              : comment
-                          ),
-                        }
-                      : post
-                  ),
-                }
-              : account
-          )
-        )
-      })
-    },
-    [currentUser, runBusy]
-  )
-
-  const deleteBoardComment = useCallback(
-    async (accountId: string, postId: string, commentId: string) => {
-      if (!currentUser) return
-
-      await runBusy(async () => {
-        setAccounts((prev) =>
-          prev.map((account) =>
-            account.id === accountId
-              ? {
-                  ...account,
-                  boardPosts: account.boardPosts.map((post) =>
-                    post.id === postId
-                      ? {
-                          ...post,
-                          comments: post.comments.filter((comment) => !(comment.id === commentId && comment.authorUserId === currentUser.id)),
-                        }
-                      : post
-                  ),
-                }
-              : account
-          )
-        )
-      })
-    },
-    [currentUser, runBusy]
-  )
-
-  const toggleBoardPostLike = useCallback(
-    async (accountId: string, postId: string) => {
-      if (!currentUser) return
-
-      await runBusy(async () => {
-        setAccounts((prev) =>
-          prev.map((account) =>
-            account.id === accountId
-              ? {
-                  ...account,
-                  boardPosts: account.boardPosts.map((post) => {
-                    if (post.id !== postId) return post
-                    const hasLiked = post.likedByUserIds.includes(currentUser.id)
-                    return {
-                      ...post,
-                      likedByUserIds: hasLiked
-                        ? post.likedByUserIds.filter((userId) => userId !== currentUser.id)
-                        : [...post.likedByUserIds, currentUser.id],
-                    }
-                  }),
-                }
-              : account
-          )
-        )
-      })
-    },
-    [currentUser, runBusy]
-  )
-
+  // ─── Notification operations ──────────────────────────────────────────────────
   const updateNotificationPreferences = useCallback(async (next: NotificationPreferences) => {
     setNotificationPreferences(next)
   }, [])
@@ -1436,13 +507,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setNotifications((prev) => prev.map((item) => ({ ...item, unread: false })))
   }, [])
 
-  const clearNotifications = useCallback(async () => {
-    setNotifications([])
-  }, [])
+  const clearNotifications = useCallback(async () => { setNotifications([]) }, [])
 
-  const restoreNotifications = useCallback(async () => {
-    setNotifications([...initialNotifications])
-  }, [])
+  const restoreNotifications = useCallback(async () => { setNotifications([...initialNotifications]) }, [])
 
   const resetDemoData = useCallback(() => {
     setUsers(cloneUsers(defaultUsers))
@@ -1456,6 +523,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setLastSyncError(null)
   }, [])
 
+  // ─── Accounts operations (delegated to hook) ──────────────────────────────────
+  const accountsOps = useAccountsOperations({
+    backendAdapter,
+    prefersRealApi,
+    runBusy,
+    currentUser,
+    authTokens,
+    accounts,
+    selectedAccountId,
+    setAccounts,
+    setSelectedAccountId,
+    setNotifications,
+    setDataSource,
+    swaggerCreateMeetingMutation,
+  })
+
+  // ─── Context values ───────────────────────────────────────────────────────────
   const unreadNotificationCount = useMemo(
     () => notifications.filter((item) => item.unread).length,
     [notifications]
@@ -1513,14 +597,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const authContextValue = useMemo<AppAuthContextType>(
-    () => ({
-      currentUser,
-      login,
-      signup,
-      updateProfile,
-      logout,
-      withdraw,
-    }),
+    () => ({ currentUser, login, signup, updateProfile, logout, withdraw }),
     [currentUser, login, logout, signup, updateProfile, withdraw]
   )
 
@@ -1528,69 +605,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       accounts,
       selectedAccountId,
-      selectAccount,
-      clearSelectedAccount,
-      createAccount,
-      deleteAccount,
-      toggleDues,
-      updateAutoTransfer,
-      updateAccount,
-      createOneTimeDues,
-      updateOneTimeDues,
-      closeOneTimeDues,
-      deleteOneTimeDues,
-      toggleOneTimeDuesRecord,
-      createMember,
-      updateMember,
-      delegateManager,
-      deleteMember,
-      createTransaction,
-      updateTransaction,
-      deleteTransaction,
-      sendPaymentReminder,
-      sendTransferRequest,
-      createBoardPost: createBoardPostForAccount,
-      addBoardComment,
-      updateBoardPost,
-      deleteBoardPost,
-      updateBoardComment,
-      deleteBoardComment,
-      toggleBoardPostLike,
       resetDemoData,
+      ...accountsOps,
     }),
-    [
-      accounts,
-      clearSelectedAccount,
-      closeOneTimeDues,
-      createAccount,
-      createMember,
-      delegateManager,
-      createOneTimeDues,
-      createTransaction,
-      createBoardPostForAccount,
-      deleteAccount,
-      addBoardComment,
-      deleteMember,
-      deleteOneTimeDues,
-      deleteTransaction,
-      sendPaymentReminder,
-      sendTransferRequest,
-      resetDemoData,
-      selectAccount,
-      selectedAccountId,
-      toggleDues,
-      toggleOneTimeDuesRecord,
-      updateAccount,
-      updateAutoTransfer,
-      updateBoardComment,
-      updateBoardPost,
-      updateMember,
-      updateOneTimeDues,
-      deleteBoardComment,
-      deleteBoardPost,
-      toggleBoardPostLike,
-      updateTransaction,
-    ]
+    [accounts, selectedAccountId, resetDemoData, accountsOps]
   )
 
   return (
