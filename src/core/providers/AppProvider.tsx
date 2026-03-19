@@ -376,7 +376,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async (name: string, email: string, password: string) => {
       console.log(`[AppAuth] Signup attempt - Mode: ${prefersRealApi ? "Real" : "Demo"}, BaseURL: ${apiConfig.baseUrl}`)
       
-      if (prefersRealApi && apiConfig.baseUrl) {
+      if (prefersRealApi) {
         try {
           console.log(`[AppAuth] Calling signup API for ${email}`)
           await swaggerSignupMutation.mutateAsync({ userName: name.trim(), email: email.trim(), password })
