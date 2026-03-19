@@ -72,4 +72,9 @@ export const uiTypography = {
     fontWeight: "600" as const,
     color: uiColors.textSoft,
   },
+  metric: {
+    fontSize: 18,
+    fontWeight: "800" as const,
+    color: uiColors.textStrong,
+  },
 } as const

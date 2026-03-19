@@ -12,7 +12,10 @@ const STATUS_MESSAGES: Record<number, string> = {
   401: "인증이 필요합니다. 로그인 정보를 확인해주세요.",
   403: "접근 권한이 없습니다. 다시 로그인하거나 관리자에게 문의해주세요.",
   404: "요청한 리소스를 찾을 수 없습니다. 주소를 확인하거나 잠시 후 다시 시도해주세요.",
+  408: "요청 처리 시간이 초과되었습니다. 다시 시도해주세요.",
   409: "이미 사용 중인 이메일이거나 충돌이 발생했습니다. 다른 정보로 시도해주세요.",
+  422: "입력 데이터를 처리할 수 없습니다. 입력 내용을 확인해주세요.",
+  429: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
 }
 
 const STATUS_RANGE_MESSAGES: { min: number; max: number; message: string }[] = [
@@ -52,8 +55,20 @@ export function mapApiFailureToUserMessage(failure: ApiFailureInfo | null | unde
     return "요청한 데이터를 찾을 수 없습니다. 목록에서 다시 선택해 주세요."
   }
 
+  if (failure.status === 408) {
+    return "요청 처리 시간이 초과되었습니다. 다시 시도해주세요."
+  }
+
   if (failure.status === 409) {
     return failure.message?.trim() || "이미 존재하는 데이터입니다."
+  }
+
+  if (failure.status === 422) {
+    return failure.message?.trim() || "입력 데이터를 처리할 수 없습니다. 입력 내용을 확인해주세요."
+  }
+
+  if (failure.status === 429) {
+    return "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
   }
 
   if (failure.status && failure.status >= 500) {

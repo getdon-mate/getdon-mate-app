@@ -22,9 +22,7 @@ export const uiRecipes = StyleSheet.create({
     color: uiColors.textMuted,
   },
   metricValue: {
-    color: uiColors.textStrong,
-    fontSize: 18,
-    fontWeight: "800",
+    ...uiTypography.metric,
   },
   softCard: {
     borderWidth: 1,
