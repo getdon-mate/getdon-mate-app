@@ -29,8 +29,7 @@ export function useAuthForm({ login, signup, showError }: UseAuthFormParams) {
         return
       }
       setSubmitting(true)
-      await new Promise((resolve) => setTimeout(resolve, 300))
-      const ok = await signup(name.trim(), email.trim(), password)
+      const ok = await signup(name, email, password)
       if (!ok) {
         setError(feedbackPresets.signupFailed.message)
         showError(feedbackPresets.signupFailed.message, feedbackPresets.signupFailed.title)

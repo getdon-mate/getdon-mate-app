@@ -6,6 +6,19 @@ export interface ApiFailureInfo {
   message?: string
 }
 
+/** HTTP 상태 코드별 사용자용 메시지 (200, 201만 정상 처리, 그 외는 예외 처리) */
+const STATUS_MESSAGES: Record<number, string> = {
+  400: "잘못된 요청입니다. 입력 내용(이메일 형식, 비밀번호 등)을 확인해주세요.",
+  401: "인증이 필요합니다. 로그인 정보를 확인해주세요.",
+  403: "접근 권한이 없습니다. 다시 로그인하거나 관리자에게 문의해주세요.",
+  404: "요청한 리소스를 찾을 수 없습니다. 주소를 확인하거나 잠시 후 다시 시도해주세요.",
+  409: "이미 사용 중인 이메일이거나 충돌이 발생했습니다. 다른 정보로 시도해주세요.",
+}
+
+const STATUS_RANGE_MESSAGES: { min: number; max: number; message: string }[] = [
+  { min: 500, max: 599, message: "서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요." },
+]
+
 export function mapApiFailureToUserMessage(failure: ApiFailureInfo | null | undefined): string {
   if (!failure) {
     return "실서버 연결에 실패해 데모 데이터를 유지합니다. 잠시 후 다시 시도해주세요."
@@ -45,6 +58,13 @@ export function mapApiFailureToUserMessage(failure: ApiFailureInfo | null | unde
 
   if (failure.status && failure.status >= 500) {
     return "서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
+  }
+  const status = failure.status
+  if (status != null) {
+    const exact = STATUS_MESSAGES[status]
+    if (exact) return exact
+    const range = STATUS_RANGE_MESSAGES.find((r) => status >= r.min && status <= r.max)
+    if (range) return range.message
   }
 
   return failure.message?.trim() || "요청 처리에 실패했습니다. 잠시 후 다시 시도해주세요."

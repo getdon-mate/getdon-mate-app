@@ -374,15 +374,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const signup = useCallback(
     async (name: string, email: string, password: string) => {
-      if (prefersRealApi) {
+      console.log(`[AppAuth] Signup attempt - Mode: ${prefersRealApi ? "Real" : "Demo"}, BaseURL: ${apiConfig.baseUrl}`)
+      
+      if (prefersRealApi && apiConfig.baseUrl) {
         try {
-          await swaggerSignupMutation.mutateAsync({ userName: name, email, password })
-          const tokens = await swaggerLoginMutation.mutateAsync({ email, password })
-          const remoteUser = createRemoteUser(email, name)
+          console.log(`[AppAuth] Calling signup API for ${email}`)
+          await swaggerSignupMutation.mutateAsync({ userName: name.trim(), email: email.trim(), password })
+          const tokens = await swaggerLoginMutation.mutateAsync({ email: email.trim(), password })
+          const remoteUser = createRemoteUser(email.trim(), name.trim())
           setAuthTokens(tokens)
           setCurrentUser(remoteUser)
           setUsers((prev) => {
-            const withoutDup = prev.filter((user) => user.email !== email)
+            const withoutDup = prev.filter((user) => user.email !== email.trim())
             return [...withoutDup, remoteUser]
           })
           const meetings = await queryClient.fetchQuery({
@@ -394,12 +397,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setLastSyncError(null)
           return true
         } catch (error) {
-          logger.error({ scope: "auth.signup", message: "Signup failed", details: error })
-          setLastSyncError(mapApiFailureToUserMessage(getLastBackendFailure()) ?? "실서버 회원가입에 실패했습니다.")
+          const userMessage = mapApiFailureToUserMessage(getLastBackendFailure()) ?? "실서버 회원가입에 실패했습니다."
+          setLastSyncError(userMessage)
           return false
         }
       }
-      return false
+
+      if (users.some((u) => u.email === email)) return false
+      console.log(`[AppAuth] Falling back to demo mode for ${email}`)
+      const newUser: AppUser = {
+        id: `u${Date.now()}`,
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      }
+      setUsers((prev) => [...prev, newUser])
+      setDataSource("demo")
+      setCurrentUser(newUser)
+      return true
     },
     [prefersRealApi, queryClient, swaggerLoginMutation, swaggerSignupMutation]
   )
