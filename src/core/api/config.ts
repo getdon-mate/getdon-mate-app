@@ -35,7 +35,8 @@ type EnvShape = Record<string, string | undefined>
 export function createApiConfig(env: EnvShape = process.env): ApiConfig {
   let mode = parseApiMode(env.EXPO_PUBLIC_API_MODE)
 
-  // Failsafe: 배포된 환경(Vercel 등)에서 환경 변수가 누락된 경우 Real로 간주
+  // TODO: [Cleanup] Vercel 빌드 시 환경 변수 주입이 완벽하게 확인되면 아래 Failsafe 로직은 제거해도 됩니다.
+  // 현재는 빌드시 EXPO_PUBLIC_API_MODE가 누락되는 이슈를 방지하기 위해 배포 환경(non-localhost)에서 기본값을 real로 강제합니다.
   if (typeof window !== "undefined" && !window.location.hostname.includes("localhost")) {
     if (!env.EXPO_PUBLIC_API_MODE) {
       mode = "real"

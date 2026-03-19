@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
 import { requireText, validateEmail, validatePassword } from "@shared/lib/validation"
-import { TEST_ACCOUNT } from "@shared/constants/copy"
+import { COPY } from "@shared/constants/copy"
 
 interface UseAuthFormParams {
   login: (email: string, password: string) => Promise<boolean>
@@ -12,8 +12,8 @@ interface UseAuthFormParams {
 export function useAuthForm({ login, signup, showError }: UseAuthFormParams) {
   const [isSignup, setIsSignup] = useState(false)
   const [name, setName] = useState("")
-  const [email, setEmail] = useState<string>(TEST_ACCOUNT.email)
-  const [password, setPassword] = useState<string>(TEST_ACCOUNT.password)
+  const [email, setEmail] = useState<string>("")
+  const [password, setPassword] = useState<string>("")
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
@@ -60,8 +60,11 @@ export function useAuthForm({ login, signup, showError }: UseAuthFormParams) {
     setIsSignup(nextSignup)
     setError("")
     setName("")
-    setEmail(nextSignup ? "" : TEST_ACCOUNT.email)
-    setPassword(nextSignup ? "" : TEST_ACCOUNT.password)
+    // NOTE: We don't reset email if it already exists to improve UX (especially when switching back from signup)
+    if (nextSignup) {
+      setEmail("")
+    }
+    setPassword("")
   }
 
   return {

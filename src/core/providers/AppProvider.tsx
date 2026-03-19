@@ -23,7 +23,7 @@ import {
   writeNotificationPreferences,
   type NotificationPreferences,
 } from "@shared/lib/preferences-storage"
-import { clearPersistedSession, readPersistedSession, writePersistedSession } from "@shared/lib/session-storage"
+import { clearPersistedSession, readPersistedSession, writeLastEmail, writePersistedSession } from "@shared/lib/session-storage"
 import { clearPersistedAuthTokens, readPersistedAuthTokens, writePersistedAuthTokens } from "@shared/lib/auth-token-storage"
 import {
   cloneAccounts,
@@ -108,6 +108,7 @@ interface AppAuthContextType {
   updateProfile: (data: UpdateProfileInput) => Promise<void>
   logout: () => void
   withdraw: () => void
+  continueAsGuest: () => void
 }
 
 interface AppAccountsContextType {
@@ -360,6 +361,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setAccounts(cloneAccounts(meetings.map((meeting: SwaggerMeetingSummary) => toGroupAccountSummary(meeting, remoteUser))))
           setDataSource("remote")
           setLastSyncError(null)
+          writeLastEmail(email)
           return true
         } catch (error) {
           logger.error({ scope: "auth.login", message: "Login failed", details: error })
@@ -395,6 +397,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setAccounts(cloneAccounts(meetings.map((meeting: SwaggerMeetingSummary) => toGroupAccountSummary(meeting, remoteUser))))
           setDataSource("remote")
           setLastSyncError(null)
+          writeLastEmail(email.trim())
           return true
         } catch (error) {
           const userMessage = mapApiFailureToUserMessage(getLastBackendFailure()) ?? "실서버 회원가입에 실패했습니다."
@@ -439,6 +442,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setCurrentUser(null)
     setSelectedAccountId(null)
     setAuthTokens(null)
+  }, [])
+
+  const continueAsGuest = useCallback(() => {
+    setDataSource("demo")
+    setCurrentUser({
+      id: "guest",
+      name: "게스트",
+      email: "guest@example.com",
+      password: "",
+    })
   }, [])
 
   const withdraw = useCallback(() => {
@@ -611,8 +624,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const authContextValue = useMemo<AppAuthContextType>(
-    () => ({ currentUser, login, signup, updateProfile, logout, withdraw }),
-    [currentUser, login, logout, signup, updateProfile, withdraw]
+    () => ({ currentUser, login, signup, updateProfile, logout, withdraw, continueAsGuest }),
+    [currentUser, login, logout, signup, updateProfile, withdraw, continueAsGuest]
   )
 
   const accountsContextValue = useMemo<AppAccountsContextType>(

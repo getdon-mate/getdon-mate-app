@@ -1,11 +1,6 @@
-export const TEST_ACCOUNT = {
-  email: "test@test.com",
-  password: "password",
-} as const
-
 export const COPY = {
   auth: {
-    testAccountLabel: `테스트 계정: ${TEST_ACCOUNT.email} / ${TEST_ACCOUNT.password}`,
+    testAccountLabel: "",
   },
   notification: {
     title: "알림 설정",

@@ -4,9 +4,12 @@ import {
   StyleSheet,
   View,
   useWindowDimensions,
+  Alert,
 } from "react-native"
+import { useEffect } from "react"
 import { useAppAuth, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
+import { readLastEmail } from "@shared/lib/session-storage"
 import { appEnv } from "@shared/config/app-env"
 import { Card, SkeletonBlock, StatusBanner, uiSpacing } from "@shared/ui"
 import { AuthFormCard } from "../components/AuthFormCard"
@@ -15,12 +18,27 @@ import { useAuthForm } from "../hooks/useAuthForm"
 
 export function LoginScreen() {
   const { isBootstrapping, prefersRealApi, lastSyncError, authRecoveryNotice } = useAppRuntime()
-  const { login, signup } = useAppAuth()
-  const { showError, showToast } = useFeedback()
+  const { login, signup, continueAsGuest } = useAppAuth()
+  const { showError } = useFeedback()
   const { width } = useWindowDimensions()
   const isWide = width >= 900
   const { isSignup, name, email, password, error, submitting, setName, setEmail, setPassword, handleSubmit, resetForm } =
     useAuthForm({ login, signup, showError })
+
+  useEffect(() => {
+    const lastEmail = readLastEmail()
+    if (lastEmail) {
+      setEmail(lastEmail)
+    }
+  }, [])
+
+  const handleSocialLogin = (provider: "google" | "kakao") => {
+    Alert.alert(
+      "준비 중",
+      `${provider === "google" ? "Google" : "카카오"} 로그인 기능은 현재 준비 중입니다.`,
+      [{ text: "확인" }]
+    )
+  }
 
   return (
     <KeyboardAvoidingView
@@ -72,6 +90,8 @@ export function LoginScreen() {
               onChangeEmail={setEmail}
               onChangePassword={setPassword}
               onSubmit={handleSubmit}
+              onSocialLogin={handleSocialLogin}
+              onContinueAsGuest={continueAsGuest}
               onToggleMode={() => resetForm(!isSignup)}
               submitting={submitting}
               showTestAccountHint={appEnv.showTestCredentials}

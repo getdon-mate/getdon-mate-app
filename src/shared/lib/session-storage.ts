@@ -1,4 +1,5 @@
 const SESSION_STORAGE_KEY = "getdon:session"
+const LAST_EMAIL_KEY = "getdon:last_email"
 
 interface PersistedUserSnapshot {
   id: string
@@ -58,4 +59,14 @@ export function clearPersistedSession() {
   try {
     globalThis.localStorage.removeItem(SESSION_STORAGE_KEY)
   } catch {}
+}
+
+export function readLastEmail(): string | null {
+  if (!canUseStorage()) return null
+  return globalThis.localStorage.getItem(LAST_EMAIL_KEY)
+}
+
+export function writeLastEmail(email: string) {
+  if (!canUseStorage()) return
+  globalThis.localStorage.setItem(LAST_EMAIL_KEY, email)
 }
