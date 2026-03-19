@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://getdon-api.duckDNS.org:8080/api/:path*"
+      "destination": "https://getdon-api.duckdns.org/api/:path*"
     },
     {
       "source": "/(.*)",
