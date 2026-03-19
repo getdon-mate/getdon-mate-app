@@ -6,6 +6,7 @@
   "main": "expo/AppEntry",
   "scripts": {
     "check:ios-dev-env": "node scripts/check-ios-dev-env.mjs",
+    "build": "pnpm run export:web",
     "start": "expo start --port 3000",
     "android": "expo run:android",
     "ios": "expo run:ios",
