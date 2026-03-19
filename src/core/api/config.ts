@@ -4,15 +4,17 @@ const DEFAULT_TIMEOUT_MS = 8000
 
 export interface ApiConfig {
   mode: ApiMode
-  baseUrl: string | null
+  baseUrl: string
   timeoutMs: number
 }
+
+const DEFAULT_API_BASE_URL = "https://getdon-api.duckdns.org"
 
 function parseApiMode(value: string | undefined): ApiMode {
   if (value === "real" || value === "auto" || value === "mock") {
     return value
   }
-  return "mock"
+  return "real"
 }
 
 function parseTimeout(value: string | undefined): number {
@@ -24,9 +26,9 @@ function parseTimeout(value: string | undefined): number {
   return parsed
 }
 
-function parseBaseUrl(value: string | undefined): string | null {
+function parseBaseUrl(value: string | undefined): string {
   const trimmed = value?.trim()
-  if (!trimmed) return null
+  if (!trimmed) return DEFAULT_API_BASE_URL
   return trimmed.replace(/\/+$/, "")
 }
 
