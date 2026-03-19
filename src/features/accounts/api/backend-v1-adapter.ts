@@ -94,8 +94,7 @@ export interface AccountsBackendAdapter {
 }
 
 function backendEnabled(): boolean {
-  if (!shouldUseRealApi()) return false
-  return apiClient.hasBaseUrl
+  return shouldUseRealApi()
 }
 
 async function tryBackend<T>(operationName: string, operation: () => Promise<T>): Promise<T | null> {

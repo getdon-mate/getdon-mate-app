@@ -13,7 +13,7 @@
     "web": "expo start --web --port 3000",
     "web:local": "EXPO_PUBLIC_API_MODE=mock expo start --web --port 3000",
     "web:proxy": "node scripts/dev-proxy.mjs",
-    "export:web": "expo export --platform web",
+    "export:web": "EXPO_PUBLIC_API_MODE=real expo export --platform web",
     "typecheck": "tsc --noEmit",
     "ci:web": "pnpm run typecheck && pnpm run export:web",
     "deploy:vercel:preview": "pnpm exec bash scripts/vercel-deploy.sh preview",
