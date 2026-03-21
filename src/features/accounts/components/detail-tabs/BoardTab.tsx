@@ -5,7 +5,7 @@ import { useFeedback } from "@core/providers/FeedbackProvider"
 import { copyText } from "@shared/lib/clipboard"
 import { formatActivityTimestamp } from "@shared/lib/format"
 import { requireText } from "@shared/lib/validation"
-import { ActionChip, Button, Icon, InputField, ToggleSwitch, uiColors, uiRadius } from "@shared/ui"
+import { ActionChip, ActionSheet, Button, Icon, InputField, ToggleSwitch, uiColors, uiRadius } from "@shared/ui"
 import type { BoardComment, BoardPost, GroupAccount } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
 import { LoadingStateCard } from "../LoadingStateCard"
@@ -87,42 +87,30 @@ function CommentItem({
           {ownComment ? (
             <View style={styles.commentMenuWrap}>
               <Pressable
-                onPress={() => setMenuOpen((prev) => !prev)}
+                onPress={() => setMenuOpen(true)}
                 accessibilityRole="button"
                 accessibilityLabel={`${comment.authorName} 댓글 메뉴 열기`}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                style={[styles.inlineIconButton, menuOpen && styles.inlineIconButtonActive]}
+                style={styles.inlineIconButton}
               >
                 <Icon name="ellipsis" size={14} color={uiColors.textMuted} />
               </Pressable>
-              {menuOpen ? (
-                <View style={styles.commentMenuPanel}>
-                  <Pressable
-                    onPress={() => {
-                      setMenuOpen(false)
-                      onStartEdit()
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${comment.authorName} 댓글 수정`}
-                    style={styles.commentMenuItem}
-                  >
-                    <Icon name="edit" size={14} color={uiColors.textStrong} />
-                    <Text style={styles.commentMenuText}>수정</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => {
-                      setMenuOpen(false)
-                      onDelete()
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${comment.authorName} 댓글 삭제`}
-                    style={[styles.commentMenuItem, styles.commentMenuItemDanger]}
-                  >
-                    <Icon name="trash" size={14} color={uiColors.danger} />
-                    <Text style={styles.commentMenuTextDanger}>삭제</Text>
-                  </Pressable>
-                </View>
-              ) : null}
+              <ActionSheet
+                visible={menuOpen}
+                title="댓글"
+                items={[
+                  {
+                    label: "수정",
+                    onPress: onStartEdit,
+                  },
+                  {
+                    label: "삭제",
+                    tone: "danger",
+                    onPress: onDelete,
+                  },
+                ]}
+                onClose={() => setMenuOpen(false)}
+              />
             </View>
           ) : null}
         </View>
@@ -252,42 +240,30 @@ function PostCard({
         {ownPost ? (
           <View style={styles.postMenuWrap}>
             <Pressable
-              onPress={() => setMenuOpen((prev) => !prev)}
+              onPress={() => setMenuOpen(true)}
               accessibilityRole="button"
               accessibilityLabel={`${post.title} 게시글 메뉴 열기`}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              style={[styles.inlineIconButton, menuOpen && styles.inlineIconButtonActive]}
+              style={styles.inlineIconButton}
             >
               <Icon name="ellipsis" size={15} color={uiColors.textStrong} />
             </Pressable>
-            {menuOpen ? (
-              <View style={styles.postMenuPanel}>
-                <Pressable
-                  onPress={() => {
-                    setMenuOpen(false)
-                    onStartEditPost()
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${post.title} 게시글 수정`}
-                  style={styles.postMenuItem}
-                >
-                  <Icon name="edit" size={14} color={uiColors.textStrong} />
-                  <Text style={styles.postMenuText}>수정</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    setMenuOpen(false)
-                    onDeletePost()
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${post.title} 게시글 삭제`}
-                  style={[styles.postMenuItem, styles.postMenuItemDanger]}
-                >
-                  <Icon name="trash" size={14} color={uiColors.danger} />
-                  <Text style={styles.postMenuTextDanger}>삭제</Text>
-                </Pressable>
-              </View>
-            ) : null}
+            <ActionSheet
+              visible={menuOpen}
+              title="게시물"
+              items={[
+                {
+                  label: "수정",
+                  onPress: onStartEditPost,
+                },
+                {
+                  label: "삭제",
+                  tone: "danger",
+                  onPress: onDeletePost,
+                },
+              ]}
+              onClose={() => setMenuOpen(false)}
+            />
           </View>
         ) : null}
       </View>
@@ -740,39 +716,6 @@ const styles = StyleSheet.create({
   commentMenuWrap: {
     position: "relative",
   },
-  commentMenuPanel: {
-    position: "absolute",
-    top: 32,
-    right: 0,
-    minWidth: 104,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: uiColors.border,
-    backgroundColor: uiColors.surface,
-    overflow: "hidden",
-    zIndex: 20,
-  },
-  commentMenuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  commentMenuItemDanger: {
-    borderTopWidth: 1,
-    borderTopColor: uiColors.border,
-  },
-  commentMenuText: {
-    color: uiColors.textStrong,
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  commentMenuTextDanger: {
-    color: uiColors.danger,
-    fontSize: 13,
-    fontWeight: "700",
-  },
   inlineIconButton: {
     width: 28,
     height: 28,
@@ -783,45 +726,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  inlineIconButtonActive: {
-    borderColor: uiColors.primaryBorder,
-    backgroundColor: uiColors.primarySoft,
-  },
   postMenuWrap: {
     position: "relative",
-  },
-  postMenuPanel: {
-    position: "absolute",
-    top: 34,
-    right: 0,
-    minWidth: 104,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: uiColors.border,
-    backgroundColor: uiColors.surface,
-    overflow: "hidden",
-    zIndex: 20,
-  },
-  postMenuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  postMenuItemDanger: {
-    borderTopWidth: 1,
-    borderTopColor: uiColors.border,
-  },
-  postMenuText: {
-    color: uiColors.textStrong,
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  postMenuTextDanger: {
-    color: uiColors.danger,
-    fontSize: 13,
-    fontWeight: "700",
   },
   commentList: {
     marginTop: 12,

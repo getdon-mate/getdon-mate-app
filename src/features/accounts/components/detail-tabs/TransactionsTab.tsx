@@ -3,7 +3,7 @@ import { Pressable, SectionList, StyleSheet, Text, View } from "react-native"
 import { useAppAccounts, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
-import { ActionChip, Button, Icon, InputField, NumericInputField, uiColors } from "@shared/ui"
+import { ActionChip, ActionSheet, Button, Icon, InputField, NumericInputField, uiColors } from "@shared/ui"
 import { formatFullDate, formatKRW } from "@shared/lib/format"
 import { getMemberById } from "../../model/member-utils"
 import { getTransactionTotals, groupTransactionsByDate } from "../../model/selectors"
@@ -42,7 +42,7 @@ export function TransactionsTab({
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
+  const [selectedTxForMenu, setSelectedTxForMenu] = useState<Transaction | null>(null)
 
   const [draftType, setDraftType] = useState<TransactionType>(initialType)
   const [amount, setAmount] = useState("")
@@ -173,7 +173,7 @@ export function TransactionsTab({
   }
 
   function handleEdit(transaction: Transaction) {
-    setMenuOpenId(null)
+    setSelectedTxForMenu(null)
     setEditingId(transaction.id)
     setDraftType(transaction.type)
     setAmount(String(transaction.amount))
@@ -183,7 +183,7 @@ export function TransactionsTab({
   }
 
   async function handleDelete(transaction: Transaction) {
-    setMenuOpenId(null)
+    setSelectedTxForMenu(null)
     const confirmed = await confirm({
       title: "거래 삭제",
       message: `${transaction.description} 거래를 삭제합니다.`,
@@ -393,7 +393,7 @@ export function TransactionsTab({
           </SectionCard>
         )}
         renderItem={({ item: tx }) => (
-          <View style={[styles.transactionCard, menuOpenId === tx.id && styles.transactionCardActive]}>
+          <View style={styles.transactionCard}>
             <View style={styles.transactionCardRow}>
               <View style={styles.transactionContent}>
                 <TransactionRow account={account} tx={tx} />
@@ -403,39 +403,13 @@ export function TransactionsTab({
                   hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
                   accessibilityRole="button"
                   accessibilityLabel={`${tx.description} ${tx.date} 거래 메뉴 열기`}
-                  onPress={() => setMenuOpenId((prev) => (prev === tx.id ? null : tx.id))}
-                  style={[styles.menuButton, menuOpenId === tx.id && styles.menuButtonActive]}
+                  onPress={() => setSelectedTxForMenu(tx)}
+                  style={styles.menuButton}
                 >
                   <Icon name="ellipsis" size={16} color={uiColors.textStrong} />
                 </Pressable>
               </View>
             </View>
-            {menuOpenId === tx.id ? (
-              <View style={styles.menuInlinePanel}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="수정"
-                  disabled={isMutating}
-                  onPress={() => handleEdit(tx)}
-                  style={[styles.menuItem, isMutating && styles.menuItemDisabled]}
-                >
-                  <Icon name="edit" size={15} color={uiColors.textStrong} />
-                  <Text style={styles.menuText}>수정</Text>
-                </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="삭제"
-                  disabled={isMutating}
-                  onPress={() => {
-                    void handleDelete(tx)
-                  }}
-                  style={[styles.menuItem, styles.menuItemWithDivider, isMutating && styles.menuItemDisabled]}
-                >
-                  <Icon name="trash" size={15} color={uiColors.danger} />
-                  <Text style={styles.menuTextDanger}>{isMutating ? "처리 중..." : "삭제"}</Text>
-                </Pressable>
-              </View>
-            ) : null}
           </View>
         )}
         ListEmptyComponent={
@@ -453,6 +427,28 @@ export function TransactionsTab({
             />
           )
         }
+      />
+      <ActionSheet
+        visible={selectedTxForMenu !== null}
+        title={selectedTxForMenu?.description}
+        items={[
+          {
+            label: "수정",
+            onPress: () => {
+              if (selectedTxForMenu) handleEdit(selectedTxForMenu)
+            },
+            disabled: isMutating,
+          },
+          {
+            label: isMutating ? "처리 중..." : "삭제",
+            tone: "danger",
+            onPress: () => {
+              if (selectedTxForMenu) void handleDelete(selectedTxForMenu)
+            },
+            disabled: isMutating,
+          },
+        ]}
+        onClose={() => setSelectedTxForMenu(null)}
       />
     </>
   )
@@ -600,10 +596,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#eef2f7",
     paddingBottom: 6,
-    position: "relative",
-  },
-  transactionCardActive: {
-    zIndex: 30,
   },
   transactionCardRow: {
     flexDirection: "row",
@@ -625,44 +617,6 @@ const styles = StyleSheet.create({
     backgroundColor: uiColors.surface,
     alignItems: "center",
     justifyContent: "center",
-  },
-  menuButtonActive: {
-    borderColor: uiColors.primaryBorder,
-    backgroundColor: uiColors.primarySoft,
-  },
-  menuInlinePanel: {
-    alignSelf: "flex-end",
-    marginTop: 8,
-    minWidth: 128,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: uiColors.border,
-    backgroundColor: uiColors.surface,
-    overflow: "hidden",
-  },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  menuItemWithDivider: {
-    borderTopWidth: 1,
-    borderTopColor: uiColors.border,
-  },
-  menuItemDisabled: {
-    opacity: 0.5,
-  },
-  menuText: {
-    color: uiColors.textStrong,
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  menuTextDanger: {
-    color: uiColors.danger,
-    fontSize: 13,
-    fontWeight: "700",
   },
   editingMeta: {
     color: uiColors.textMuted,
