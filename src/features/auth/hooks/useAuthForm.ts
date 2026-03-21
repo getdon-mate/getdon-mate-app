@@ -52,7 +52,7 @@ export function useAuthForm({ login, signup, showError, lastSyncError }: UseAuth
     }
 
     setSubmitting(true)
-    const ok = await login(email.trim(), password)
+    const ok = await login(email.trim(), password.trim())
     if (!ok) {
       setError(feedbackPresets.loginFailed.message)
       showError(feedbackPresets.loginFailed.message, feedbackPresets.loginFailed.title)
