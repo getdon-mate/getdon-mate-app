@@ -4,7 +4,6 @@ import {
   StyleSheet,
   View,
   useWindowDimensions,
-  Alert,
 } from "react-native"
 import { useEffect } from "react"
 import { useAppAuth, useAppRuntime } from "@core/providers/AppProvider"
@@ -31,14 +30,6 @@ export function LoginScreen() {
       setEmail(lastEmail)
     }
   }, [])
-
-  const handleSocialLogin = (provider: "google" | "kakao") => {
-    Alert.alert(
-      "준비 중",
-      `${provider === "google" ? "Google" : "카카오"} 로그인 기능은 현재 준비 중입니다.`,
-      [{ text: "확인" }]
-    )
-  }
 
   return (
     <KeyboardAvoidingView
@@ -90,7 +81,6 @@ export function LoginScreen() {
               onChangeEmail={setEmail}
               onChangePassword={setPassword}
               onSubmit={handleSubmit}
-              onSocialLogin={handleSocialLogin}
               onContinueAsGuest={continueAsGuest}
               onToggleMode={() => resetForm(!isSignup)}
               submitting={submitting}

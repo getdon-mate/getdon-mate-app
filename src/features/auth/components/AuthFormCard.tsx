@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from "react-native"
+import { Pressable, StyleSheet, Text } from "react-native"
 import { COPY } from "@shared/constants/copy"
-import { Button, Card, Icon, InputField, uiColors } from "@shared/ui"
+import { Button, Card, InputField, uiColors } from "@shared/ui"
 
 interface AuthFormCardProps {
     isSignup: boolean
@@ -12,7 +12,6 @@ interface AuthFormCardProps {
     onChangeEmail: (value: string) => void
     onChangePassword: (value: string) => void
     onSubmit: () => void
-    onSocialLogin: (provider: "google" | "kakao") => void
     onContinueAsGuest: () => void
     onToggleMode: () => void
     submitting?: boolean
@@ -29,7 +28,6 @@ export function AuthFormCard({
     onChangeEmail,
     onChangePassword,
     onSubmit,
-    onSocialLogin,
     onContinueAsGuest,
     onToggleMode,
     submitting = false,
@@ -38,18 +36,6 @@ export function AuthFormCard({
     return (
         <Card style={styles.card}>
             <Text style={styles.cardTitle}>{isSignup ? "회원가입" : "로그인"}</Text>
-            {!isSignup ? (
-                <View style={styles.socialStack}>
-                    <Pressable style={[styles.socialButton, styles.socialButtonDisabled]} onPress={() => onSocialLogin("google")} accessibilityRole="button" accessibilityLabel="Google 로그인 (준비 중)">
-                        <Icon name="google" size={16} color={uiColors.textSoft} />
-                        <Text style={styles.socialButtonTextDisabled}>Google로 계속하기 (준비 중)</Text>
-                    </Pressable>
-                    <Pressable style={[styles.socialButton, styles.socialButtonDisabled]} onPress={() => onSocialLogin("kakao")} accessibilityRole="button" accessibilityLabel="카카오 로그인 (준비 중)">
-                        <Icon name="kakao" size={16} color={uiColors.textSoft} />
-                        <Text style={styles.socialButtonTextDisabled}>카카오로 계속하기 (준비 중)</Text>
-                    </Pressable>
-                </View>
-            ) : null}
 
             {isSignup && (
                 <InputField
@@ -136,33 +122,6 @@ const styles = StyleSheet.create({
     error: {
         color: uiColors.danger,
         fontSize: 13,
-        fontWeight: "600",
-    },
-    socialStack: {
-        gap: 10,
-    },
-    socialButton: {
-        minHeight: 48,
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: uiColors.border,
-        backgroundColor: uiColors.surfaceMuted,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
-    },
-    socialButtonText: {
-        color: uiColors.textStrong,
-        fontSize: 14,
-        fontWeight: "700",
-    },
-    socialButtonDisabled: {
-        opacity: 0.5,
-    },
-    socialButtonTextDisabled: {
-        color: uiColors.textSoft,
-        fontSize: 14,
         fontWeight: "600",
     },
 })
