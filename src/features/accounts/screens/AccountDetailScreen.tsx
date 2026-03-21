@@ -199,7 +199,6 @@ export function AccountDetailScreen() {
                 account={account}
                 onOpenDues={() => setTab("dues")}
                 onOpenTransactions={() => setTab("transactions")}
-                onCopyAccountNumber={() => void handleCopyAccountNumber()}
               />
             ) : null}
             {tab === "dues" ? (

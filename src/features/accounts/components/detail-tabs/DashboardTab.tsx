@@ -1,7 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from "react-native"
+import { StyleSheet, Text, View } from "react-native"
 import { getCurrentMonthKey } from "@shared/lib/date"
-import { useAppRuntime } from "@core/providers/AppProvider"
-import { ActionChip, Icon, uiColors, uiRadius, uiSpacing } from "@shared/ui"
+import { uiColors, uiRadius, uiSpacing } from "@shared/ui"
 import { formatKRW } from "@shared/lib/format"
 import { getMemberById } from "../../model/member-utils"
 import { getPaymentSummary, getRecentTransactions } from "../../model/selectors"
@@ -15,55 +14,17 @@ export function DashboardTab({
   account,
   onOpenTransactions,
   onOpenDues,
-  onCopyAccountNumber,
 }: {
   account: GroupAccount
   onOpenTransactions: () => void
   onOpenDues: () => void
-  onCopyAccountNumber?: () => void
 }) {
-  const { maskAmounts, toggleMaskAmounts } = useAppRuntime()
-
   const currentMonth = getCurrentMonthKey()
   const { paid, payableMembers, progress, unpaidMembers } = getPaymentSummary(account, currentMonth)
   const recentTransactions = getRecentTransactions(account)
 
   return (
     <View style={styles.stack}>
-      <SectionCard>
-        {account.accountNumber ? (
-          <View style={styles.accountNumberRow}>
-            <Text style={styles.subtleText}>{account.bankName} · {account.accountNumber}</Text>
-            <Pressable
-              onPress={onCopyAccountNumber}
-              accessibilityRole="button"
-              accessibilityLabel="대시보드 계좌번호 복사"
-              style={styles.copyButton}
-            >
-              <Icon name="copy" size={14} color={uiColors.primary} />
-            </Pressable>
-          </View>
-        ) : (
-          <Text style={styles.subtleText}>{account.bankName}</Text>
-        )}
-        <Text style={styles.balanceLabel}>잔액</Text>
-        <View style={styles.balanceWrap}>
-          {maskAmounts ? (
-            <View style={styles.maskOverlay}>
-              <Text style={styles.maskOverlayLabel}>필요할 때만 잔액을 확인하세요</Text>
-            </View>
-          ) : (
-            <Text style={styles.balanceText}>{formatKRW(account.balance)}</Text>
-          )}
-        </View>
-        <ActionChip
-          label={maskAmounts ? "잔액 보기" : "잔액 숨기기"}
-          onPress={toggleMaskAmounts}
-          active={!maskAmounts}
-          style={styles.chipSelf}
-        />
-      </SectionCard>
-
       <SectionCard>
         <SectionHeader title="회비 현황" actionLabel="자세히" onAction={onOpenDues} />
         <View style={styles.summaryPillRow}>
@@ -136,51 +97,6 @@ const styles = StyleSheet.create({
   subtleText: {
     color: uiColors.textMuted,
     fontSize: 12,
-  },
-  accountNumberRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  copyButton: {
-    width: 24,
-    height: 24,
-    borderRadius: uiRadius.full,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: uiColors.primarySoft,
-  },
-  balanceLabel: {
-    color: uiColors.textMuted,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  balanceText: {
-    color: uiColors.textStrong,
-    fontSize: 30,
-    fontWeight: "800",
-  },
-  balanceWrap: {
-    minHeight: 36,
-    justifyContent: "center",
-  },
-  maskOverlay: {
-    borderRadius: uiRadius.md,
-    borderWidth: 1,
-    borderColor: uiColors.border,
-    backgroundColor: uiColors.surfaceMuted,
-    alignItems: "flex-end",
-    justifyContent: "center",
-    paddingHorizontal: uiSpacing.md,
-    paddingVertical: uiSpacing.sm,
-  },
-  maskOverlayLabel: {
-    color: uiColors.textSoft,
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  chipSelf: {
-    alignSelf: "flex-start",
   },
   metricText: {
     color: uiColors.textStrong,
