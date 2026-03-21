@@ -76,7 +76,7 @@ export function AppRouter() {
     }
 
     if (currentRouteName === ROUTES.AccountDetail) {
-      const accountId = (currentRoute?.params as { accountId?: string } | undefined)?.accountId
+      const accountId = (currentRoute?.params as RootStackParamList[typeof ROUTES.AccountDetail])?.accountId
       if (accountId && accounts.some((account) => account.id === accountId)) {
         if (selectedAccountId !== accountId) {
           selectAccount(accountId)

@@ -43,27 +43,46 @@ export function useFeedback() {
 }
 
 export function FeedbackProvider({ children }: { children: ReactNode }) {
-  const [toastState, setToastState] = useState({
+  const [toastState, setToastState] = useState<{
+    visible: boolean
+    title: string
+    message: string
+    tone: ToastTone
+  }>({
     visible: false,
     title: "",
     message: "",
-    tone: "info" as ToastTone,
+    tone: "info",
   })
-  const [alertState, setAlertState] = useState({
+  const [alertState, setAlertState] = useState<{
+    visible: boolean
+    title: string
+    message: string
+    tone: AlertTone
+    confirmLabel: string
+  }>({
     visible: false,
     title: "",
     message: "",
-    tone: "neutral" as AlertTone,
+    tone: "neutral",
     confirmLabel: "확인",
   })
-  const [confirmState, setConfirmState] = useState({
+  const [confirmState, setConfirmState] = useState<{
+    visible: boolean
+    title: string
+    message: string
+    confirmLabel: string
+    cancelLabel: string
+    confirmTone: ConfirmTone
+    resolve: ((value: boolean) => void) | null
+  }>({
     visible: false,
     title: "",
     message: "",
     confirmLabel: "확인",
     cancelLabel: "취소",
-    confirmTone: "primary" as ConfirmTone,
-    resolve: null as ((value: boolean) => void) | null,
+    confirmTone: "primary",
+    resolve: null,
   })
 
   const showToast = useCallback(

@@ -50,7 +50,7 @@ function getLatestActivityDate(account: GroupAccount) {
     ...account.boardPosts.map((post) => post.createdAt.slice(0, 10)),
     ...account.reminders.map((item) => item.createdAt.slice(0, 10)),
     ...account.oneTimeDues.map((item) => item.dueDate),
-    ...account.duesRecords.filter((record) => record.paidDate).map((record) => record.paidDate as string),
+    ...account.duesRecords.flatMap((record) => (record.paidDate ? [record.paidDate] : [])),
   ]
 
   return candidates.sort((a, b) => b.localeCompare(a))[0] ?? "0000-00-00"
