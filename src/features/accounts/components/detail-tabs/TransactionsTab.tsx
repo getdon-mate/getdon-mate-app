@@ -1,5 +1,5 @@
 import { useDeferredValue, useCallback, useEffect, useMemo, useState } from "react"
-import { Pressable, SectionList, StyleSheet, Text, View } from "react-native"
+import { Modal, Pressable, ScrollView, SectionList, StyleSheet, Text, View } from "react-native"
 import { useAppAccounts, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
@@ -44,6 +44,7 @@ export function TransactionsTab({
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [selectedTxForMenu, setSelectedTxForMenu] = useState<Transaction | null>(null)
+  const [formOpen, setFormOpen] = useState(false)
 
   const [draftType, setDraftType] = useState<TransactionType>(initialType)
   const [amount, setAmount] = useState("")
@@ -57,6 +58,10 @@ export function TransactionsTab({
     setDraftType(initialType)
     setCategory((prev) => (editingId ? prev : getCategoryLabel(initialType)))
   }, [composerSignal, editingId, initialType])
+
+  useEffect(() => {
+    if (composerSignal > 0) setFormOpen(true)
+  }, [composerSignal])
 
   const isEditing = editingId !== null
   const query = deferredSearchQuery.trim().toLowerCase()
@@ -172,12 +177,14 @@ export function TransactionsTab({
       await updateTransaction(account.id, editingId, payload)
       showToast({ tone: "success", title: COPY.common.editDone, message: COPY.transaction.editDone(payload.description) })
       resetComposer(payload.type)
+      setFormOpen(false)
       return
     }
 
     await createTransaction(account.id, payload)
     showToast({ tone: "success", title: COPY.common.registerDone, message: COPY.transaction.registerDone(payload.description) })
     resetComposer(payload.type)
+    setFormOpen(false)
   }
 
   function handleEdit(transaction: Transaction) {
@@ -188,6 +195,7 @@ export function TransactionsTab({
     setDescription(transaction.description)
     setDate(transaction.date)
     setCategory(transaction.category)
+    setFormOpen(true)
   }
 
   async function handleDelete(transaction: Transaction) {
@@ -216,103 +224,17 @@ export function TransactionsTab({
         contentContainerStyle={styles.sectionListContent}
         ListHeaderComponent={
           <View style={styles.headerStack}>
-            <SectionCard>
-              <SectionHeader title={isEditing ? COPY.transaction.editTitle : COPY.transaction.newTitle} description="입금과 출금을 기록합니다." />
-              <View style={styles.formTypeRow}>
-                {(["income", "expense"] as const).map((item) => {
-                  const active = draftType === item
-                  return (
-                    <ActionChip
-                      key={item}
-                      label={item === "income" ? COPY.transaction.income : COPY.transaction.expense}
-                      active={active}
-                      style={styles.flexChip}
-                      onPress={() => {
-                        setDraftType(item)
-                        if (!isEditing) {
-                          setCategory(getCategoryLabel(item))
-                        }
-                      }}
-                    />
-                  )
-                })}
-              </View>
-              <View style={styles.formGrid}>
-                <NumericInputField
-                  value={amount}
-                  onChangeText={setAmount}
-                  label="금액"
-                  placeholder="금액"
-                  containerStyle={styles.compactField}
-                  inputStyle={styles.compactInput}
-                />
-                <InputField
-                  value={date}
-                  onChangeText={setDate}
-                  label="거래일"
-                  placeholder="YYYY-MM-DD"
-                  containerStyle={styles.compactField}
-                  inputStyle={styles.compactInput}
-                />
-                <InputField
-                  value={description}
-                  onChangeText={setDescription}
-                  label="설명"
-                  placeholder="예: 회비 입금, 모임 식비"
-                  containerStyle={styles.compactField}
-                  inputStyle={styles.compactInput}
-                />
-                <InputField
-                  value={category}
-                  onChangeText={setCategory}
-                  label="카테고리"
-                  placeholder="예: 회비, 식비"
-                  containerStyle={styles.compactField}
-                  inputStyle={styles.compactInput}
-                />
-              </View>
-              {recentCategories.length > 0 ? (
-                <View style={styles.recentCategoryWrap}>
-                  <Text style={styles.recentCategoryLabel}>최근 카테고리</Text>
-                  <View style={styles.recentCategoryRow}>
-                    {recentCategories.map((item) => (
-                      <ActionChip key={item} label={item} onPress={() => setCategory(item)} />
-                    ))}
-                  </View>
-                </View>
-              ) : null}
-              {recentDraftSuggestions.length > 0 ? (
-                <View style={styles.recentValueWrap}>
-                  <Text style={styles.recentCategoryLabel}>최근 거래값</Text>
-                  <View style={styles.recentValueRow}>
-                    {recentDraftSuggestions.map((tx) => (
-                      <ActionChip
-                        key={tx.id}
-                        label={`${tx.description} · ${formatKRW(tx.amount)}`}
-                        onPress={() => handleSelectSuggestion(tx)}
-                      />
-                    ))}
-                  </View>
-                </View>
-              ) : null}
-              <View style={styles.formActionRow}>
-                {isEditing ? (
-                  <Button
-                    label={COPY.transaction.cancelEditLabel}
-                    variant="ghost"
-                    onPress={() => resetComposer(initialType)}
-                    style={styles.formActionButton}
-                    disabled={isMutating}
-                  />
-                ) : null}
-                <Button
-                  label={isMutating ? COPY.transaction.savingLabel : isEditing ? COPY.transaction.editButtonLabel : draftType === "income" ? COPY.transaction.incomeRegisterLabel : COPY.transaction.expenseRegisterLabel}
-                  onPress={() => void handleSubmit()}
-                  style={styles.formActionButton}
-                  disabled={isMutating}
-                />
-              </View>
-            </SectionCard>
+            <View style={styles.addButtonRow}>
+              <Pressable
+                style={styles.addButton}
+                onPress={() => setFormOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel="거래 추가"
+              >
+                <Icon name="plus" size={16} color={uiColors.primary} />
+                <Text style={styles.addButtonText}>거래 추가</Text>
+              </Pressable>
+            </View>
 
             <View style={styles.summaryRow}>
               <SectionCard>
@@ -382,12 +304,6 @@ export function TransactionsTab({
                 </Text>
               ) : null}
             </SectionCard>
-
-            {selectedTransaction ? (
-              <Text style={styles.editingMeta}>
-                현재 편집 중: {selectedTransaction.description} ({formatKRW(selectedTransaction.amount)})
-              </Text>
-            ) : null}
           </View>
         }
         renderSectionHeader={({ section }) => (
@@ -453,6 +369,128 @@ export function TransactionsTab({
           )
         }
       />
+
+      <Modal
+        visible={formOpen}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => { setFormOpen(false); resetComposer(initialType) }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{isEditing ? COPY.transaction.editTitle : COPY.transaction.newTitle}</Text>
+            <Pressable
+              onPress={() => { setFormOpen(false); if (!isEditing) resetComposer(initialType) }}
+              style={styles.modalCloseButton}
+              accessibilityRole="button"
+              accessibilityLabel="폼 닫기"
+            >
+              <Icon name="close" size={18} color={uiColors.textStrong} />
+            </Pressable>
+          </View>
+          <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent}>
+            {selectedTransaction ? (
+              <Text style={styles.editingMeta}>
+                현재 편집 중: {selectedTransaction.description} ({formatKRW(selectedTransaction.amount)})
+              </Text>
+            ) : null}
+            <View style={styles.formTypeRow}>
+              {(["income", "expense"] as const).map((item) => {
+                const active = draftType === item
+                return (
+                  <ActionChip
+                    key={item}
+                    label={item === "income" ? COPY.transaction.income : COPY.transaction.expense}
+                    active={active}
+                    style={styles.flexChip}
+                    onPress={() => {
+                      setDraftType(item)
+                      if (!isEditing) {
+                        setCategory(getCategoryLabel(item))
+                      }
+                    }}
+                  />
+                )
+              })}
+            </View>
+            <View style={styles.formGrid}>
+              <NumericInputField
+                value={amount}
+                onChangeText={setAmount}
+                label="금액"
+                placeholder="금액"
+                containerStyle={styles.compactField}
+                inputStyle={styles.compactInput}
+              />
+              <InputField
+                value={date}
+                onChangeText={setDate}
+                label="거래일"
+                placeholder="YYYY-MM-DD"
+                containerStyle={styles.compactField}
+                inputStyle={styles.compactInput}
+              />
+              <InputField
+                value={description}
+                onChangeText={setDescription}
+                label="설명"
+                placeholder="예: 회비 입금, 모임 식비"
+                containerStyle={styles.compactField}
+                inputStyle={styles.compactInput}
+              />
+              <InputField
+                value={category}
+                onChangeText={setCategory}
+                label="카테고리"
+                placeholder="예: 회비, 식비"
+                containerStyle={styles.compactField}
+                inputStyle={styles.compactInput}
+              />
+            </View>
+            {recentCategories.length > 0 ? (
+              <View style={styles.recentCategoryWrap}>
+                <Text style={styles.recentCategoryLabel}>최근 카테고리</Text>
+                <View style={styles.recentCategoryRow}>
+                  {recentCategories.map((item) => (
+                    <ActionChip key={item} label={item} onPress={() => setCategory(item)} />
+                  ))}
+                </View>
+              </View>
+            ) : null}
+            {recentDraftSuggestions.length > 0 ? (
+              <View style={styles.recentValueWrap}>
+                <Text style={styles.recentCategoryLabel}>최근 거래값</Text>
+                <View style={styles.recentValueRow}>
+                  {recentDraftSuggestions.map((tx) => (
+                    <ActionChip
+                      key={tx.id}
+                      label={`${tx.description} · ${formatKRW(tx.amount)}`}
+                      onPress={() => handleSelectSuggestion(tx)}
+                    />
+                  ))}
+                </View>
+              </View>
+            ) : null}
+            <View style={styles.formActionRow}>
+              {isEditing ? (
+                <Button
+                  label={COPY.transaction.cancelEditLabel}
+                  variant="ghost"
+                  onPress={() => { resetComposer(initialType); setFormOpen(false) }}
+                  style={styles.formActionButton}
+                  disabled={isMutating}
+                />
+              ) : null}
+              <Button
+                label={isMutating ? COPY.transaction.savingLabel : isEditing ? COPY.transaction.editButtonLabel : draftType === "income" ? COPY.transaction.incomeRegisterLabel : COPY.transaction.expenseRegisterLabel}
+                onPress={() => void handleSubmit()}
+                style={styles.formActionButton}
+                disabled={isMutating}
+              />
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
     </>
   )
 }
@@ -480,14 +518,12 @@ const styles = StyleSheet.create({
   formTypeRow: {
     flexDirection: "row",
     gap: 8,
-    marginTop: 10,
   },
   flexChip: {
     flex: 1,
   },
   formGrid: {
     gap: 6,
-    marginTop: 6,
   },
   compactField: {
     gap: 4,
@@ -499,7 +535,6 @@ const styles = StyleSheet.create({
   },
   recentCategoryWrap: {
     gap: 6,
-    marginTop: 8,
   },
   recentCategoryLabel: {
     color: uiColors.textMuted,
@@ -522,7 +557,6 @@ const styles = StyleSheet.create({
   formActionRow: {
     flexDirection: "row",
     gap: 8,
-    marginTop: 10,
   },
   formActionButton: {
     flex: 1,
@@ -668,5 +702,58 @@ const styles = StyleSheet.create({
     color: uiColors.textMuted,
     fontSize: 12,
     fontWeight: "700",
+  },
+  addButtonRow: {
+    marginBottom: 4,
+  },
+  addButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: uiColors.primaryBorder,
+    backgroundColor: uiColors.primarySoft,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    justifyContent: "center",
+  },
+  addButtonText: {
+    color: uiColors.primary,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: uiColors.background,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: uiColors.border,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: uiColors.textStrong,
+  },
+  modalCloseButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: uiColors.surfaceMuted,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalScroll: {
+    flex: 1,
+  },
+  modalScrollContent: {
+    padding: 20,
+    gap: 12,
   },
 })
