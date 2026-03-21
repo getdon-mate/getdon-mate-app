@@ -3,7 +3,7 @@ import { Pressable, SectionList, StyleSheet, Text, View } from "react-native"
 import { useAppAccounts, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
-import { ActionChip, ActionSheet, Button, Icon, InputField, NumericInputField, uiColors } from "@shared/ui"
+import { ActionChip, Button, Icon, InputField, NumericInputField, uiColors } from "@shared/ui"
 import { formatFullDate, formatKRW } from "@shared/lib/format"
 import { COPY } from "@shared/constants/copy"
 import { getMemberById } from "../../model/member-utils"
@@ -395,26 +395,48 @@ export function TransactionsTab({
             <Text style={styles.dateSectionText}>{formatFullDate(section.title)}</Text>
           </View>
         )}
-        renderItem={({ item: tx }) => (
-          <View style={styles.transactionCard}>
-            <View style={styles.transactionCardRow}>
-              <View style={styles.transactionContent}>
-                <TransactionRow account={account} tx={tx} />
-              </View>
-              <View style={styles.menuWrap}>
+        renderItem={({ item: tx }) => {
+          const isMenuOpen = selectedTxForMenu?.id === tx.id
+          return (
+            <View style={styles.transactionCard}>
+              <View style={styles.transactionCardRow}>
+                <View style={styles.transactionContent}>
+                  <TransactionRow account={account} tx={tx} />
+                </View>
                 <Pressable
                   hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
                   accessibilityRole="button"
                   accessibilityLabel={`${tx.description} ${tx.date} 거래 메뉴 열기`}
-                  onPress={() => setSelectedTxForMenu(tx)}
-                  style={styles.menuButton}
+                  onPress={() => setSelectedTxForMenu(isMenuOpen ? null : tx)}
+                  style={[styles.menuButton, isMenuOpen && styles.menuButtonActive]}
                 >
-                  <Icon name="ellipsis" size={16} color={uiColors.textStrong} />
+                  <Icon name="ellipsis" size={16} color={isMenuOpen ? uiColors.primary : uiColors.textStrong} />
                 </Pressable>
               </View>
+              {isMenuOpen ? (
+                <View style={styles.inlineMenu}>
+                  <Pressable
+                    style={styles.inlineMenuItem}
+                    onPress={() => { if (selectedTxForMenu) handleEdit(selectedTxForMenu) }}
+                    disabled={isMutating}
+                  >
+                    <Icon name="edit" size={13} color={uiColors.textStrong} />
+                    <Text style={styles.inlineMenuItemText}>{COPY.common.edit}</Text>
+                  </Pressable>
+                  <View style={styles.inlineMenuDivider} />
+                  <Pressable
+                    style={styles.inlineMenuItem}
+                    onPress={() => { if (selectedTxForMenu) void handleDelete(selectedTxForMenu) }}
+                    disabled={isMutating}
+                  >
+                    <Icon name="trash" size={13} color={uiColors.danger} />
+                    <Text style={[styles.inlineMenuItemText, styles.inlineMenuItemDanger]}>{COPY.common.delete}</Text>
+                  </Pressable>
+                </View>
+              ) : null}
             </View>
-          </View>
-        )}
+          )
+        }}
         ListEmptyComponent={
           isMutating ? (
             <View style={styles.headerStack}>
@@ -430,28 +452,6 @@ export function TransactionsTab({
             />
           )
         }
-      />
-      <ActionSheet
-        visible={selectedTxForMenu !== null}
-        title={selectedTxForMenu?.description}
-        items={[
-          {
-            label: COPY.common.edit,
-            onPress: () => {
-              if (selectedTxForMenu) handleEdit(selectedTxForMenu)
-            },
-            disabled: isMutating,
-          },
-          {
-            label: isMutating ? COPY.common.processing : COPY.common.delete,
-            tone: "danger",
-            onPress: () => {
-              if (selectedTxForMenu) void handleDelete(selectedTxForMenu)
-            },
-            disabled: isMutating,
-          },
-        ]}
-        onClose={() => setSelectedTxForMenu(null)}
       />
     </>
   )
@@ -608,9 +608,6 @@ const styles = StyleSheet.create({
   transactionContent: {
     flex: 1,
   },
-  menuWrap: {
-    position: "relative",
-  },
   menuButton: {
     width: 34,
     height: 34,
@@ -620,6 +617,42 @@ const styles = StyleSheet.create({
     backgroundColor: uiColors.surface,
     alignItems: "center",
     justifyContent: "center",
+  },
+  menuButtonActive: {
+    borderColor: uiColors.primaryBorder,
+    backgroundColor: uiColors.primarySoft,
+  },
+  inlineMenu: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 6,
+    marginLeft: 4,
+    backgroundColor: uiColors.surfaceMuted,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: uiColors.border,
+    overflow: "hidden",
+    alignSelf: "flex-end",
+  },
+  inlineMenuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  inlineMenuItemText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: uiColors.textStrong,
+  },
+  inlineMenuItemDanger: {
+    color: uiColors.danger,
+  },
+  inlineMenuDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: uiColors.border,
   },
   editingMeta: {
     color: uiColors.textMuted,
