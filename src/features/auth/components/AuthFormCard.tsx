@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text } from "react-native"
+import { Pressable, StyleSheet, Text, View } from "react-native"
 import { COPY } from "@shared/constants/copy"
 import { Button, Card, InputField, uiColors } from "@shared/ui"
 
@@ -77,12 +77,15 @@ export function AuthFormCard({
             />
 
             {!isSignup ? (
-                <Button
-                    label="둘러보기"
-                    variant="ghost"
-                    onPress={onContinueAsGuest}
-                    disabled={submitting}
-                />
+                <View style={styles.guestSection}>
+                    <Text style={styles.guestHint}>계정 없이 앱을 먼저 둘러볼 수 있습니다.</Text>
+                    <Button
+                        label="게스트로 둘러보기"
+                        variant="secondary"
+                        onPress={onContinueAsGuest}
+                        disabled={submitting}
+                    />
+                </View>
             ) : null}
 
             <Pressable onPress={onToggleMode} disabled={submitting}>
@@ -123,5 +126,13 @@ const styles = StyleSheet.create({
         color: uiColors.danger,
         fontSize: 13,
         fontWeight: "600",
+    },
+    guestSection: {
+        gap: 6,
+    },
+    guestHint: {
+        textAlign: "center",
+        color: uiColors.textMuted,
+        fontSize: 12,
     },
 })
