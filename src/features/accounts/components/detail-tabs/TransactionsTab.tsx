@@ -236,16 +236,36 @@ export function TransactionsTab({
               </Pressable>
             </View>
 
-            <View style={styles.summaryRow}>
-              <SectionCard>
-                <Text style={styles.summaryLabel}>총 입금</Text>
-                <Text style={[styles.metricText, styles.incomeText]}>+{formatKRW(income)}</Text>
-              </SectionCard>
-              <SectionCard>
-                <Text style={styles.summaryLabel}>총 출금</Text>
-                <Text style={[styles.metricText, styles.expenseText]}>-{formatKRW(expense)}</Text>
-              </SectionCard>
-            </View>
+            <SectionCard>
+              {(() => {
+                const total = income + expense
+                const incomeRatio = total > 0 ? (income / total) * 100 : 50
+                const net = income - expense
+                return (
+                  <>
+                    <View style={styles.summaryAmountRow}>
+                      <View>
+                        <Text style={styles.summaryLabel}>총 입금</Text>
+                        <Text style={[styles.metricText, styles.incomeText]}>+{formatKRW(income)}</Text>
+                      </View>
+                      <View style={styles.summaryNetPill}>
+                        <Text style={styles.summaryNetLabel}>순변동</Text>
+                        <Text style={[styles.summaryNetValue, net >= 0 ? styles.incomeText : styles.expenseText]}>
+                          {net >= 0 ? "+" : ""}{formatKRW(net)}
+                        </Text>
+                      </View>
+                      <View style={styles.summaryRightAlign}>
+                        <Text style={styles.summaryLabel}>총 출금</Text>
+                        <Text style={[styles.metricText, styles.expenseText]}>-{formatKRW(expense)}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.summaryTrack}>
+                      <View style={[styles.summaryIncomeFill, { width: `${incomeRatio}%` }]} />
+                    </View>
+                  </>
+                )
+              })()}
+            </SectionCard>
 
             <SectionCard>
               <View style={styles.filterHeaderRow}>
@@ -511,9 +531,39 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 4,
   },
-  summaryRow: {
+  summaryAmountRow: {
     flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
     gap: 8,
+  },
+  summaryRightAlign: {
+    alignItems: "flex-end",
+  },
+  summaryNetPill: {
+    alignItems: "center",
+    gap: 2,
+  },
+  summaryNetLabel: {
+    color: uiColors.textMuted,
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  summaryNetValue: {
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  summaryTrack: {
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: uiColors.dangerSoft,
+    overflow: "hidden",
+    marginTop: 10,
+  },
+  summaryIncomeFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: uiColors.primary,
   },
   formTypeRow: {
     flexDirection: "row",
