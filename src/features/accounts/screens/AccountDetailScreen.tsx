@@ -8,7 +8,7 @@ import type { RootStackParamList } from "@core/navigation/types"
 import { useAppAccounts, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { copyText } from "@shared/lib/clipboard"
-import { Button, uiColors } from "@shared/ui"
+import { Button, uiColors, uiTypography, uiSpacing } from "@shared/ui"
 import { buildAccountInviteLink } from "@shared/lib/invite"
 import { getCurrentMonthKey } from "@shared/lib/date"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
@@ -202,12 +202,24 @@ export function AccountDetailScreen() {
                 onCopyAccountNumber={() => void handleCopyAccountNumber()}
               />
             ) : null}
-            {tab === "dues" ? <DuesTab account={account} selectedMonth={selectedMonth} onSelectMonth={setSelectedMonth} /> : null}
-            {tab === "members" ? <MembersTab account={account} /> : null}
-            {tab === "statistics" ? <StatisticsTab account={account} /> : null}
-            {tab === "calendar" ? <CalendarTab account={account} onOpenQuickAction={setTab} /> : null}
-            {tab === "board" ? <BoardTab account={account} /> : null}
-            {tab === "settings" ? <SettingsTab account={account} /> : null}
+            {tab === "dues" ? (
+              isBootstrapping ? <LoadingStateCard lines={5} /> : <DuesTab account={account} selectedMonth={selectedMonth} onSelectMonth={setSelectedMonth} />
+            ) : null}
+            {tab === "members" ? (
+              isBootstrapping ? <LoadingStateCard lines={4} /> : <MembersTab account={account} />
+            ) : null}
+            {tab === "statistics" ? (
+              isBootstrapping ? <LoadingStateCard lines={4} /> : <StatisticsTab account={account} />
+            ) : null}
+            {tab === "calendar" ? (
+              isBootstrapping ? <LoadingStateCard lines={4} /> : <CalendarTab account={account} onOpenQuickAction={setTab} />
+            ) : null}
+            {tab === "board" ? (
+              isBootstrapping ? <LoadingStateCard lines={4} /> : <BoardTab account={account} />
+            ) : null}
+            {tab === "settings" ? (
+              isBootstrapping ? <LoadingStateCard lines={4} /> : <SettingsTab account={account} />
+            ) : null}
           </View>
         </ScrollView>
       )}
@@ -226,33 +238,32 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    gap: 12,
-    padding: 20,
+    gap: uiSpacing.md,
+    padding: uiSpacing.xl,
   },
   emptyBackButton: {
-    marginTop: 8,
+    marginTop: uiSpacing.sm,
     minWidth: 180,
   },
   emptyTitle: {
+    ...uiTypography.section,
     color: uiColors.textStrong,
-    fontSize: 16,
-    fontWeight: "700",
   },
   emptyDescription: {
-    color: uiColors.textMuted,
+    ...uiTypography.body,
     fontSize: 13,
   },
   content: {
     flex: 1,
-    marginTop: 8,
+    marginTop: uiSpacing.sm,
   },
   contentContainer: {
-    paddingHorizontal: 14,
-    paddingBottom: 18,
+    paddingHorizontal: uiSpacing.md + 2,
+    paddingBottom: uiSpacing.lg + 2,
   },
   contentWrap: {
     width: "100%",
-    gap: 12,
+    gap: uiSpacing.md,
   },
   contentWrapWide: {
     maxWidth: 980,
