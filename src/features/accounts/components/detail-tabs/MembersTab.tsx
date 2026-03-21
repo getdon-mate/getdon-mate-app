@@ -2,7 +2,7 @@ import { useMemo, useState } from "react"
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native"
 import { useAppAccounts, useAppAuth } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
-import { requireText, validatePhoneNumber } from "@shared/lib/validation"
+import { onlyDigits, requireText, validatePhoneNumber } from "@shared/lib/validation"
 import { ActionChip, Button, Icon, InputField, uiColors, uiRadius } from "@shared/ui"
 import { COPY } from "@shared/constants/copy"
 import { getMemberPaymentRate } from "../../model/member-utils"
@@ -33,8 +33,9 @@ export function MembersTab({ account }: { account: GroupAccount }) {
   const [addModalOpen, setAddModalOpen] = useState(false)
 
   const avgRate =
-    account.members.reduce((sum, member) => sum + getMemberPaymentRate(account.duesRecords, member.id), 0) /
-    Math.max(account.members.length, 1)
+    account.members.length === 0
+      ? "-"
+      : `${Math.round(account.members.reduce((sum, member) => sum + getMemberPaymentRate(account.duesRecords, member.id), 0) / account.members.length)}%`
   const editingMember = useMemo(() => account.members.find((member) => member.id === editingId) ?? null, [account.members, editingId])
   const currentManager = useMemo(() => account.members.find((member) => member.role === "총무") ?? null, [account.members])
   const currentUserMember = useMemo(
@@ -64,7 +65,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
 
   const visibleMembers = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
-    const digitQuery = query.replace(/\D/g, "")
+    const digitQuery = onlyDigits(query)
     return [...account.members]
       .filter((member) => {
         if (roleFilter !== "all" && member.role !== roleFilter) return false
@@ -209,7 +210,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
         </SectionCard>
         <SectionCard>
           <Text style={styles.summaryLabel}>평균 납부율</Text>
-          <Text style={styles.metricText}>{Math.round(avgRate)}%</Text>
+          <Text style={styles.metricText}>{avgRate}</Text>
         </SectionCard>
       </View>
 
@@ -348,7 +349,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
         />
       )}
 
-      <Modal transparent animationType="fade" visible={addModalOpen} onRequestClose={handleCloseAddModal}>
+      <Modal transparent animationType="fade" visible={addModalOpen} onRequestClose={handleCloseAddModal} accessibilityLabel="멤버 추가 모달">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
