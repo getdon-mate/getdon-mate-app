@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import {
@@ -61,10 +61,10 @@ export function AccountListScreen() {
   }, [currentMonth, filter, orderedAccounts, searchQuery])
   const hasActiveFilter = filter !== "all" || Boolean(searchQuery.trim())
 
-  async function handleRefresh() {
+  const handleRefresh = useCallback(async () => {
     const source = await refreshAccounts()
     showToast(source === "remote" ? feedbackPresets.refreshSuccess : feedbackPresets.refreshDemo)
-  }
+  }, [refreshAccounts, showToast])
 
   const listHeader = useMemo(() => (
     <View style={styles.listHeaderWrap}>
@@ -114,7 +114,7 @@ export function AccountListScreen() {
   ), [
     currentUser, initials, unreadNotificationCount, maskAmounts,
     toggleMaskAmounts, navigation, isRefreshingAccounts, isBootstrapping,
-    searchQuery, filter,
+    searchQuery, filter, handleRefresh,
   ])
 
   const listEmpty = useMemo(() => !isBootstrapping ? (
