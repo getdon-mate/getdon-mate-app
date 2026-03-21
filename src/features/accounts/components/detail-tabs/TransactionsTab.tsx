@@ -314,7 +314,7 @@ export function TransactionsTab({
         renderItem={({ item: tx }) => {
           const isMenuOpen = selectedTxForMenu?.id === tx.id
           return (
-            <View style={styles.transactionCard}>
+            <View style={[styles.transactionCard, isMenuOpen && styles.transactionCardOpen]}>
               <View style={styles.transactionCardRow}>
                 <View style={styles.transactionContent}>
                   <TransactionRow account={account} tx={tx} />
@@ -634,6 +634,10 @@ const styles = StyleSheet.create({
     borderBottomColor: "#eef2f7",
     paddingBottom: 6,
   },
+  transactionCardOpen: {
+    zIndex: 10,
+    overflow: "visible",
+  },
   transactionCardRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -657,16 +661,21 @@ const styles = StyleSheet.create({
     backgroundColor: uiColors.primarySoft,
   },
   inlineMenu: {
+    position: "absolute",
+    top: 40,
+    right: 0,
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 6,
-    marginLeft: 4,
-    backgroundColor: uiColors.surfaceMuted,
+    backgroundColor: uiColors.surface,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: uiColors.border,
     overflow: "hidden",
-    alignSelf: "flex-end",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 6,
   },
   inlineMenuItem: {
     flexDirection: "row",
