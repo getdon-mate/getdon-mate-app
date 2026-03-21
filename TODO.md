@@ -5,6 +5,54 @@
 
 ---
 
+## 진행 상태 요약 (2026-03-21 기준)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| P0-1 검색창 UI | ✅ 완료 | InputField 추가 |
+| P0-2 계좌 상세 데이터 미연동 | 🔴 미완 | 백엔드 API 명세 필요 |
+| P0-3 API 엔드포인트 이중 체계 | 🔴 미완 | 백엔드 확인 필요 |
+| P0-4 withdraw() fire-and-forget | ✅ 완료 | await + 에러 처리 |
+| P0-5 availableMonths 하드코딩 | ✅ 완료 | getAvailableMonths() 동적 생성 |
+| P0-6 real 모드 딜레이 | ✅ 완료 | prefersRealApi 조건부 스킵 |
+| P0-7 로그인 300ms 딜레이 | ✅ 완료 | setTimeout 제거 |
+| P0-8 AppUser.password | ✅ 완료 | optional + isGuest 플래그 |
+| P0-9 "Manage" 텍스트 | ✅ 완료 | SettingsTab 리팩토링 시 제거 |
+| P1-1 Refresh Token | 🟠 미완 | 백엔드 엔드포인트 필요 |
+| P1-2 lastBackendFailure race | 🟠 미완 | 동시 호출 적어 영향 낮음 |
+| P1-3 apiConfig TODO 정리 | 🟠 미완 | Vercel 환경변수 확인 후 결정 |
+| P1-4 withdraw setAccounts 누락 | ✅ 완료 | setAccounts + setDataSource 추가 |
+| P1-5 createMeeting bankAccount 타입 | ✅ 완료 | Number() 변환 → string 직전달 |
+| P1-6 signup 에러 메시지 | ✅ 완료 | lastSyncError 폼에 반영 |
+| P1-7 updateProfile API 미연동 | 🟠 미완 | 백엔드 엔드포인트 확인 필요 |
+| P1-8 detailTabMemory 누수 | ✅ 완료 | DETAIL_TAB_MEMORY_LIMIT=20 LRU |
+| P1-9 lastMutationError 미표시 | ✅ 완료 | AppRouter에서 Toast 표시 |
+| P1-10 게스트 UI 구분 없음 | ✅ 완료 | isGuest 플래그 + MyPage 분기 |
+| P2-1 showBalance 중복 | ✅ 완료 | maskAmounts 전역 통합 |
+| P2-2 DashboardTab 하드코딩 색상 | ✅ 완료 | uiColors 토큰 교체 |
+| P2-3 중복 스타일 recipes | ✅ 완료 | recipes.ts에 공통 패턴 14개 정의 |
+| P2-4 달 선택 UI 이중 구조 | ✅ 완료 | 화살표+텍스트만 유지 |
+| P2-5 SpinnerOverlay 전체 화면 | ✅ 완료 | isMutating 연동 |
+| P2-6 빈 계좌 상태 화면 | ✅ 완료 | "목록으로 돌아가기" 버튼 추가 |
+| P2-7 LoginScreen 하드코딩 배경 | ✅ 완료 | uiColors.background 교체 |
+| P2-8 소셜 로그인 버튼 | ✅ 완료 | disabled 처리 + "(준비 중)" 표시 |
+| P2-9 COPY 상수 정리 | 🟡 미완 | 인라인 문자열 다수 잔존 |
+| P2-10 새로고침 토스트 통일 | ✅ 완료 | feedbackPresets 표준화 |
+| P2-11 Android 키보드 | ✅ 완료 | android: "height" 적용 |
+| P2-12 빈 계좌번호 복사 버튼 | ✅ 완료 | accountNumber 조건부 렌더링 |
+| P3-1 SettingsTab 분리 | ✅ 완료 | detail-panels/ 4개 패널로 분리 |
+| P3-2 useApp() 스프레드 | ✅ 완료 | useApp() 제거, 개별 훅 사용 중 |
+| P3-3 DuesTab useApp() | ✅ 완료 | useAppAccounts() 사용 중 |
+| P3-4 swagger-api/mappers 분리 | ✅ 완료 | toGroupAccountSummary → mappers.ts |
+| P3-5 useAccountsOperations 확인 | 🔵 미완 | 코드 검토 필요 |
+| P3-6 getNextTransferDate 위치 | ✅ 완료 | shared/lib/date.ts로 이동 |
+| P3-7 validateAll 헬퍼 | ✅ 완료 | validation.ts에 구현됨 |
+| P3-8 TypeScript strict | 🔵 미완 | as 캐스팅 정리 필요 |
+| P3-9 console.log 배포 노출 | ✅ 완료 | __DEV__ 가드 적용됨 |
+| P3-10 데드코드 login/signup | 🔵 미완 | 인터페이스 의존성으로 보류 |
+
+---
+
 ## 목차
 
 1. [P0 — 출시 차단 이슈](#p0--출시-차단-이슈)
