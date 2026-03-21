@@ -108,7 +108,7 @@ export function useAccountsOperations({
             accessToken: authTokens.accessToken,
             title: data.groupName,
             bankName: data.bankName,
-            bankAccount: Number(data.accountNumber.replace(/\D/g, "")) || 0,
+            bankAccount: data.accountNumber,
           })
           const meetings = await queryClient.fetchQuery({
             queryKey: ["swaggerMeetings", authTokens.accessToken],
