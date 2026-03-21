@@ -2,9 +2,9 @@ import { useMemo, useState } from "react"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import {
+  FlatList,
   Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   useWindowDimensions,
   View,
@@ -23,6 +23,7 @@ import { AccountSummaryCard } from "../components/AccountSummaryCard"
 import { EmptyStateCard } from "../components/EmptyStateCard"
 import { UserHeaderCard } from "../components/UserHeaderCard"
 import { getHomeAccounts, getPaymentSummary } from "../model/selectors"
+import type { GroupAccount } from "../model/types"
 
 type HomeFilter = "all" | "attention"
 
@@ -61,102 +62,115 @@ export function AccountListScreen() {
     showToast(source === "remote" ? feedbackPresets.refreshSuccess : feedbackPresets.refreshDemo)
   }
 
-  return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl
-          refreshing={isRefreshingAccounts}
-          onRefresh={() => void handleRefresh()}
-          tintColor={uiColors.primary}
-        />
-      }
-    >
-      <View style={[styles.contentWrap, isWide && styles.contentWrapWide]}>
-        <UserHeaderCard
-          user={currentUser}
-          initials={initials}
-          unreadNotificationCount={unreadNotificationCount}
-          maskAmounts={maskAmounts}
-          onToggleMaskAmounts={toggleMaskAmounts}
-          onOpenNotifications={() => navigation.navigate(ROUTES.NotificationList)}
-          onOpenMyPage={() => navigation.navigate(ROUTES.MyPage)}
-          onOpenAppSettings={() => navigation.navigate(ROUTES.AppSettings)}
-        />
+  const listHeader = (
+    <View style={styles.listHeaderWrap}>
+      <UserHeaderCard
+        user={currentUser}
+        initials={initials}
+        unreadNotificationCount={unreadNotificationCount}
+        maskAmounts={maskAmounts}
+        onToggleMaskAmounts={toggleMaskAmounts}
+        onOpenNotifications={() => navigation.navigate(ROUTES.NotificationList)}
+        onOpenMyPage={() => navigation.navigate(ROUTES.MyPage)}
+        onOpenAppSettings={() => navigation.navigate(ROUTES.AppSettings)}
+      />
 
-        <View style={styles.searchStack}>
-          <InputField
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="모임명, 은행명, 계좌번호 검색"
-            autoCapitalize="none"
-            accessibilityLabel="모임통장 검색"
-          />
-          <View testID="account-list-filter-actions" style={styles.filterActionsRow}>
-            <View style={styles.filterRow}>
-              <ActionChip label="전체" active={filter === "all"} onPress={() => setFilter("all")} />
-              <ActionChip label="미납 2명+" active={filter === "attention"} onPress={() => setFilter("attention")} />
-            </View>
-            <Pressable
-              style={[styles.headerIconButton, isRefreshingAccounts && styles.headerIconButtonDisabled]}
-              onPress={() => void handleRefresh()}
-              accessibilityRole="button"
-              accessibilityLabel="모임통장 목록 새로고침"
-              disabled={isRefreshingAccounts}
-            >
-              <Icon name="refresh" size={18} color={uiColors.text} />
-            </Pressable>
+      <View style={styles.searchStack}>
+        <InputField
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="모임명, 은행명, 계좌번호 검색"
+          autoCapitalize="none"
+          accessibilityLabel="모임통장 검색"
+        />
+        <View testID="account-list-filter-actions" style={styles.filterActionsRow}>
+          <View style={styles.filterRow}>
+            <ActionChip label="전체" active={filter === "all"} onPress={() => setFilter("all")} />
+            <ActionChip label="미납 2명+" active={filter === "attention"} onPress={() => setFilter("attention")} />
           </View>
+          <Pressable
+            style={[styles.headerIconButton, isRefreshingAccounts && styles.headerIconButtonDisabled]}
+            onPress={() => void handleRefresh()}
+            accessibilityRole="button"
+            accessibilityLabel="모임통장 목록 새로고침"
+            disabled={isRefreshingAccounts}
+          >
+            <Icon name="refresh" size={18} color={uiColors.text} />
+          </Pressable>
         </View>
+      </View>
 
-        {isBootstrapping ? (
-          <>
-            <LoadingStateCard />
-            <LoadingStateCard />
-          </>
-        ) : visibleAccounts.length > 0 ? (
-          visibleAccounts.map((account) => (
-            <AccountSummaryCard
-              key={account.id}
-              account={account}
-              currentMonth={currentMonth}
-              maskAmounts={maskAmounts}
-              onPress={() => {
-                selectAccount(account.id)
-                navigation.navigate(ROUTES.AccountDetail, { accountId: account.id })
-              }}
-            />
-          ))
-        ) : hasActiveFilter ? (
-          <EmptyStateCard
-            title="조건에 맞는 모임통장이 없습니다."
-            description="검색어나 필터를 조정해보세요."
-            actionLabel="필터 초기화"
-            onAction={() => {
-              setSearchQuery("")
-              setFilter("all")
+      {isBootstrapping ? (
+        <>
+          <LoadingStateCard />
+          <LoadingStateCard />
+        </>
+      ) : null}
+    </View>
+  )
+
+  const listEmpty = !isBootstrapping ? (
+    hasActiveFilter ? (
+      <EmptyStateCard
+        title="조건에 맞는 모임통장이 없습니다."
+        description="검색어나 필터를 조정해보세요."
+        actionLabel="필터 초기화"
+        onAction={() => {
+          setSearchQuery("")
+          setFilter("all")
+        }}
+      />
+    ) : (
+      <EmptyStateCard
+        title={COPY.account.createEmptyTitle}
+        description={COPY.account.createEmptyDescription}
+        actionLabel="모임통장 만들기"
+        onAction={() => navigation.navigate(ROUTES.AccountCreate)}
+      />
+    )
+  ) : null
+
+  const listFooter = !isBootstrapping ? (
+    <Button
+      style={styles.addCard}
+      variant="secondary"
+      label={COPY.account.createButtonLabel}
+      onPress={() => navigation.navigate(ROUTES.AccountCreate)}
+    />
+  ) : null
+
+  return (
+    <View style={styles.screen}>
+      <FlatList<GroupAccount>
+        style={isWide ? styles.flatListWide : undefined}
+        contentContainerStyle={styles.content}
+        data={isBootstrapping ? [] : visibleAccounts}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item: account }) => (
+          <AccountSummaryCard
+            account={account}
+            currentMonth={currentMonth}
+            maskAmounts={maskAmounts}
+            onPress={() => {
+              selectAccount(account.id)
+              navigation.navigate(ROUTES.AccountDetail, { accountId: account.id })
             }}
           />
-        ) : (
-          <EmptyStateCard
-            title={COPY.account.createEmptyTitle}
-            description={COPY.account.createEmptyDescription}
-            actionLabel="모임통장 만들기"
-            onAction={() => navigation.navigate(ROUTES.AccountCreate)}
-          />
         )}
-
-        {!isBootstrapping ? (
-          <Button
-            style={styles.addCard}
-            variant="secondary"
-            label={COPY.account.createButtonLabel}
-            onPress={() => navigation.navigate(ROUTES.AccountCreate)}
+        ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        ListFooterComponent={listFooter}
+        ListFooterComponentStyle={styles.listFooterStyle}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshingAccounts}
+            onRefresh={() => void handleRefresh()}
+            tintColor={uiColors.primary}
           />
-        ) : null}
-      </View>
-    </ScrollView>
+        }
+      />
+    </View>
   )
 }
 
@@ -170,13 +184,20 @@ const styles = StyleSheet.create({
     paddingTop: uiSpacing.md,
     paddingBottom: 30,
   },
-  contentWrap: {
-    gap: 14,
+  flatListWide: {
+    maxWidth: 920,
+    alignSelf: "center",
     width: "100%",
   },
-  contentWrapWide: {
-    alignSelf: "center",
-    maxWidth: 920,
+  listHeaderWrap: {
+    gap: 14,
+    marginBottom: 14,
+  },
+  itemSeparator: {
+    height: 14,
+  },
+  listFooterStyle: {
+    marginTop: 14,
   },
   searchStack: {
     gap: 8,
