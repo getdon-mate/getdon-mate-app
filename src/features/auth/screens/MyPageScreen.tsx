@@ -58,7 +58,7 @@ export function MyPageScreen() {
           <Card style={styles.profileCard}>
             <View style={styles.profileTopRow}>
               <View style={styles.avatarCircle}>
-                <Text style={styles.avatarText}>{(name || currentUser?.name || "나").slice(0, 1)}</Text>
+                <Text style={styles.avatarText}>{(name.trim() || currentUser?.name || "나").slice(0, 1)}</Text>
               </View>
               <Badge label="My Account" tone="primary" />
             </View>
