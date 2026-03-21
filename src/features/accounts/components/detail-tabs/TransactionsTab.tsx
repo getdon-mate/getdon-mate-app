@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState } from "react"
+import { useDeferredValue, useCallback, useEffect, useMemo, useState } from "react"
 import { Pressable, SectionList, StyleSheet, Text, View } from "react-native"
 import { useAppAccounts, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
@@ -141,6 +141,13 @@ export function TransactionsTab({
     setSortOrder("latest")
   }
 
+  const handleSelectSuggestion = useCallback((tx: Transaction) => {
+    setAmount(String(tx.amount))
+    setDescription(tx.description)
+    setCategory(tx.category)
+    setDate(tx.date)
+  }, [])
+
   async function handleSubmit() {
     const validationError =
       requireText(description, "거래 설명을 입력해주세요.") ??
@@ -282,12 +289,7 @@ export function TransactionsTab({
                       <ActionChip
                         key={tx.id}
                         label={`${tx.description} · ${formatKRW(tx.amount)}`}
-                        onPress={() => {
-                          setAmount(String(tx.amount))
-                          setDescription(tx.description)
-                          setCategory(tx.category)
-                          setDate(tx.date)
-                        }}
+                        onPress={() => handleSelectSuggestion(tx)}
                       />
                     ))}
                   </View>
