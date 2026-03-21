@@ -38,12 +38,12 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   memberName: {
-    color: "#111827",
+    color: uiColors.textStrong,
     fontSize: 14,
     fontWeight: "700",
   },
   memberMeta: {
-    color: "#6b7280",
+    color: uiColors.textMuted,
     fontSize: 12,
   },
   transactionAmount: {
@@ -51,9 +51,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   incomeText: {
-    color: "#16a34a",
+    color: uiColors.success,
   },
   expenseText: {
-    color: uiColors.textStrong,
+    color: uiColors.danger,
   },
 })
