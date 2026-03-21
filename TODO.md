@@ -10,8 +10,8 @@
 | 항목 | 상태 | 비고 |
 |------|------|------|
 | P0-1 검색창 UI | ✅ 완료 | InputField 추가 |
-| P0-2 계좌 상세 데이터 미연동 | 🔴 미완 | 백엔드 API 명세 필요 |
-| P0-3 API 엔드포인트 이중 체계 | 🔴 미완 | 백엔드 확인 필요 |
+| P0-2 계좌 상세 데이터 미연동 | 🟡 부분완료 | 선택적 필드 확장, fetchMeetingDetail() 추가. 백엔드 응답에 필드 포함 시 자동 반영 |
+| P0-3 API 엔드포인트 이중 체계 | ✅ 완료 | backendAdapter.login/signup 데드코드 제거 |
 | P0-4 withdraw() fire-and-forget | ✅ 완료 | await + 에러 처리 |
 | P0-5 availableMonths 하드코딩 | ✅ 완료 | getAvailableMonths() 동적 생성 |
 | P0-6 real 모드 딜레이 | ✅ 완료 | prefersRealApi 조건부 스킵 |
@@ -20,7 +20,7 @@
 | P0-9 "Manage" 텍스트 | ✅ 완료 | SettingsTab 리팩토링 시 제거 |
 | P1-1 Refresh Token | 🟠 미완 | 백엔드 엔드포인트 필요 |
 | P1-2 lastBackendFailure race | 🟠 미완 | 동시 호출 적어 영향 낮음 |
-| P1-3 apiConfig TODO 정리 | 🟠 미완 | Vercel 환경변수 확인 후 결정 |
+| P1-3 apiConfig TODO 정리 | ✅ 완료 | failsafe 블록 제거 (parseApiMode가 이미 처리) |
 | P1-4 withdraw setAccounts 누락 | ✅ 완료 | setAccounts + setDataSource 추가 |
 | P1-5 createMeeting bankAccount 타입 | ✅ 완료 | Number() 변환 → string 직전달 |
 | P1-6 signup 에러 메시지 | ✅ 완료 | lastSyncError 폼에 반영 |
@@ -36,7 +36,7 @@
 | P2-6 빈 계좌 상태 화면 | ✅ 완료 | "목록으로 돌아가기" 버튼 추가 |
 | P2-7 LoginScreen 하드코딩 배경 | ✅ 완료 | uiColors.background 교체 |
 | P2-8 소셜 로그인 버튼 | ✅ 완료 | disabled 처리 + "(준비 중)" 표시 |
-| P2-9 COPY 상수 정리 | 🟡 미완 | 인라인 문자열 다수 잔존 |
+| P2-9 COPY 상수 정리 | 🟡 부분완료 | account/dues 네임스페이스 추가, 주요 중복 문자열 통일 |
 | P2-10 새로고침 토스트 통일 | ✅ 완료 | feedbackPresets 표준화 |
 | P2-11 Android 키보드 | ✅ 완료 | android: "height" 적용 |
 | P2-12 빈 계좌번호 복사 버튼 | ✅ 완료 | accountNumber 조건부 렌더링 |
