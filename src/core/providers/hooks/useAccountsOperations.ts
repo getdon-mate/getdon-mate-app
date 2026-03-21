@@ -2,7 +2,7 @@ import { useCallback } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { type UseMutationResult } from "@tanstack/react-query"
 import { createAccountsBackendV1Adapter } from "@features/accounts/api"
-import { fetchMyMeetings, type SwaggerMeetingSummary } from "@features/accounts/api/swagger-api"
+import { fetchMyMeetings } from "@features/accounts/api/swagger-api"
 import { toGroupAccountSummary } from "@features/accounts/api/mappers"
 import type { AppUser, AutoTransfer, GroupAccount, OneTimeDues, OneTimeDuesRecord, ReminderType } from "@features/accounts/model/types"
 import type { NotificationItem } from "@shared/lib/notification-state"
@@ -89,6 +89,7 @@ export function useAccountsOperations({
   swaggerCreateMeetingMutation,
 }: AccountsOperationsInput) {
   const queryClient = useQueryClient()
+  const { mutateAsync: createMeetingMutateAsync } = swaggerCreateMeetingMutation
 
   const selectAccount = useCallback((id: string) => {
     setSelectedAccountId(id)
@@ -104,7 +105,7 @@ export function useAccountsOperations({
 
       await runBusy(async () => {
         if (prefersRealApi && authTokens?.accessToken) {
-          await swaggerCreateMeetingMutation.mutateAsync({
+          await createMeetingMutateAsync({
             accessToken: authTokens.accessToken,
             title: data.groupName,
             bankName: data.bankName,
@@ -114,7 +115,7 @@ export function useAccountsOperations({
             queryKey: ["swaggerMeetings", authTokens.accessToken],
             queryFn: () => fetchMyMeetings(authTokens.accessToken),
           })
-          setAccounts(cloneAccounts(meetings.map((meeting: SwaggerMeetingSummary) => toGroupAccountSummary(meeting, currentUser))))
+          setAccounts(cloneAccounts(meetings.map((meeting) => toGroupAccountSummary(meeting, currentUser))))
           setDataSource("remote")
           return
         }
@@ -124,7 +125,7 @@ export function useAccountsOperations({
         setAccounts((prev) => [...prev, newAccount])
       })
     },
-    [authTokens?.accessToken, currentUser, prefersRealApi, queryClient, runBusy, setAccounts, setDataSource, swaggerCreateMeetingMutation]
+    [authTokens?.accessToken, createMeetingMutateAsync, currentUser, prefersRealApi, queryClient, runBusy, setAccounts, setDataSource]
   )
 
   const deleteAccount = useCallback(
