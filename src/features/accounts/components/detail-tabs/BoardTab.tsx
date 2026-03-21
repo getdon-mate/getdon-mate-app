@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { memo, useMemo, useState } from "react"
 import { Pressable, Share, StyleSheet, Text, TextInput, View } from "react-native"
 import { useAppAccounts, useAppAuth, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
@@ -44,7 +44,7 @@ function getProfileMeta(account: GroupAccount, authorName: string, authorUserId?
   }
 }
 
-function CommentItem({
+const CommentItem = memo(function CommentItem({
   account,
   comment,
   ownComment,
@@ -131,7 +131,7 @@ function CommentItem({
       </View>
     </View>
   )
-}
+})
 
 function CommentComposer({
   value,
@@ -181,7 +181,7 @@ function CommentComposer({
   )
 }
 
-function PostCard({
+const PostCard = memo(function PostCard({
   account,
   post,
   currentUserId,
@@ -319,7 +319,7 @@ function PostCard({
       />
     </SectionCard>
   )
-}
+})
 
 export function BoardTab({ account }: { account: GroupAccount }) {
   const { currentUser } = useAppAuth()
