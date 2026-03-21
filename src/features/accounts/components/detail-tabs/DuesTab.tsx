@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import { useAppAccounts } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
@@ -29,7 +30,10 @@ export function DuesTab({
   const monthIndex = availableMonths.indexOf(selectedMonth)
   const disablePreviousMonth = monthIndex >= availableMonths.length - 1
   const disableNextMonth = monthIndex <= 0
-  const { dues: currentDues, paid, unpaid, exempt, progress } = getPaymentSummary(account, selectedMonth)
+  const { dues: currentDues, paid, unpaid, exempt, progress } = useMemo(
+    () => getPaymentSummary(account, selectedMonth),
+    [account, selectedMonth]
+  )
   const unpaidRecords = currentDues.filter((record) => record.status === "unpaid")
 
   async function handleSendReminder(memberId: string, memberName: string, type: "payment-reminder" | "transfer-request") {
