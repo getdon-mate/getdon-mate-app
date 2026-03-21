@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   incomeText: {
-    color: uiColors.success,
+    color: uiColors.primary,
   },
   expenseText: {
     color: uiColors.danger,
