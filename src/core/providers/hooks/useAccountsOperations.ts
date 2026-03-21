@@ -71,7 +71,7 @@ interface AccountsOperationsInput {
   setSelectedAccountId: Dispatch<SetStateAction<string | null>>
   setNotifications: Dispatch<SetStateAction<NotificationItem[]>>
   setDataSource: Dispatch<SetStateAction<DataSource>>
-  swaggerCreateMeetingMutation: UseMutationResult<null, Error, { accessToken: string; title: string; bankName: string; bankAccount: number }, unknown>
+  swaggerCreateMeetingMutation: UseMutationResult<null, Error, { accessToken: string; title: string; bankName: string; bankAccount: string }, unknown>
 }
 
 export function useAccountsOperations({

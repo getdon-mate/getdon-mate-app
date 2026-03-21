@@ -39,7 +39,7 @@ export function useAccountsProvider({
   setDataSource,
 }: UseAccountsProviderInput) {
   const swaggerCreateMeetingMutation = useMutation({
-    mutationFn: ({ accessToken, title, bankName, bankAccount }: { accessToken: string; title: string; bankName: string; bankAccount: number }) =>
+    mutationFn: ({ accessToken, title, bankName, bankAccount }: { accessToken: string; title: string; bankName: string; bankAccount: string }) =>
       createMeetingWithSwaggerApi(accessToken, { title, bankName, bankAccount }),
   })
 

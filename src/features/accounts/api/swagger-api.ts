@@ -67,3 +67,7 @@ export async function createMeetingWithSwaggerApi(accessToken: string, payload: 
 export async function fetchMeetingDetail(accessToken: string, meetingId: number) {
   return apiClient.get<SwaggerMeetingDetail>(`/api/meeting/${meetingId}`, withAuthHeaders(accessToken))
 }
+
+export async function refreshAccessToken(refreshToken: string) {
+  return apiClient.post<SwaggerLoginResponse>("/api/token/refresh", { refreshToken })
+}

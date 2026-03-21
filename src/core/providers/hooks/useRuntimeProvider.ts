@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { getErrorMessage, isApiError, mapApiFailureToUserMessage } from "@core/api"
 import { createAccountsBackendV1Adapter, getLastBackendFailure } from "@features/accounts/api"
-import { fetchMyMeetings, type SwaggerMeetingSummary } from "@features/accounts/api/swagger-api"
+import { fetchMyMeetings, refreshAccessToken, type SwaggerMeetingSummary } from "@features/accounts/api/swagger-api"
 import { toGroupAccountSummary } from "@features/accounts/api/mappers"
 import { defaultAccounts, defaultUsers } from "@features/accounts/model/fixtures"
 import type { AppUser, GroupAccount } from "@features/accounts/model/types"
@@ -165,15 +165,41 @@ export function useRuntimeProvider({
     setLastSyncError(null)
   }, [currentUser, prefersRealApi, remoteMeetingsQuery.data, setAccounts, setDataSource, setLastSyncError])
 
-  useEffect(() => {
-    if (!remoteMeetingsQuery.error) return
-    if (isApiError(remoteMeetingsQuery.error) && remoteMeetingsQuery.error.status === 401) {
+  // ─── Token refresh ────────────────────────────────────────────────────────────
+  /**
+   * refreshToken으로 새 accessToken 발급을 시도합니다.
+   * 성공 시 authTokens 갱신(true 반환), 실패 시 강제 로그아웃(false 반환).
+   */
+  const tryRefreshTokens = useCallback(async (): Promise<boolean> => {
+    if (!authTokens?.refreshToken) {
       setAuthTokens(null)
       setCurrentUser(null)
       setSelectedAccountId(null)
-      setAuthRecoveryNotice("로그인이 만료되었습니다. 다시 로그인해주세요.")
+      return false
     }
-  }, [remoteMeetingsQuery.error, setAuthTokens, setCurrentUser, setSelectedAccountId])
+    try {
+      const newTokens = await refreshAccessToken(authTokens.refreshToken)
+      setAuthTokens(newTokens)
+      return true
+    } catch {
+      setAuthTokens(null)
+      setCurrentUser(null)
+      setSelectedAccountId(null)
+      return false
+    }
+  }, [authTokens?.refreshToken, setAuthTokens, setCurrentUser, setSelectedAccountId])
+
+  useEffect(() => {
+    if (!remoteMeetingsQuery.error) return
+    if (!isApiError(remoteMeetingsQuery.error) || remoteMeetingsQuery.error.status !== 401) return
+    void (async () => {
+      const refreshed = await tryRefreshTokens()
+      if (!refreshed) {
+        setAuthRecoveryNotice("로그인이 만료되었습니다. 다시 로그인해주세요.")
+      }
+      // 성공 시 authTokens 변경 → remoteMeetingsQuery 자동 재실행
+    })()
+  }, [remoteMeetingsQuery.error, tryRefreshTokens, setAuthRecoveryNotice])
 
   // ─── Preferences persistence ──────────────────────────────────────────────────
   useEffect(() => { writeNotificationPreferences(notificationPreferences) }, [notificationPreferences])
@@ -210,10 +236,11 @@ export function useRuntimeProvider({
         return "remote" as const
       } catch (err) {
         if (isApiError(err) && err.status === 401) {
-          setAuthTokens(null)
-          setCurrentUser(null)
-          setSelectedAccountId(null)
-          setAuthRecoveryNotice("로그인이 만료되었습니다. 다시 로그인해주세요.")
+          const refreshed = await tryRefreshTokens()
+          if (!refreshed) {
+            setAuthRecoveryNotice("로그인이 만료되었습니다. 다시 로그인해주세요.")
+          }
+          // 성공 시 authTokens 변경 → 다음 refreshAccounts 호출 시 새 토큰 사용
           return "remote" as const
         }
         setLastSyncError("모임 목록을 다시 불러오지 못했습니다.")
@@ -244,7 +271,7 @@ export function useRuntimeProvider({
     } finally {
       setIsRefreshingAccounts(false)
     }
-  }, [authTokens?.accessToken, backendAdapter, currentUser, prefersRealApi, queryClient, setAccounts, setAuthTokens, setCurrentUser, setDataSource, setLastSyncError, setSelectedAccountId, setUsers])
+  }, [authTokens?.accessToken, backendAdapter, currentUser, prefersRealApi, queryClient, tryRefreshTokens, setAccounts, setAuthTokens, setCurrentUser, setDataSource, setLastSyncError, setSelectedAccountId, setUsers])
 
   const toggleMaskAmounts = useCallback(() => { setMaskAmounts((prev) => !prev) }, [])
 
