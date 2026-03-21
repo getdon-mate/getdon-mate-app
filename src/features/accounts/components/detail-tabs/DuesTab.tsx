@@ -4,14 +4,15 @@ import { useFeedback } from "@core/providers/FeedbackProvider"
 import { ActionChip, Icon, uiColors } from "@shared/ui"
 import { getAvailableMonths } from "@shared/lib/date"
 import { formatDate, formatMonth } from "@shared/lib/format"
-
-const availableMonths = getAvailableMonths(11)
+import { COPY } from "@shared/constants/copy"
 import { getMemberById } from "../../model/member-utils"
 import { getLatestReminderForMember, getPaymentSummary } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
 import { SectionHeader } from "../SectionHeader"
 import { SectionCard } from "../SectionCard"
+
+const availableMonths = getAvailableMonths(11)
 
 export function DuesTab({
   account,
@@ -34,7 +35,7 @@ export function DuesTab({
   async function handleSendReminder(memberId: string, memberName: string, type: "payment-reminder" | "transfer-request") {
     if (type === "payment-reminder") {
       await sendPaymentReminder(account.id, memberId, selectedMonth)
-      showToast({ tone: "success", title: "납부 안내 전송", message: `${memberName}님께 부드럽게 안내를 보냈습니다.` })
+      showToast({ tone: "success", title: COPY.dues.reminderSentTitle, message: COPY.dues.reminderSent(memberName) })
       return
     }
 

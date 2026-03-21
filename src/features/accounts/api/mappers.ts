@@ -94,14 +94,15 @@ export function createRemoteUser(email: string, name?: string): AppUser {
 }
 
 export function toGroupAccountSummary(meeting: SwaggerMeetingSummary, currentUser: AppUser | null): GroupAccount {
+  const dueDay = meeting.dueDay ?? 25
   return {
     id: String(meeting.meetingId),
     groupName: meeting.title,
     bankName: meeting.bankName,
-    accountNumber: "",
+    accountNumber: meeting.bankAccount ?? "",
     balance: meeting.amount,
-    monthlyDuesAmount: 0,
-    dueDay: 25,
+    monthlyDuesAmount: meeting.monthlyDues ?? 0,
+    dueDay,
     members: currentUser
       ? [
           {
@@ -120,7 +121,7 @@ export function toGroupAccountSummary(meeting: SwaggerMeetingSummary, currentUse
     transactions: [],
     autoTransfer: {
       enabled: false,
-      dayOfMonth: 25,
+      dayOfMonth: dueDay,
       amount: 0,
       fromAccount: "",
     },

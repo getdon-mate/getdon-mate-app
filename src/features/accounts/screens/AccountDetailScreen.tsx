@@ -12,6 +12,7 @@ import { Button, uiColors } from "@shared/ui"
 import { buildAccountInviteLink } from "@shared/lib/invite"
 import { getCurrentMonthKey } from "@shared/lib/date"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
+import { COPY } from "@shared/constants/copy"
 import { LoadingStateCard } from "../components/LoadingStateCard"
 import { DashboardTab } from "../components/detail-tabs/DashboardTab"
 import { DuesTab } from "../components/detail-tabs/DuesTab"
@@ -123,10 +124,10 @@ export function AccountDetailScreen() {
     if (!account) return
     const copied = await copyText(account.accountNumber)
     if (copied) {
-      showToast({ tone: "success", title: "복사 완료", message: "계좌번호를 복사했어요." })
+      showToast({ tone: "success", title: "복사 완료", message: COPY.account.copyAccountNumber })
       return
     }
-    showAlert({ title: "복사 실패", message: "계좌번호를 복사하지 못했습니다.", tone: "danger" })
+    showAlert({ title: "복사 실패", message: COPY.account.copyAccountNumberFail, tone: "danger" })
   }
 
   async function handleShareInvite() {

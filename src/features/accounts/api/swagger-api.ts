@@ -26,6 +26,18 @@ export interface SwaggerMeetingSummary {
   bankName: string
   amount: number
   paidCount: number
+  // 백엔드가 제공할 경우 사용되는 선택적 상세 필드
+  bankAccount?: string
+  dueDay?: number
+  monthlyDues?: number
+  memberCount?: number
+}
+
+export interface SwaggerMeetingDetail extends SwaggerMeetingSummary {
+  bankAccount: string
+  dueDay: number
+  monthlyDues: number
+  memberCount: number
 }
 
 function withAuthHeaders(accessToken: string) {
@@ -50,4 +62,8 @@ export async function fetchMyMeetings(accessToken: string) {
 
 export async function createMeetingWithSwaggerApi(accessToken: string, payload: SwaggerCreateMeetingRequest) {
   return apiClient.post<null>("/api/meeting/create", payload, withAuthHeaders(accessToken))
+}
+
+export async function fetchMeetingDetail(accessToken: string, meetingId: number) {
+  return apiClient.get<SwaggerMeetingDetail>(`/api/meeting/${meetingId}`, withAuthHeaders(accessToken))
 }

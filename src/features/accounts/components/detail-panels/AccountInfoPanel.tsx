@@ -4,6 +4,7 @@ import { useAppAccounts } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { copyText } from "@shared/lib/clipboard"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
+import { COPY } from "@shared/constants/copy"
 import { requireText, validateAll, validateDayOfMonth, validatePositiveNumber } from "@shared/lib/validation"
 import { Button, DayOfMonthSelectField, Icon, InputField, NumericInputField, uiColors, uiRadius, uiSpacing } from "@shared/ui"
 import { formatKRW } from "@shared/lib/format"
@@ -30,7 +31,7 @@ export function AccountInfoPanel({ account }: { account: GroupAccount }) {
   async function handleCopyAccountNumber() {
     const copied = await copyText(account.accountNumber)
     if (copied) {
-      showToast({ tone: "success", title: "복사 완료", message: "계좌번호를 복사했습니다." })
+      showToast({ tone: "success", title: "복사 완료", message: COPY.account.copyAccountNumber })
       return
     }
     showAlert({ title: "복사 실패", message: "권한이나 기기 설정 때문에 자동 복사를 완료하지 못했습니다.", tone: "danger" })

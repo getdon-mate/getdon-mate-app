@@ -4,6 +4,7 @@ import { useAppAccounts, useAppAuth } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validatePhoneNumber } from "@shared/lib/validation"
 import { ActionChip, Button, Icon, InputField, uiColors, uiRadius } from "@shared/ui"
+import { COPY } from "@shared/constants/copy"
 import { getMemberPaymentRate } from "../../model/member-utils"
 import { getLatestReminderForMember } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"
@@ -191,7 +192,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
 
     if (type === "payment-reminder") {
       await sendPaymentReminder(account.id, memberId, latestMonth)
-      showToast({ tone: "success", title: "납부 안내 전송", message: `${memberName}님께 납부 안내를 보냈습니다.` })
+      showToast({ tone: "success", title: COPY.dues.reminderSentTitle, message: COPY.dues.reminderSent(memberName) })
       return
     }
 

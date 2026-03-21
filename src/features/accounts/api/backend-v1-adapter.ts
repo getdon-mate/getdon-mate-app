@@ -1,19 +1,10 @@
 import { apiClient, isApiError, shouldUseRealApi } from "@core/api"
 import { logger } from "@shared/lib/logger"
 import type { AppUser, AutoTransfer, GroupAccount, Member, MemberRole, Transaction, TransactionType } from "../model/types"
-import type { ApiAuthResponse, ApiBootstrapResponse, ApiGroupAccount, ApiMember, ApiTransaction } from "./dto"
-import { toDomainAccount, toDomainAuthResponse, toDomainBootstrapResponse, toDomainTransaction } from "./mappers"
+import type { ApiBootstrapResponse, ApiGroupAccount, ApiMember, ApiTransaction } from "./dto"
+import { toDomainAccount, toDomainBootstrapResponse, toDomainTransaction } from "./mappers"
 
 const API_V1_PREFIX = "/api/v1"
-
-interface AuthPayload {
-  email: string
-  password: string
-}
-
-interface SignupPayload extends AuthPayload {
-  name: string
-}
 
 interface CreateAccountPayload {
   groupName: string
@@ -51,11 +42,6 @@ interface UpsertTransactionPayload {
   category: string
 }
 
-interface AuthResponse {
-  user: AppUser
-  accounts?: GroupAccount[]
-}
-
 interface BootstrapResponse {
   users: AppUser[]
   accounts: GroupAccount[]
@@ -75,8 +61,6 @@ export function getLastBackendFailure(): BackendFailureInfo | null {
 
 export interface AccountsBackendAdapter {
   loadBootstrap: () => Promise<BootstrapResponse | null>
-  login: (payload: AuthPayload) => Promise<AuthResponse | null>
-  signup: (payload: SignupPayload) => Promise<AuthResponse | null>
   createAccount: (payload: CreateAccountPayload) => Promise<GroupAccount | null>
   deleteAccount: (accountId: string) => Promise<void>
   toggleDues: (accountId: string, memberId: string, month: string) => Promise<void>
@@ -138,52 +122,11 @@ async function tryBackend<T>(operationName: string, operation: () => Promise<T>)
   }
 }
 
-async function fetchAccounts(): Promise<GroupAccount[] | null> {
-  const response = await tryBackend("accounts.list", () => apiClient.get<ApiGroupAccount[]>(`${API_V1_PREFIX}/accounts`))
-  return response?.map(toDomainAccount) ?? null
-}
-
 export function createAccountsBackendV1Adapter(): AccountsBackendAdapter {
   return {
     async loadBootstrap() {
       const response = await tryBackend("bootstrap", () => apiClient.get<ApiBootstrapResponse>(`${API_V1_PREFIX}/bootstrap`))
       return response ? toDomainBootstrapResponse(response) : null
-    },
-
-    async login(payload) {
-      const response = await tryBackend("auth.login", () =>
-        apiClient.post<ApiAuthResponse>(`${API_V1_PREFIX}/auth/login`, payload)
-      )
-      if (!response) return null
-
-      const domainResponse = toDomainAuthResponse(response)
-
-      if (!domainResponse.accounts) {
-        const accounts = await fetchAccounts()
-        if (accounts) {
-          return { ...domainResponse, accounts }
-        }
-      }
-
-      return domainResponse
-    },
-
-    async signup(payload) {
-      const response = await tryBackend("auth.signup", () =>
-        apiClient.post<ApiAuthResponse>(`${API_V1_PREFIX}/auth/signup`, payload)
-      )
-      if (!response) return null
-
-      const domainResponse = toDomainAuthResponse(response)
-
-      if (!domainResponse.accounts) {
-        const accounts = await fetchAccounts()
-        if (accounts) {
-          return { ...domainResponse, accounts }
-        }
-      }
-
-      return domainResponse
     },
 
     async createAccount(payload) {

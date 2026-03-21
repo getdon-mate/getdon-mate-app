@@ -15,6 +15,7 @@ import { useAppAccounts, useAppAuth, useAppRuntime } from "@core/providers/AppPr
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { getCurrentMonthKey } from "@shared/lib/date"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
+import { COPY } from "@shared/constants/copy"
 import { ActionChip, Button, Icon, InputField, uiColors, uiSpacing } from "@shared/ui"
 import { onlyDigits } from "@shared/lib/validation"
 import { LoadingStateCard } from "../components/LoadingStateCard"
@@ -138,8 +139,8 @@ export function AccountListScreen() {
           />
         ) : (
           <EmptyStateCard
-            title="아직 모임통장이 없습니다."
-            description="새 모임통장을 열고 회비 관리를 시작하세요."
+            title={COPY.account.createEmptyTitle}
+            description={COPY.account.createEmptyDescription}
             actionLabel="모임통장 만들기"
             onAction={() => navigation.navigate(ROUTES.AccountCreate)}
           />
@@ -149,7 +150,7 @@ export function AccountListScreen() {
           <Button
             style={styles.addCard}
             variant="secondary"
-            label="+ 새 모임통장 개설"
+            label={COPY.account.createButtonLabel}
             onPress={() => navigation.navigate(ROUTES.AccountCreate)}
           />
         ) : null}

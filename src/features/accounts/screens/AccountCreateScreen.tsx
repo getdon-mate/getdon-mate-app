@@ -9,6 +9,7 @@ import { useFeedback } from "@core/providers/FeedbackProvider"
 import { getErrorMessage } from "@core/api"
 import { requireText, validateDayOfMonth, validatePositiveNumber } from "@shared/lib/validation"
 import { Icon, PageHeader, uiColors } from "@shared/ui"
+import { COPY } from "@shared/constants/copy"
 import { AccountCreatePanel } from "../components/AccountCreatePanel"
 
 export function AccountCreateScreen() {
@@ -50,7 +51,7 @@ export function AccountCreateScreen() {
         monthlyDuesAmount: Number(monthlyDues),
         dueDay: Number(dueDay),
       })
-      showToast({ tone: "success", title: "개설 완료", message: "새 모임통장을 만들었습니다." })
+      showToast({ tone: "success", title: "개설 완료", message: COPY.account.createSuccess })
       navigation.navigate(ROUTES.AccountList)
     } catch (err) {
       const message = getErrorMessage(err, "모임통장을 개설하지 못했습니다.")
@@ -69,7 +70,7 @@ export function AccountCreateScreen() {
             <Pressable style={styles.backButton} onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="이전 화면으로 이동">
               <Icon name="chevronLeft" size={20} color={uiColors.text} />
             </Pressable>
-            <PageHeader title="모임통장 개설" subtitle="새로운 모임통장을 만들어보세요." />
+            <PageHeader title={COPY.account.createTitle} subtitle={COPY.account.createSubtitle} />
           </View>
           <AccountCreatePanel
             groupName={groupName}
