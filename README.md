@@ -1,159 +1,118 @@
-# getdon-mate-app
+# getdon mate
 
-Getdon 모임통장 프론트엔드 앱(Expo + React Native) 저장소입니다.
+모임 운영 흐름을 빠르게 확인하고 바로 정리하는 모임통장 관리 앱.
 
-## 1. Tech Baseline
+## 기술 스택
 
-- Runtime: Expo React Native (single app)
-- Language: TypeScript
-- Package manager: pnpm
-- Lockfile: `pnpm-lock.yaml`
-- Node version: `.nvmrc` 기준
-- Backend: 별도 저장소(API 연동 전까지 mock 데이터 기반 동작)
+| 항목 | 기술 |
+|------|------|
+| 프레임워크 | Expo (React Native) |
+| 언어 | TypeScript (strict mode) |
+| 상태 관리 | React Context API + @tanstack/react-query |
+| HTTP 클라이언트 | fetch 기반 커스텀 클라이언트 |
+| 내비게이션 | @react-navigation/native-stack |
 
-## 2. Prerequisites
+## 시작하기
 
-```bash
-nvm use
-corepack enable
-pnpm install
-```
-
-`nvm`이 없다면 `.nvmrc`의 Node 버전을 직접 맞춘 뒤 `pnpm install`을 실행하세요.
-
-환경변수 파일이 필요하면 `.env.example`을 참고해 `.env`를 생성하세요.
+### 의존성 설치
 
 ```bash
-cp .env.example .env
+npm install
 ```
 
-## 3. Run Commands
+### 개발 서버 실행
 
 ```bash
-# 개발 서버
-pnpm run start
-
-# 플랫폼별 실행
-pnpm run ios
-pnpm run ios:dev
-pnpm run android
-pnpm run web
-
-# 정적 웹 산출물 생성
-pnpm run export:web
-
-# 타입 검증
-pnpm run typecheck
-
-# CI용 웹 검증(typecheck + export)
-pnpm run ci:web
-
-# E2E 스모크 (Playwright)
-pnpm run test:e2e
-
-# Vercel 수동 배포
-pnpm run deploy:vercel:preview
-pnpm run deploy:vercel:production
+npm run dev          # Expo 개발 서버
+npm run dev:proxy    # 로컬 프록시 포함
 ```
 
-## 4. Demo Flow (Mock Data)
-
-기본 로그인 계정:
-
-- Email: `test@test.com`
-- Password: `password`
-
-주요 데모 플로우:
-
-1. 로그인 또는 회원가입
-2. 모임통장 목록 조회
-3. 모임통장 상세(홈/회비/거래/멤버/설정) 확인
-4. 모임통장 생성
-5. 필요 시 `데모 데이터 초기화`로 초기 상태 복귀
-
-## 5. Build & Verification
-
-PR 전 최소 검증:
+### 웹 빌드
 
 ```bash
-pnpm run ci:web
+npm run build:web    # Vercel 배포용 웹 빌드
 ```
 
-`export:web` 성공 시 `dist/` 디렉터리가 생성됩니다.
+## 프로젝트 구조
 
-## 5-1. iOS App Testing
-
-iOS 동작 검증은 Expo Go보다 development build 기준으로 진행합니다.
-
-```bash
-pnpm run ios:dev
 ```
-
-메모:
-
-- `app.json`에서 `newArchEnabled: false`를 사용합니다.
-- JS 캐시를 비워야 할 때는 `pnpm run start -- --clear`를 사용합니다.
-- long press, pull-to-refresh, native gesture 확인은 iOS development build를 기준으로 봅니다.
-
-## 6. API Runtime Config
-
-- `EXPO_PUBLIC_API_MODE`
-  - `mock`: 네트워크 요청 없이 mock 어댑터만 사용
-  - `real`: backend API를 강제 사용
-  - `auto`: `EXPO_PUBLIC_API_BASE_URL`이 있으면 backend 우선, 실패 시 fallback 가능
-- `EXPO_PUBLIC_API_BASE_URL`: backend base URL (`http://localhost:4000` 등)
-- `EXPO_PUBLIC_API_TIMEOUT_MS`: 요청 타임아웃(ms, 기본 8000)
-- `EXPO_PUBLIC_ENABLE_DEMO_CONTROLS`: 데모 전용 제어(초기화 버튼) 노출 여부
-- `EXPO_PUBLIC_SHOW_TEST_CREDENTIALS`: 로그인 화면 테스트 계정 힌트 노출 여부
-- `EXPO_PUBLIC_ENABLE_OBSERVABILITY`: 콘솔 기반 에러/API 로깅 활성화 여부
-
-## 7. Vercel Deployment Pipeline (GET-16)
-
-Expo 웹 정적 산출물(`dist/`)을 기준으로 Preview/Production 배포를 분리합니다.
-
-- Workflow: `.github/workflows/vercel-deploy.yml`
-- Preview deploy: `pull_request`(target=`main`, draft 제외)
-- Production deploy: `push` to `main`
-- 공통 사전 검증: `pnpm run ci:web`
-- 배포 스크립트: `scripts/vercel-deploy.sh`
-
-필수 GitHub Secrets:
-
-- `VERCEL_TOKEN`
-- `VERCEL_ORG_ID`
-- `VERCEL_PROJECT_ID`
-
-Vercel 프로젝트 기본값:
-
-- Framework Preset: `Other`
-- Build Command: `pnpm run export:web`
-- Output Directory: `dist`
-
-주의:
-
-- Preview는 PR 리뷰/데모 공유 용도입니다.
-- Production은 `main` 기준 웹 배포 경로입니다.
-- 모바일 앱 배포는 Expo/EAS 경로로 분리합니다.
-
-## 8. Project Structure
-
-```text
 src/
-  core/                  # 앱 라우팅/전역 provider
-  features/
-    auth/                # 로그인/회원가입
-    accounts/            # 계좌 목록/상세 도메인
-  shared/                # 공통 유틸
-docs/plans/              # 작업/스펙 문서
-docs/fe-design-system-guide.md  # 공통 UI/토큰 사용 가이드
-docs/api-runtime-policy.md      # API 모드/실패 정책/DTO 경계 가이드
+├── core/                    # 앱 공통 기반
+│   ├── api/                 # HTTP 클라이언트, 에러, 설정, 쿼리 키
+│   ├── providers/           # 전역 상태 (AppProvider, 3-Context)
+│   │   └── hooks/           # useRuntimeProvider, useAuthProvider, useAccountsOperations
+│   ├── query/               # React Query 클라이언트 설정
+│   └── navigation/          # 라우트 정의
+├── features/                # 도메인 피처
+│   ├── accounts/            # 모임통장 관리
+│   │   ├── api/             # API 함수 + React Query 훅
+│   │   │   ├── meetings-api.ts        # 모임 CRUD API
+│   │   │   ├── use-meetings-query.ts  # 모임 쿼리 훅
+│   │   │   ├── swagger-api.ts         # API 진입점
+│   │   │   └── mappers.ts             # DTO → 도메인 변환
+│   │   ├── model/           # 타입, 픽스처, 셀렉터
+│   │   ├── screens/         # 목록, 상세, 생성 화면
+│   │   └── components/      # UI 컴포넌트 (탭, 패널, 카드)
+│   └── auth/                # 인증
+│       ├── api/             # 인증 API + React Query 뮤테이션 훅
+│       │   ├── auth-api.ts            # 로그인/회원가입/토큰 갱신
+│       │   └── use-auth-mutations.ts  # 뮤테이션 훅
+│       ├── screens/         # 로그인, 마이페이지
+│       ├── hooks/           # useAuthForm
+│       └── components/      # AuthHero, AuthFormCard
+└── shared/                  # 공통 유틸
+    ├── ui/                  # 디자인 시스템 (토큰, 컴포넌트)
+    ├── lib/                 # 유틸리티 (날짜, 포맷, 스토리지)
+    └── constants/           # UI 텍스트 (COPY)
 ```
 
-## 9. Current Related Linear Tasks
+## API 구성
 
-- `GET-11`: Figma 대비 UI 갭 분석/수정
-- `GET-14`: Mock 기반 플로우 안정화
-- `GET-16`: Vercel preview/production 배포 파이프라인
-- `GET-17`: package.json 기반 README 재작성
-- `GET-23`: 컴포넌트/상태관리 규칙
-- `GET-24`: FE/BE 계약 동기화 및 착수 게이트
+백엔드 주소: `https://getdon-api.duckdns.org`
+
+| 피처 | 함수 | 메서드 | 경로 |
+|------|------|--------|------|
+| 인증 | `loginWithApi` | POST | `/api/member/login` |
+| 인증 | `signupWithApi` | POST | `/api/member/join` |
+| 인증 | `refreshTokenWithApi` | POST | `/api/token/refresh` |
+| 모임 | `fetchMyMeetings` | GET | `/api/meeting/my-list` |
+| 모임 | `fetchMeetingDetail` | GET | `/api/meeting/:id` |
+| 모임 | `createMeeting` | POST | `/api/meeting/create` |
+
+### React Query 쿼리 키
+
+```typescript
+import { meetingKeys, authKeys } from "@core/api/query-keys"
+
+meetingKeys.lists()                  // ["meetings", "list"]
+meetingKeys.list(accessToken)        // ["meetings", "list", { accessToken }]
+meetingKeys.detail(meetingId)        // ["meetings", "detail", meetingId]
+```
+
+## 상태 관리
+
+앱 전역 상태는 3개의 Context로 분리됩니다.
+
+```typescript
+// AppRuntimeContext - 부트스트랩, 동기화, 알림, UI 설정
+const { isBootstrapping, prefersRealApi, refreshAccounts } = useAppRuntime()
+
+// AppAuthContext - 인증 상태
+const { login, signup, currentUser, logout } = useAppAuth()
+
+// AppAccountsContext - 모임 데이터 및 CRUD
+const { accounts, createAccount, createTransaction } = useAppAccounts()
+```
+
+## 환경 변수
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `EXPO_PUBLIC_API_MODE` | `real` | API 모드 (`real` \| `demo`) |
+| `EXPO_PUBLIC_API_BASE_URL` | — | 백엔드 API 주소 |
+
+## 데이터 소스
+
+- **real 모드**: 백엔드 Swagger API (JWT 인증, 토큰 자동 갱신)
+- **demo 모드**: 로컬 fixtures 데이터 (오프라인, 게스트 포함)
+- 로그인 없이 "게스트로 둘러보기" 선택 시 demo 데이터로 앱 탐색 가능
