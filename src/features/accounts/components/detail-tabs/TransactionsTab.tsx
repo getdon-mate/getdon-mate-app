@@ -571,10 +571,10 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   incomeText: {
-    color: uiColors.success,
+    color: uiColors.primary,
   },
   expenseText: {
-    color: uiColors.text,
+    color: uiColors.danger,
   },
   filterRow: {
     flexDirection: "row",

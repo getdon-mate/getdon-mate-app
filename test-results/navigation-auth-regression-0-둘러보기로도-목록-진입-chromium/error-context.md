@@ -1,0 +1,64 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e13]:
+  - generic [ref=e14]:
+    - generic [ref=e16]: 스트
+    - generic [ref=e18]: 게스트
+    - generic [ref=e19]:
+      - button "금액 표시 전환" [ref=e20] [cursor=pointer]:
+        - generic "icon-eye" [ref=e21]: 
+      - button "알림 목록 열기" [ref=e22] [cursor=pointer]:
+        - generic "icon-bell" [ref=e23]: 
+        - generic [ref=e25]: "2"
+      - button "마이페이지 열기" [ref=e26] [cursor=pointer]:
+        - generic "icon-user" [ref=e27]: 
+      - button "앱 설정 열기" [ref=e28] [cursor=pointer]:
+        - generic "icon-settings" [ref=e29]: 
+  - generic [ref=e30]:
+    - textbox "모임명, 은행명, 계좌번호 검색" [ref=e32]
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - button "전체" [ref=e35] [cursor=pointer]:
+          - generic [ref=e36]: 전체
+        - button "미납 2명+" [ref=e37] [cursor=pointer]:
+          - generic [ref=e38]: 미납 2명+
+      - button "모임통장 목록 새로고침" [ref=e39] [cursor=pointer]:
+        - generic "icon-refresh" [ref=e40]: 
+  - button "개발자 스터디 상세 열기" [ref=e41] [cursor=pointer]:
+    - generic [ref=e42]:
+      - generic [ref=e43]:
+        - generic [ref=e45]: 개
+        - generic [ref=e46]:
+          - generic [ref=e47]: 개발자 스터디
+          - generic [ref=e48]: 참여 멤버 4명
+      - generic "icon-chevronRight" [ref=e49]: 
+    - generic [ref=e50]:
+      - generic [ref=e51]: 잔액
+      - generic [ref=e52]: 284,500원
+    - generic [ref=e53]: 카카오뱅크 · 2/4 완납
+    - generic [ref=e54]:
+      - generic [ref=e56]: 정산 필요
+      - generic [ref=e57]:
+        - generic [ref=e58]: 미납 2명
+        - generic [ref=e59]: 최근 3월 4일
+  - button "주말 등산 모임 상세 열기" [ref=e60] [cursor=pointer]:
+    - generic [ref=e61]:
+      - generic [ref=e62]:
+        - generic [ref=e64]: 주
+        - generic [ref=e65]:
+          - generic [ref=e66]: 주말 등산 모임
+          - generic [ref=e67]: 참여 멤버 3명
+      - generic "icon-chevronRight" [ref=e68]: 
+    - generic [ref=e69]:
+      - generic [ref=e70]: 잔액
+      - generic [ref=e71]: 120,000원
+    - generic [ref=e72]: 토스뱅크 · 2/3 완납
+    - generic [ref=e73]:
+      - generic [ref=e75]: 안정
+      - generic [ref=e76]:
+        - generic [ref=e77]: 미납 1명
+        - generic [ref=e78]: 최근 3월 3일
+  - button "+ 새 모임통장 개설" [ref=e79] [cursor=pointer]:
+    - generic [ref=e80]: + 새 모임통장 개설
+```

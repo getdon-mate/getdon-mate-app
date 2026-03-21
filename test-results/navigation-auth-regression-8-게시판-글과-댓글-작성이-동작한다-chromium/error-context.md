@@ -1,0 +1,44 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e11]:
+    - generic [ref=e12]:
+      - generic [ref=e14]: gm
+      - generic [ref=e15]: getdon mate
+      - generic [ref=e16]: 모임 운영 흐름을 빠르게 확인하고 바로 정리하세요.
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - generic [ref=e19]: •
+          - generic [ref=e20]: 회비 납부 현황을 한눈에 확인
+        - generic [ref=e21]:
+          - generic [ref=e22]: •
+          - generic [ref=e23]: 입출금 내역 공동 관리
+        - generic [ref=e24]:
+          - generic [ref=e25]: •
+          - generic [ref=e26]: 모임원과 게시판으로 소통
+    - generic [ref=e27]:
+      - generic [ref=e28]: 로그인
+      - generic [ref=e29]:
+        - generic [ref=e30]: 이메일
+        - textbox "이메일" [ref=e31]:
+          - /placeholder: example@email.com
+      - generic [ref=e32]:
+        - generic [ref=e33]: 비밀번호
+        - textbox "비밀번호" [ref=e34]:
+          - /placeholder: 비밀번호를 입력해주세요
+      - generic [ref=e35]: 이메일을 입력해주세요.
+      - button "로그인" [ref=e36] [cursor=pointer]:
+        - generic [ref=e37]: 로그인
+      - generic [ref=e38]:
+        - generic [ref=e39]: 계정 없이 앱을 먼저 둘러볼 수 있습니다.
+        - button "게스트로 둘러보기" [ref=e40] [cursor=pointer]:
+          - generic [ref=e41]: 게스트로 둘러보기
+      - generic [ref=e43] [cursor=pointer]: 처음이라면 회원가입
+  - dialog [ref=e45]:
+    - generic [ref=e48]:
+      - generic [ref=e49]: 입력 오류
+      - generic [ref=e50]: 이메일을 입력해주세요.
+      - button "확인" [active] [ref=e51] [cursor=pointer]:
+        - generic [ref=e52]: 확인
+```
