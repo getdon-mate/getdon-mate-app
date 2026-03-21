@@ -7,6 +7,7 @@ interface UseAuthFormParams {
   login: (email: string, password: string) => Promise<boolean>
   signup: (name: string, email: string, password: string) => Promise<boolean>
   showError: (message: string, title?: string) => void
+  lastSyncError?: string | null
 }
 
 export function useAuthForm({ login, signup, showError }: UseAuthFormParams) {
@@ -46,7 +47,6 @@ export function useAuthForm({ login, signup, showError }: UseAuthFormParams) {
     }
 
     setSubmitting(true)
-    await new Promise((resolve) => setTimeout(resolve, 300))
     const ok = await login(email.trim(), password)
     if (!ok) {
       setError(feedbackPresets.loginFailed.message)

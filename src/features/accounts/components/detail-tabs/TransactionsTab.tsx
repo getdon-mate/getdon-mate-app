@@ -1,6 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
-import { useApp } from "@core/providers/AppProvider"
+import { useAppAccounts, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
 import { ActionChip, Button, Icon, InputField, NumericInputField, uiColors } from "@shared/ui"
@@ -33,7 +33,8 @@ export function TransactionsTab({
   initialType?: TransactionType
   composerSignal?: number
 }) {
-  const { createTransaction, updateTransaction, deleteTransaction, isMutating } = useApp()
+  const { isMutating } = useAppRuntime()
+  const { createTransaction, updateTransaction, deleteTransaction } = useAppAccounts()
   const { showAlert, showToast, confirm } = useFeedback()
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all")
   const [sortOrder, setSortOrder] = useState<SortOrder>("latest")

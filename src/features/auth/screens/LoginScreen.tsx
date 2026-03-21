@@ -43,7 +43,7 @@ export function LoginScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.screen}
-      behavior={Platform.select({ ios: "padding", android: undefined })}
+      behavior={Platform.select({ ios: "padding", android: "height" })}
     >
       <View style={[styles.content, isWide && styles.contentWide]}>
         {isBootstrapping ? (
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 28,
-    backgroundColor: "#ffffff",
+    backgroundColor: uiColors.background,
   },
   content: {
     width: "100%",

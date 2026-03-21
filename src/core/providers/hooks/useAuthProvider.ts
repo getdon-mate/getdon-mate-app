@@ -2,14 +2,8 @@ import { useCallback } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { getErrorMessage } from "@core/api"
 import { createAccountsBackendV1Adapter } from "@features/accounts/api"
-import {
-  createRemoteUser,
-  fetchMyMeetings,
-  loginWithSwaggerApi,
-  signupWithSwaggerApi,
-  toGroupAccountSummary,
-  type SwaggerMeetingSummary,
-} from "@features/accounts/api/swagger-api"
+import { fetchMyMeetings, loginWithSwaggerApi, signupWithSwaggerApi, type SwaggerMeetingSummary } from "@features/accounts/api/swagger-api"
+import { createRemoteUser, toGroupAccountSummary } from "@features/accounts/api/mappers"
 import { defaultAccounts } from "@features/accounts/model/fixtures"
 import type { AppUser, GroupAccount } from "@features/accounts/model/types"
 import { logger } from "@shared/lib/logger"
@@ -84,7 +78,7 @@ export function useAuthProvider({
           return false
         }
       }
-      const localUser = users.find((u) => u.email === email && u.password === password)
+      const localUser = users.find((u) => u.email === email && u.password !== undefined && u.password === password)
       if (localUser) {
         setCurrentUser(localUser)
         setAccounts(cloneAccounts(defaultAccounts))
@@ -172,18 +166,25 @@ export function useAuthProvider({
       name: "게스트",
       email: "guest@example.com",
       password: "",
+      isGuest: true,
     })
   }, [setDataSource, setCurrentUser])
 
-  const withdraw = useCallback(() => {
+  const withdraw = useCallback(async () => {
     if (!currentUser) return
     const userId = currentUser.id
+    try {
+      await backendAdapter.deleteUser(userId)
+    } catch {
+      // 백엔드 삭제 실패해도 로컬 상태는 초기화 (사용자 경험 우선)
+    }
     setUsers((prev) => prev.filter((u) => u.id !== userId))
     setCurrentUser(null)
     setSelectedAccountId(null)
     setAuthTokens(null)
-    void backendAdapter.deleteUser(userId)
-  }, [backendAdapter, currentUser, setUsers, setCurrentUser, setSelectedAccountId, setAuthTokens])
+    setAccounts(cloneAccounts(defaultAccounts))
+    setDataSource("demo")
+  }, [backendAdapter, currentUser, setUsers, setCurrentUser, setSelectedAccountId, setAuthTokens, setAccounts, setDataSource])
 
   return { login, signup, updateProfile, logout, continueAsGuest, withdraw }
 }

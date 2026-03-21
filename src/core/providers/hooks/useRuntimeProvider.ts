@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { getErrorMessage, isApiError, mapApiFailureToUserMessage } from "@core/api"
 import { createAccountsBackendV1Adapter, getLastBackendFailure } from "@features/accounts/api"
-import { fetchMyMeetings, toGroupAccountSummary, type SwaggerMeetingSummary } from "@features/accounts/api/swagger-api"
+import { fetchMyMeetings, type SwaggerMeetingSummary } from "@features/accounts/api/swagger-api"
+import { toGroupAccountSummary } from "@features/accounts/api/mappers"
 import { defaultAccounts, defaultUsers } from "@features/accounts/model/fixtures"
 import type { AppUser, GroupAccount } from "@features/accounts/model/types"
 import { appEnv } from "@shared/config/app-env"
@@ -184,7 +185,7 @@ export function useRuntimeProvider({
   const runBusy = useCallback(async <T,>(task: () => Promise<T>) => {
     setBusyCount((prev) => prev + 1)
     try {
-      await delay(appEnv.uiDemoDelayMs)
+      if (!prefersRealApi) await delay(appEnv.uiDemoDelayMs)
       return await task()
     } catch (err) {
       setLastMutationError(getErrorMessage(err, "작업 처리 중 오류가 발생했습니다."))

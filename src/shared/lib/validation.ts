@@ -54,3 +54,21 @@ export function validatePhoneNumber(value: string) {
   }
   return null
 }
+
+/**
+ * 여러 유효성 검사 결과 중 첫 번째 에러 메시지를 반환합니다.
+ * 모두 통과하면 null을 반환합니다.
+ *
+ * @example
+ * const error = validateAll(
+ *   requireText(groupName, "모임명을 입력해주세요."),
+ *   validatePositiveNumber(monthlyDues, "월 회비를 입력해주세요."),
+ *   validateDayOfMonth(dueDay),
+ * )
+ */
+export function validateAll(...results: (string | null)[]): string | null {
+  for (const result of results) {
+    if (result !== null) return result
+  }
+  return null
+}

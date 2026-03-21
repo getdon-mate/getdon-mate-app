@@ -12,7 +12,7 @@
     "ios": "expo run:ios",
     "ios:dev": "export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 && pnpm run check:ios-dev-env && expo run:ios",
     "web": "expo start --web --port 3000",
-    "web:local": "expo start --web --port 3000",
+    "web:local": "node scripts/dev-proxy.mjs & EXPO_PUBLIC_API_BASE_URL=http://localhost:3001 expo start --web --port 3000",
     "web:proxy": "node scripts/dev-proxy.mjs",
     "export:web": "EXPO_PUBLIC_API_MODE=real expo export --platform web",
     "typecheck": "tsc --noEmit",

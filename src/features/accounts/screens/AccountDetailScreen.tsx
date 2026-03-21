@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigation, useRoute } from "@react-navigation/native"
+import type { RouteProp } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from "react-native"
 import { ROUTES } from "@core/navigation/routes"
@@ -7,9 +8,10 @@ import type { RootStackParamList } from "@core/navigation/types"
 import { useAppAccounts, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { copyText } from "@shared/lib/clipboard"
-import { uiColors } from "@shared/ui"
+import { Button, uiColors } from "@shared/ui"
 import { buildAccountInviteLink } from "@shared/lib/invite"
-import { availableMonths } from "../model/fixtures"
+import { getCurrentMonthKey } from "@shared/lib/date"
+import { feedbackPresets } from "@shared/lib/feedback-presets"
 import { LoadingStateCard } from "../components/LoadingStateCard"
 import { DashboardTab } from "../components/detail-tabs/DashboardTab"
 import { DuesTab } from "../components/detail-tabs/DuesTab"
@@ -25,10 +27,19 @@ import { DetailTabBar, type DetailTab } from "../components/detail/DetailTabBar"
 import type { TransactionType } from "../model/types"
 
 const detailTabMemory = new Map<string, DetailTab>()
+const DETAIL_TAB_MEMORY_LIMIT = 20
+
+function rememberTab(accountId: string, tab: DetailTab) {
+  detailTabMemory.set(accountId, tab)
+  if (detailTabMemory.size > DETAIL_TAB_MEMORY_LIMIT) {
+    const firstKey = detailTabMemory.keys().next().value
+    if (firstKey !== undefined) detailTabMemory.delete(firstKey)
+  }
+}
 
 export function AccountDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
-  const route = useRoute()
+  const route = useRoute<RouteProp<RootStackParamList, typeof ROUTES.AccountDetail>>()
   const { isBootstrapping, isRefreshingAccounts, prefersRealApi, lastSyncError, refreshAccounts, maskAmounts, toggleMaskAmounts } = useAppRuntime()
   const { accounts, selectedAccountId, clearSelectedAccount, selectAccount } = useAppAccounts()
   const { showAlert, showToast } = useFeedback()
@@ -36,11 +47,11 @@ export function AccountDetailScreen() {
   const isWide = width >= 1024
 
   const [tab, setTab] = useState<DetailTab>("dashboard")
-  const [selectedMonth, setSelectedMonth] = useState(availableMonths[0])
+  const [selectedMonth, setSelectedMonth] = useState(() => getCurrentMonthKey())
   const [transactionComposerType, setTransactionComposerType] = useState<TransactionType>("income")
   const [transactionComposerSignal, setTransactionComposerSignal] = useState(0)
 
-  const routeAccountId = (route.params as { accountId?: string } | undefined)?.accountId
+  const routeAccountId = route.params?.accountId
 
   useEffect(() => {
     if (!routeAccountId) return
@@ -68,7 +79,7 @@ export function AccountDetailScreen() {
 
   useEffect(() => {
     if (!account) return
-    detailTabMemory.set(account.id, tab)
+    rememberTab(account.id, tab)
   }, [account, tab])
 
   function goToList() {
@@ -88,16 +99,13 @@ export function AccountDetailScreen() {
 
   async function handleRefresh() {
     const source = await refreshAccounts()
-    showToast({
-      tone: source === "remote" ? "success" : "warning",
-      title: source === "remote" ? "상세 데이터 갱신 완료" : prefersRealApi ? "재시도 필요" : "데모 데이터 유지",
-      message:
-        source === "remote"
-          ? "계좌 상세 데이터를 다시 동기화했습니다."
-          : prefersRealApi
-            ? (lastSyncError ?? "실서버 연결에 실패했습니다. 다시 시도해주세요.")
-            : "현재는 데모 모드로 동작 중입니다.",
-    })
+    if (source === "remote") {
+      showToast(feedbackPresets.refreshSuccess)
+    } else if (prefersRealApi) {
+      showToast(feedbackPresets.refreshFallback(lastSyncError))
+    } else {
+      showToast(feedbackPresets.refreshDemo)
+    }
   }
 
   async function handleCopyInvite() {
@@ -140,6 +148,12 @@ export function AccountDetailScreen() {
       <View style={styles.emptyWrap}>
         <Text style={styles.emptyTitle}>선택된 모임이 없습니다.</Text>
         <Text style={styles.emptyDescription}>목록에서 모임통장을 다시 선택해주세요.</Text>
+        <Button
+          label="목록으로 돌아가기"
+          variant="secondary"
+          onPress={() => navigation.navigate(ROUTES.AccountList)}
+          style={styles.emptyBackButton}
+        />
       </View>
     )
   }
@@ -203,8 +217,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    gap: 6,
+    gap: 12,
     padding: 20,
+  },
+  emptyBackButton: {
+    marginTop: 8,
+    minWidth: 180,
   },
   emptyTitle: {
     color: uiColors.textStrong,

@@ -6,7 +6,6 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
 } from "react-native"
@@ -15,7 +14,8 @@ import type { RootStackParamList } from "@core/navigation/types"
 import { useAppAccounts, useAppAuth, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { getCurrentMonthKey } from "@shared/lib/date"
-import { ActionChip, Button, Icon, uiColors, uiSpacing } from "@shared/ui"
+import { feedbackPresets } from "@shared/lib/feedback-presets"
+import { ActionChip, Button, Icon, InputField, uiColors, uiSpacing } from "@shared/ui"
 import { onlyDigits } from "@shared/lib/validation"
 import { LoadingStateCard } from "../components/LoadingStateCard"
 import { AccountSummaryCard } from "../components/AccountSummaryCard"
@@ -34,7 +34,6 @@ export function AccountListScreen() {
   const currentMonth = getCurrentMonthKey()
   const { width } = useWindowDimensions()
   const isWide = width >= 960
-  const compact = width < 390
   const [searchQuery, setSearchQuery] = useState("")
   const [filter, setFilter] = useState<HomeFilter>("all")
 
@@ -58,11 +57,7 @@ export function AccountListScreen() {
 
   async function handleRefresh() {
     const source = await refreshAccounts()
-    showToast({
-      tone: source === "remote" ? "success" : "warning",
-      title: source === "remote" ? "목록 동기화 완료" : "데모 데이터 유지",
-      message: source === "remote" ? "모임통장 목록을 최신 상태로 불러왔습니다." : "현재는 데모 데이터로 목록을 유지하고 있습니다.",
-    })
+    showToast(source === "remote" ? feedbackPresets.refreshSuccess : feedbackPresets.refreshDemo)
   }
 
   return (
@@ -89,13 +84,13 @@ export function AccountListScreen() {
           onOpenAppSettings={() => navigation.navigate(ROUTES.AppSettings)}
         />
 
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionHeaderCopy}>
-            <Text style={[styles.sectionTitle, compact && styles.sectionTitleCompact]}></Text>
-            <Text style={styles.sectionSubtitle}></Text>
-          </View>
-        </View>
         <View style={styles.searchStack}>
+          <InputField
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="모임명, 은행명, 계좌번호 검색"
+            autoCapitalize="none"
+          />
           <View testID="account-list-filter-actions" style={styles.filterActionsRow}>
             <View style={styles.filterRow}>
               <ActionChip label="전체" active={filter === "all"} onPress={() => setFilter("all")} />
@@ -180,30 +175,6 @@ const styles = StyleSheet.create({
   contentWrapWide: {
     alignSelf: "center",
     maxWidth: 920,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: uiSpacing.md,
-  },
-  sectionHeaderCopy: {
-    gap: 2,
-    flex: 1,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: uiColors.text,
-  },
-  sectionTitleCompact: {
-    fontSize: 18,
-  },
-  sectionSubtitle: {
-    fontSize: 12,
-    color: uiColors.textMuted,
-    fontWeight: "600",
-    letterSpacing: 0.35,
   },
   searchStack: {
     gap: 8,

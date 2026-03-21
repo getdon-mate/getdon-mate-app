@@ -1,3 +1,4 @@
+import { getAvailableMonths } from "@shared/lib/date"
 import { memberAccentPalette } from "@shared/ui/palette"
 import type { AppUser, BoardPost, DuesRecord, GroupAccount, Member, ReminderItem, Transaction } from "./types"
 
@@ -154,4 +155,4 @@ export const defaultAccounts: GroupAccount[] = [
   },
 ]
 
-export const availableMonths = ["2026-03", "2026-02"]
+export const availableMonths = getAvailableMonths(11)

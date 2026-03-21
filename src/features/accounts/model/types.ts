@@ -107,5 +107,7 @@ export interface AppUser {
   id: string
   name: string
   email: string
-  password: string
+  /** 로컬 데모 모드 전용. 실서버 사용자는 undefined. */
+  password?: string
+  isGuest?: boolean
 }

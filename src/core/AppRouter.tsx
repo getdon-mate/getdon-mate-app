@@ -12,6 +12,7 @@ import { MyPageScreen } from "@features/auth/screens/MyPageScreen"
 import { NotificationListScreen } from "@features/auth/screens/NotificationListScreen"
 import { NotificationSettingsScreen } from "@features/auth/screens/NotificationSettingsScreen"
 import { SpinnerOverlay, SplashScreen, uiColors } from "@shared/ui"
+import { useFeedback } from "./providers/FeedbackProvider"
 import { ROUTES } from "./navigation/routes"
 import type { RootStackParamList } from "./navigation/types"
 import { useAppAccounts, useAppAuth, useAppRuntime } from "./providers/AppProvider"
@@ -37,8 +38,15 @@ const linking: LinkingOptions<RootStackParamList> = {
 export function AppRouter() {
   const navigationRef = useNavigationContainerRef<RootStackParamList>()
   const { currentUser } = useAppAuth()
-  const { isBootstrapping, isMutating } = useAppRuntime()
+  const { isBootstrapping, isMutating, lastMutationError, clearMutationError } = useAppRuntime()
   const { accounts, selectedAccountId, selectAccount } = useAppAccounts()
+  const { showToast } = useFeedback()
+
+  useEffect(() => {
+    if (!lastMutationError) return
+    showToast({ tone: "danger", title: "오류", message: lastMutationError })
+    clearMutationError()
+  }, [lastMutationError, showToast, clearMutationError])
   const hasSelectedAccount = useMemo(
     () => Boolean(selectedAccountId && accounts.some((account) => account.id === selectedAccountId)),
     [accounts, selectedAccountId]

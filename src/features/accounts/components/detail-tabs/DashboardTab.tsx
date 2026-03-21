@@ -1,7 +1,7 @@
-import { useState } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import { getCurrentMonthKey } from "@shared/lib/date"
-import { ActionChip, AmountMask, Icon, uiColors, uiRecipes } from "@shared/ui"
+import { useAppRuntime } from "@core/providers/AppProvider"
+import { ActionChip, Icon, uiColors, uiRadius, uiSpacing } from "@shared/ui"
 import { formatKRW } from "@shared/lib/format"
 import { getMemberById } from "../../model/member-utils"
 import { getPaymentSummary, getRecentTransactions } from "../../model/selectors"
@@ -22,7 +22,7 @@ export function DashboardTab({
   onOpenDues: () => void
   onCopyAccountNumber?: () => void
 }) {
-  const [showBalance, setShowBalance] = useState(true)
+  const { maskAmounts, toggleMaskAmounts } = useAppRuntime()
 
   const currentMonth = getCurrentMonthKey()
   const { paid, payableMembers, progress, unpaidMembers } = getPaymentSummary(account, currentMonth)
@@ -31,30 +31,35 @@ export function DashboardTab({
   return (
     <View style={styles.stack}>
       <SectionCard>
-        <View style={styles.accountNumberRow}>
-          <Text style={styles.subtleText}>{account.bankName} · {account.accountNumber}</Text>
-          <Pressable
-            onPress={onCopyAccountNumber}
-            accessibilityRole="button"
-            accessibilityLabel="대시보드 계좌번호 복사"
-            style={styles.copyButton}
-          >
-            <Icon name="copy" size={14} color={uiColors.primary} />
-          </Pressable>
-        </View>
+        {account.accountNumber ? (
+          <View style={styles.accountNumberRow}>
+            <Text style={styles.subtleText}>{account.bankName} · {account.accountNumber}</Text>
+            <Pressable
+              onPress={onCopyAccountNumber}
+              accessibilityRole="button"
+              accessibilityLabel="대시보드 계좌번호 복사"
+              style={styles.copyButton}
+            >
+              <Icon name="copy" size={14} color={uiColors.primary} />
+            </Pressable>
+          </View>
+        ) : (
+          <Text style={styles.subtleText}>{account.bankName}</Text>
+        )}
         <Text style={styles.balanceLabel}>잔액</Text>
         <View style={styles.balanceWrap}>
-          <AmountMask value={formatKRW(account.balance)} masked={!showBalance} textStyle={styles.balanceText} skeletonHeight={28} />
-          {!showBalance ? (
-            <View pointerEvents="none" style={styles.maskOverlay}>
+          {maskAmounts ? (
+            <View style={styles.maskOverlay}>
               <Text style={styles.maskOverlayLabel}>필요할 때만 잔액을 확인하세요</Text>
             </View>
-          ) : null}
+          ) : (
+            <Text style={styles.balanceText}>{formatKRW(account.balance)}</Text>
+          )}
         </View>
         <ActionChip
-          label={showBalance ? "잔액 숨기기" : "잔액 보기"}
-          onPress={() => setShowBalance((prev) => !prev)}
-          active={showBalance}
+          label={maskAmounts ? "잔액 보기" : "잔액 숨기기"}
+          onPress={toggleMaskAmounts}
+          active={!maskAmounts}
           style={styles.chipSelf}
         />
       </SectionCard>
@@ -129,7 +134,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   subtleText: {
-    color: "#6b7280",
+    color: uiColors.textMuted,
     fontSize: 12,
   },
   accountNumberRow: {
@@ -140,35 +145,34 @@ const styles = StyleSheet.create({
   copyButton: {
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: uiRadius.full,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: uiColors.primarySoft,
   },
   balanceLabel: {
-    color: "#6b7280",
+    color: uiColors.textMuted,
     fontSize: 12,
     marginTop: 4,
   },
   balanceText: {
-    color: "#111827",
+    color: uiColors.textStrong,
     fontSize: 30,
     fontWeight: "800",
   },
   balanceWrap: {
     minHeight: 36,
     justifyContent: "center",
-    position: "relative",
   },
   maskOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 14,
+    borderRadius: uiRadius.md,
     borderWidth: 1,
     borderColor: uiColors.border,
-    backgroundColor: "rgba(248, 250, 252, 0.84)",
+    backgroundColor: uiColors.surfaceMuted,
     alignItems: "flex-end",
     justifyContent: "center",
-    paddingHorizontal: 10,
+    paddingHorizontal: uiSpacing.md,
+    paddingVertical: uiSpacing.sm,
   },
   maskOverlayLabel: {
     color: uiColors.textSoft,
@@ -179,7 +183,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   metricText: {
-    color: "#111827",
+    color: uiColors.textStrong,
     fontSize: 14,
     fontWeight: "700",
   },
@@ -189,36 +193,35 @@ const styles = StyleSheet.create({
   },
   summaryPill: {
     flex: 1,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderRadius: uiRadius.md,
+    paddingHorizontal: uiSpacing.md,
+    paddingVertical: uiSpacing.md,
     backgroundColor: uiColors.backgroundScreen,
     borderWidth: 1,
     borderColor: uiColors.border,
     gap: 4,
   },
-  rowBetween: uiRecipes.rowBetween,
   summaryPillLabel: {
-    color: "#6b7280",
+    color: uiColors.textMuted,
     fontSize: 12,
     fontWeight: "600",
   },
   summaryPillValue: {
-    color: "#111827",
+    color: uiColors.textStrong,
     fontSize: 16,
     fontWeight: "700",
   },
   progressTrack: {
     height: 10,
-    borderRadius: 999,
-    backgroundColor: "#e5e7eb",
+    borderRadius: uiRadius.full,
+    backgroundColor: uiColors.border,
     overflow: "hidden",
     marginTop: 2,
   },
   progressFill: {
     height: "100%",
-    backgroundColor: "#3b82f6",
-    borderRadius: 999,
+    backgroundColor: uiColors.primary,
+    borderRadius: uiRadius.full,
   },
   unpaidRow: {
     flexDirection: "row",
@@ -227,20 +230,20 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   memberName: {
-    color: "#111827",
+    color: uiColors.textStrong,
     fontSize: 14,
     fontWeight: "700",
   },
   unpaidBadge: {
-    borderRadius: 999,
+    borderRadius: uiRadius.full,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: "#fff1f2",
+    backgroundColor: uiColors.dangerSoft,
     borderWidth: 1,
-    borderColor: "#fecdd3",
+    borderColor: uiColors.dangerBorder,
   },
   unpaidText: {
-    color: "#dc2626",
+    color: uiColors.danger,
     fontSize: 12,
     fontWeight: "600",
   },

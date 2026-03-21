@@ -46,4 +46,19 @@ export const feedbackPresets = {
     title: "네트워크 오류",
     message: "네트워크 연결에 실패했습니다. 잠시 후 다시 시도해주세요.",
   },
+  refreshSuccess: {
+    tone: "success" as const,
+    title: "동기화 완료",
+    message: "모임통장 데이터를 최신 상태로 불러왔습니다.",
+  },
+  refreshFallback: (errorMessage?: string | null) => ({
+    tone: "warning" as const,
+    title: "동기화 실패",
+    message: errorMessage ?? "실서버 연결에 실패했습니다. 데모 데이터를 유지합니다.",
+  }),
+  refreshDemo: {
+    tone: "warning" as const,
+    title: "데모 모드",
+    message: "현재는 데모 데이터로 동작 중입니다.",
+  },
 } as const

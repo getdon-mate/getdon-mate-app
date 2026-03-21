@@ -4,7 +4,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native"
 import { ROUTES } from "@core/navigation/routes"
 import type { RootStackParamList } from "@core/navigation/types"
-import { useApp } from "@core/providers/AppProvider"
+import { useAppAccounts } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { getErrorMessage } from "@core/api"
 import { requireText, validateDayOfMonth, validatePositiveNumber } from "@shared/lib/validation"
@@ -13,7 +13,7 @@ import { AccountCreatePanel } from "../components/AccountCreatePanel"
 
 export function AccountCreateScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
-  const { createAccount } = useApp()
+  const { createAccount } = useAppAccounts()
   const { showToast, showError } = useFeedback()
 
   const [groupName, setGroupName] = useState("")

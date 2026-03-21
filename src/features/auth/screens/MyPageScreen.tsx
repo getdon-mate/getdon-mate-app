@@ -10,7 +10,8 @@ import { Badge, Button, Card, Icon, InputField, PageHeader, uiColors, uiRadius, 
 
 export function MyPageScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
-  const { currentUser, updateProfile } = useAppAuth()
+  const { currentUser, updateProfile, withdraw, logout } = useAppAuth()
+  const isGuest = currentUser?.isGuest === true
   const { showError, showToast } = useFeedback()
 
   const [name, setName] = useState(currentUser?.name ?? "")
@@ -45,7 +46,7 @@ export function MyPageScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.select({ ios: "padding", android: undefined })}>
+    <KeyboardAvoidingView style={styles.screen} behavior={Platform.select({ ios: "padding", android: "height" })}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
         <View style={[styles.contentWrap, isWide && styles.contentWrapWide]}>
           <Pressable style={styles.backButton} onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="이전 화면으로 이동">
@@ -77,14 +78,21 @@ export function MyPageScreen() {
             </View>
           </Card>
 
-          <Card style={styles.formCard}>
-            <Text style={styles.sectionTitle}>기본 정보</Text>
-            <InputField value={name} onChangeText={setName} label="이름" placeholder="이름" editable={!saving} />
-            <InputField value={email} onChangeText={setEmail} label="이메일" placeholder="email@example.com" autoCapitalize="none" editable={!saving} />
-            <View style={styles.actionRow}>
-              <Button label={saving ? "저장 중..." : "저장"} onPress={() => void handleSave()} style={styles.actionButton} disabled={saving} />
-            </View>
-          </Card>
+          {isGuest ? (
+            <Card style={styles.formCard}>
+              <Text style={styles.guestNotice}>게스트 모드에서는 정보 변경이 제한됩니다.</Text>
+              <Button label="로그인 / 회원가입" onPress={logout} />
+            </Card>
+          ) : (
+            <Card style={styles.formCard}>
+              <Text style={styles.sectionTitle}>기본 정보</Text>
+              <InputField value={name} onChangeText={setName} label="이름" placeholder="이름" editable={!saving} />
+              <InputField value={email} onChangeText={setEmail} label="이메일" placeholder="email@example.com" autoCapitalize="none" editable={!saving} />
+              <View style={styles.actionRow}>
+                <Button label={saving ? "저장 중..." : "저장"} onPress={() => void handleSave()} style={styles.actionButton} disabled={saving} />
+              </View>
+            </Card>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -198,5 +206,10 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     minHeight: 50,
+  },
+  guestNotice: {
+    color: uiColors.textMuted,
+    fontSize: 14,
+    lineHeight: 20,
   },
 })

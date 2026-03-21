@@ -54,8 +54,8 @@ export function createApiConfig(env: EnvShape = process.env): ApiConfig {
 
 export const apiConfig = createApiConfig()
 
-// 디버깅을 위한 환경 변수 로그 (배포 환경에서 확인용)
-if (typeof window !== "undefined") {
+// 디버깅을 위한 환경 변수 로그 (개발 환경에서만 출력)
+if (typeof __DEV__ !== "undefined" && __DEV__ && typeof window !== "undefined") {
   console.log("[api.config] Current API Mode:", apiConfig.mode)
   console.log("[api.config] Current API BaseURL:", apiConfig.baseUrl ?? "RELATIVE (Proxy mode)")
   console.log("[api.config] EXPO_PUBLIC_API_MODE:", process.env.EXPO_PUBLIC_API_MODE)

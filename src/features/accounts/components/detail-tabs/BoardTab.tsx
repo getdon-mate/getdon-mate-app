@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import { Pressable, Share, StyleSheet, Text, TextInput, View } from "react-native"
-import { useApp, useAppAuth } from "@core/providers/AppProvider"
+import { useAppAccounts, useAppAuth, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { copyText } from "@shared/lib/clipboard"
 import { formatActivityTimestamp } from "@shared/lib/format"
@@ -344,8 +344,9 @@ function PostCard({
 
 export function BoardTab({ account }: { account: GroupAccount }) {
   const { currentUser } = useAppAuth()
-  const { createBoardPost, addBoardComment, updateBoardPost, deleteBoardPost, updateBoardComment, deleteBoardComment, toggleBoardPostLike, isMutating } =
-    useApp()
+  const { isMutating } = useAppRuntime()
+  const { createBoardPost, addBoardComment, updateBoardPost, deleteBoardPost, updateBoardComment, deleteBoardComment, toggleBoardPostLike } =
+    useAppAccounts()
   const { showAlert, showToast, confirmDanger } = useFeedback()
   const [composerOpen, setComposerOpen] = useState(account.boardPosts.length === 0)
   const [editingPostId, setEditingPostId] = useState<string | null>(null)

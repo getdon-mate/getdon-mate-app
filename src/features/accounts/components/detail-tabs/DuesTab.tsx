@@ -1,9 +1,11 @@
 import { Pressable, StyleSheet, Text, View } from "react-native"
-import { useApp } from "@core/providers/AppProvider"
+import { useAppAccounts } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { ActionChip, Icon, uiColors } from "@shared/ui"
-import { availableMonths } from "../../model/fixtures"
+import { getAvailableMonths } from "@shared/lib/date"
 import { formatDate, formatMonth } from "@shared/lib/format"
+
+const availableMonths = getAvailableMonths(11)
 import { getMemberById } from "../../model/member-utils"
 import { getLatestReminderForMember, getPaymentSummary } from "../../model/selectors"
 import type { GroupAccount } from "../../model/types"
@@ -20,7 +22,7 @@ export function DuesTab({
   selectedMonth: string
   onSelectMonth: (month: string) => void
 }) {
-  const { toggleDues, sendPaymentReminder, sendTransferRequest } = useApp()
+  const { toggleDues, sendPaymentReminder, sendTransferRequest } = useAppAccounts()
   const { showToast } = useFeedback()
 
   const monthIndex = availableMonths.indexOf(selectedMonth)
@@ -90,16 +92,6 @@ export function DuesTab({
           >
             <Icon name="chevronRight" size={15} color={disableNextMonth ? uiColors.textSoft : uiColors.textStrong} />
           </Pressable>
-        </View>
-        <View style={styles.monthChipRow}>
-          {availableMonths.map((month) => (
-            <ActionChip
-              key={month}
-              label={`${Number(month.slice(-2))}월`}
-              active={month === selectedMonth}
-              onPress={() => onSelectMonth(month)}
-            />
-          ))}
         </View>
 
         <View style={styles.summaryPillRow}>
@@ -261,11 +253,6 @@ const styles = StyleSheet.create({
   summaryPillRow: {
     flexDirection: "row",
     gap: 8,
-  },
-  monthChipRow: {
-    flexDirection: "row",
-    gap: 8,
-    flexWrap: "wrap",
   },
   summaryPill: {
     flex: 1,

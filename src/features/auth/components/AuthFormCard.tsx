@@ -40,13 +40,13 @@ export function AuthFormCard({
             <Text style={styles.cardTitle}>{isSignup ? "회원가입" : "로그인"}</Text>
             {!isSignup ? (
                 <View style={styles.socialStack}>
-                    <Pressable style={styles.socialButton} onPress={() => onSocialLogin("google")} accessibilityRole="button" accessibilityLabel="Google로 계속하기">
-                        <Icon name="google" size={16} color={uiColors.textStrong} />
-                        <Text style={styles.socialButtonText}>Google로 계속하기</Text>
+                    <Pressable style={[styles.socialButton, styles.socialButtonDisabled]} onPress={() => onSocialLogin("google")} accessibilityRole="button" accessibilityLabel="Google 로그인 (준비 중)">
+                        <Icon name="google" size={16} color={uiColors.textSoft} />
+                        <Text style={styles.socialButtonTextDisabled}>Google로 계속하기 (준비 중)</Text>
                     </Pressable>
-                    <Pressable style={styles.socialButton} onPress={() => onSocialLogin("kakao")} accessibilityRole="button" accessibilityLabel="카카오로 계속하기">
-                        <Icon name="kakao" size={16} color={uiColors.textStrong} />
-                        <Text style={styles.socialButtonText}>카카오로 계속하기</Text>
+                    <Pressable style={[styles.socialButton, styles.socialButtonDisabled]} onPress={() => onSocialLogin("kakao")} accessibilityRole="button" accessibilityLabel="카카오 로그인 (준비 중)">
+                        <Icon name="kakao" size={16} color={uiColors.textSoft} />
+                        <Text style={styles.socialButtonTextDisabled}>카카오로 계속하기 (준비 중)</Text>
                     </Pressable>
                 </View>
             ) : null}
@@ -156,5 +156,13 @@ const styles = StyleSheet.create({
         color: uiColors.textStrong,
         fontSize: 14,
         fontWeight: "700",
+    },
+    socialButtonDisabled: {
+        opacity: 0.5,
+    },
+    socialButtonTextDisabled: {
+        color: uiColors.textSoft,
+        fontSize: 14,
+        fontWeight: "600",
     },
 })

@@ -1,3 +1,4 @@
+import { memberAccentPalette } from "@shared/ui/palette"
 import type { AppUser, GroupAccount, Member, Transaction } from "../model/types"
 import type {
   ApiAuthResponse,
@@ -7,13 +8,13 @@ import type {
   ApiTransaction,
   ApiUser,
 } from "./dto"
+import type { SwaggerMeetingSummary } from "./swagger-api"
 
 export function toDomainUser(user: ApiUser): AppUser {
   return {
     id: user.id,
     name: user.name,
     email: user.email,
-    password: user.password,
   }
 }
 
@@ -76,5 +77,55 @@ export function toDomainBootstrapResponse(response: ApiBootstrapResponse) {
   return {
     users: response.users.map(toDomainUser),
     accounts: response.accounts.map(toDomainAccount),
+  }
+}
+
+function deriveInitials(name: string) {
+  return name.trim().slice(-2) || "??"
+}
+
+export function createRemoteUser(email: string, name?: string): AppUser {
+  const derivedName = name?.trim() || email.split("@")[0] || "사용자"
+  return {
+    id: `remote:${email}`,
+    name: derivedName,
+    email,
+  }
+}
+
+export function toGroupAccountSummary(meeting: SwaggerMeetingSummary, currentUser: AppUser | null): GroupAccount {
+  return {
+    id: String(meeting.meetingId),
+    groupName: meeting.title,
+    bankName: meeting.bankName,
+    accountNumber: "",
+    balance: meeting.amount,
+    monthlyDuesAmount: 0,
+    dueDay: 25,
+    members: currentUser
+      ? [
+          {
+            id: `leader-${meeting.meetingId}`,
+            userId: currentUser.id,
+            name: currentUser.name,
+            role: "총무",
+            initials: deriveInitials(currentUser.name),
+            phone: "",
+            joinDate: new Date().toISOString().split("T")[0],
+            color: memberAccentPalette[0],
+          },
+        ]
+      : [],
+    duesRecords: [],
+    transactions: [],
+    autoTransfer: {
+      enabled: false,
+      dayOfMonth: 25,
+      amount: 0,
+      fromAccount: "",
+    },
+    oneTimeDues: [],
+    reminders: [],
+    boardPosts: [],
   }
 }

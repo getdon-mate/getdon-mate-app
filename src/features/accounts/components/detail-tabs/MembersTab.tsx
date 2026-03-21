@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native"
-import { useApp, useAppAuth } from "@core/providers/AppProvider"
+import { useAppAccounts, useAppAuth } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validatePhoneNumber } from "@shared/lib/validation"
 import { ActionChip, Button, Icon, InputField, uiColors, uiRadius } from "@shared/ui"
@@ -16,7 +16,7 @@ type MemberSort = "name" | "payment-rate"
 type RoleFilter = "all" | "총무" | "멤버"
 
 export function MembersTab({ account }: { account: GroupAccount }) {
-  const { createMember, updateMember, delegateManager, deleteMember, sendPaymentReminder, sendTransferRequest } = useApp()
+  const { createMember, updateMember, delegateManager, deleteMember, sendPaymentReminder, sendTransferRequest } = useAppAccounts()
   const { showAlert, showToast, confirm } = useFeedback()
   const { currentUser } = useAppAuth()
   const [name, setName] = useState("")

@@ -90,7 +90,7 @@ interface AppAuthContextType {
   signup: (name: string, email: string, password: string) => Promise<boolean>
   updateProfile: (data: UpdateProfileInput) => Promise<void>
   logout: () => void
-  withdraw: () => void
+  withdraw: () => Promise<void>
   continueAsGuest: () => void
 }
 

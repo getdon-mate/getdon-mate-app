@@ -1,6 +1,6 @@
 export const COPY = {
   auth: {
-    testAccountLabel: "",
+    testAccountLabel: "테스트 계정: test@test.com / password",
   },
   notification: {
     title: "알림 설정",
