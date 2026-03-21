@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
 import { requireText, validateEmail, validatePassword } from "@shared/lib/validation"
 import { COPY } from "@shared/constants/copy"
@@ -10,13 +10,18 @@ interface UseAuthFormParams {
   lastSyncError?: string | null
 }
 
-export function useAuthForm({ login, signup, showError }: UseAuthFormParams) {
+export function useAuthForm({ login, signup, showError, lastSyncError }: UseAuthFormParams) {
   const [isSignup, setIsSignup] = useState(false)
   const [name, setName] = useState("")
   const [email, setEmail] = useState<string>("")
   const [password, setPassword] = useState<string>("")
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
+
+  // 실서버 에러 메시지가 도착하면 폼 에러로 표시
+  useEffect(() => {
+    if (lastSyncError) setError(lastSyncError)
+  }, [lastSyncError])
 
   async function handleSubmit() {
     if (submitting) return

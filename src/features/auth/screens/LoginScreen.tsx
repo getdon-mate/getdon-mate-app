@@ -23,7 +23,7 @@ export function LoginScreen() {
   const { width } = useWindowDimensions()
   const isWide = width >= 900
   const { isSignup, name, email, password, error, submitting, setName, setEmail, setPassword, handleSubmit, resetForm } =
-    useAuthForm({ login, signup, showError })
+    useAuthForm({ login, signup, showError, lastSyncError })
 
   useEffect(() => {
     const lastEmail = readLastEmail()
