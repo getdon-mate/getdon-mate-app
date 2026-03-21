@@ -128,8 +128,6 @@ interface AppAccountsContextType {
   resetDemoData: () => void
 }
 
-interface AppContextType extends AppRuntimeContextType, AppAuthContextType, AppAccountsContextType {}
-
 // ─── Contexts & hooks ─────────────────────────────────────────────────────────
 
 const AppRuntimeContext = createContext<AppRuntimeContextType | null>(null)
@@ -152,13 +150,6 @@ export function useAppAccounts() {
   const ctx = useContext(AppAccountsContext)
   if (!ctx) throw new Error("useAppAccounts must be used within AppProvider")
   return ctx
-}
-
-export function useApp(): AppContextType {
-  const runtime = useAppRuntime()
-  const auth = useAppAuth()
-  const accounts = useAppAccounts()
-  return useMemo(() => ({ ...runtime, ...auth, ...accounts }), [runtime, auth, accounts])
 }
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
