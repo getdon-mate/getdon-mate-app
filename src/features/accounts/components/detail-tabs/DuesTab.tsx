@@ -77,7 +77,7 @@ export function DuesTab({
             onPress={() => onSelectMonth(availableMonths[monthIndex + 1])}
             style={[styles.arrowButton, disablePreviousMonth && styles.arrowButtonDisabled]}
             accessibilityRole="button"
-            accessibilityLabel="이전 달 보기"
+            accessibilityLabel={`${selectedMonth} 이전 달 보기`}
             accessibilityState={{ disabled: disablePreviousMonth }}
           >
             <Icon name="chevronLeft" size={15} color={disablePreviousMonth ? uiColors.textSoft : uiColors.textStrong} />
@@ -88,7 +88,7 @@ export function DuesTab({
             onPress={() => onSelectMonth(availableMonths[monthIndex - 1])}
             style={[styles.arrowButton, disableNextMonth && styles.arrowButtonDisabled]}
             accessibilityRole="button"
-            accessibilityLabel="다음 달 보기"
+            accessibilityLabel={`${selectedMonth} 다음 달 보기`}
             accessibilityState={{ disabled: disableNextMonth }}
           >
             <Icon name="chevronRight" size={15} color={disableNextMonth ? uiColors.textSoft : uiColors.textStrong} />
@@ -120,96 +120,103 @@ export function DuesTab({
         ) : null}
       </SectionCard>
 
-      <SectionCard>
-        <SectionHeader title="멤버별 납부 현황" />
-        {account.members.length === 0 ? (
-          <EmptyStateCard
-            title="먼저 멤버를 추가해보세요."
-            description="멤버를 등록하면 월별 회비 현황과 미납 안내를 바로 시작할 수 있습니다."
-          />
-        ) : currentDues.length > 0 ? (
-          <View style={styles.stackCompact}>
-            {currentDues.map((record) => {
-              const member = getMemberById(account.members, record.memberId)
-              const latestReminder = getLatestReminderForMember(account, record.memberId)
-              const isPaid = record.status === "paid"
-              const isUnpaid = record.status === "unpaid"
-              if (!member) return null
-              return (
-                <View key={`${record.memberId}-${record.month}`} style={styles.memberRow}>
-                  <View style={styles.memberIdentity}>
-                    <Text style={[styles.avatar, { backgroundColor: member.color }]}>{member.initials}</Text>
-                    <View>
-                      <View style={styles.memberHeaderRow}>
-                        <Text style={styles.memberName}>{member.name}</Text>
-                        <View
-                          style={[
-                            styles.statusPill,
-                            isPaid ? styles.statusPillPaid : isUnpaid ? styles.statusPillUnpaid : styles.statusPillExempt,
-                          ]}
-                        >
-                          <Text
+      {unpaidRecords.length > 0 ? (
+        <SectionCard>
+          <SectionHeader title="멤버별 납부 현황" />
+          {account.members.length === 0 ? (
+            <EmptyStateCard
+              title="먼저 멤버를 추가해보세요."
+              description="멤버를 등록하면 월별 회비 현황과 미납 안내를 바로 시작할 수 있습니다."
+            />
+          ) : currentDues.length > 0 ? (
+            <View style={styles.stackCompact}>
+              {currentDues.map((record) => {
+                const member = getMemberById(account.members, record.memberId)
+                const latestReminder = getLatestReminderForMember(account, record.memberId)
+                const isPaid = record.status === "paid"
+                const isUnpaid = record.status === "unpaid"
+                if (!member) return null
+                return (
+                  <View key={`${record.memberId}-${record.month}`} style={styles.memberRow}>
+                    <View style={styles.memberIdentity}>
+                      <Text style={[styles.avatar, { backgroundColor: member.color }]}>{member.initials}</Text>
+                      <View>
+                        <View style={styles.memberHeaderRow}>
+                          <Text style={styles.memberName}>{member.name}</Text>
+                          <View
                             style={[
-                              styles.statusPillText,
-                              isPaid ? styles.statusPillTextPaid : isUnpaid ? styles.statusPillTextUnpaid : styles.statusPillTextExempt,
+                              styles.statusPill,
+                              isPaid ? styles.statusPillPaid : isUnpaid ? styles.statusPillUnpaid : styles.statusPillExempt,
                             ]}
                           >
-                            {isPaid ? "완납" : isUnpaid ? "미납" : "면제"}
-                          </Text>
+                            <Text
+                              style={[
+                                styles.statusPillText,
+                                isPaid ? styles.statusPillTextPaid : isUnpaid ? styles.statusPillTextUnpaid : styles.statusPillTextExempt,
+                              ]}
+                            >
+                              {isPaid ? "완납" : isUnpaid ? "미납" : "면제"}
+                            </Text>
+                          </View>
                         </View>
-                      </View>
-                      <Text style={styles.memberMeta}>
-                        {isPaid && record.paidDate
-                          ? `${formatDate(record.paidDate)} 납부`
-                          : isUnpaid
-                            ? "이번 달 확인이 필요합니다."
-                            : "이번 달 면제로 처리됐습니다."}
-                      </Text>
-                      {isUnpaid && latestReminder ? (
-                        <Text style={styles.reminderMeta}>
-                          최근 안내 · {formatDate(latestReminder.createdAt.slice(0, 10))} {latestReminder.type === "payment-reminder" ? "납부 안내" : "송금 요청"}
+                        <Text style={styles.memberMeta}>
+                          {isPaid && record.paidDate
+                            ? `${formatDate(record.paidDate)} 납부`
+                            : isUnpaid
+                              ? "이번 달 확인이 필요합니다."
+                              : "이번 달 면제로 처리됐습니다."}
                         </Text>
-                      ) : null}
+                        {isUnpaid && latestReminder ? (
+                          <Text style={styles.reminderMeta}>
+                            최근 안내 · {formatDate(latestReminder.createdAt.slice(0, 10))} {latestReminder.type === "payment-reminder" ? "납부 안내" : "송금 요청"}
+                          </Text>
+                        ) : null}
+                      </View>
                     </View>
+                    {record.status !== "exempt" && (
+                      <View style={styles.recordActions}>
+                        {record.status === "unpaid" ? (
+                          <>
+                            <ActionChip
+                              label="납부 안내"
+                              onPress={() => {
+                                void handleSendReminder(record.memberId, member.name, "payment-reminder")
+                              }}
+                            />
+                            <ActionChip
+                              label="송금 요청"
+                              onPress={() => {
+                                void handleSendReminder(record.memberId, member.name, "transfer-request")
+                              }}
+                            />
+                          </>
+                        ) : null}
+                        <ActionChip
+                          label={record.status === "unpaid" ? COPY.dues.markPaid : COPY.dues.cancelPaid}
+                          active={record.status === "unpaid"}
+                          onPress={() => {
+                            void toggleDues(record.memberId, selectedMonth)
+                          }}
+                        />
+                      </View>
+                    )}
                   </View>
-                  {record.status !== "exempt" && (
-                    <View style={styles.recordActions}>
-                      {record.status === "unpaid" ? (
-                        <>
-                          <ActionChip
-                            label="납부 안내"
-                            onPress={() => {
-                              void handleSendReminder(record.memberId, member.name, "payment-reminder")
-                            }}
-                          />
-                          <ActionChip
-                            label="송금 요청"
-                            onPress={() => {
-                              void handleSendReminder(record.memberId, member.name, "transfer-request")
-                            }}
-                          />
-                        </>
-                      ) : null}
-                      <ActionChip
-                        label={record.status === "unpaid" ? "완납 처리" : "취소"}
-                        active={record.status === "unpaid"}
-                        onPress={() => {
-                          void toggleDues(record.memberId, selectedMonth)
-                        }}
-                      />
-                    </View>
-                  )}
-                </View>
-              )
-            })}
-          </View>
-        ) : (
-          <EmptyStateCard
-            title="이 달의 회비 기록이 없습니다."
-            description="월을 변경하거나 멤버 회비를 등록해 진행률을 확인해보세요."
-          />
-        )}
-      </SectionCard>
+                )
+              })}
+            </View>
+          ) : (
+            <EmptyStateCard
+              title="이 달의 회비 기록이 없습니다."
+              description="월을 변경하거나 멤버 회비를 등록해 진행률을 확인해보세요."
+            />
+          )}
+        </SectionCard>
+      ) : (
+        <EmptyStateCard
+          title="이 달의 회비 기록이 없습니다."
+          description="월을 변경하거나 멤버 회비를 등록해 진행률을 확인해보세요."
+        />
+      )}
     </View>
   )
 }

@@ -25,6 +25,8 @@ export const COPY = {
     reminderSentTitle: "납부 안내 전송",
     transferRequestSent: (name: string) => `${name}님께 이체 요청을 보냈습니다.`,
     transferRequestSentTitle: "이체 요청 전송",
+    markPaid: "완납 처리",
+    cancelPaid: "취소",
   },
   common: {
     cancel: "취소",
