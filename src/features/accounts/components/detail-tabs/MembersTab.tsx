@@ -35,6 +35,8 @@ export function MembersTab({ account }: { account: GroupAccount }) {
   const avgRate =
     account.members.length === 0
       ? "-"
+      : account.duesRecords.length === 0
+      ? "데이터 없음"
       : `${Math.round(account.members.reduce((sum, member) => sum + getMemberPaymentRate(account.duesRecords, member.id), 0) / account.members.length)}%`
   const editingMember = useMemo(() => account.members.find((member) => member.id === editingId) ?? null, [account.members, editingId])
   const currentManager = useMemo(() => account.members.find((member) => member.role === "총무") ?? null, [account.members])
