@@ -40,11 +40,12 @@ const styles = StyleSheet.create({
   memberName: {
     color: uiColors.textStrong,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "600",
   },
   memberMeta: {
     color: uiColors.textMuted,
     fontSize: 12,
+    fontWeight: "400",
   },
   transactionAmount: {
     fontSize: 14,

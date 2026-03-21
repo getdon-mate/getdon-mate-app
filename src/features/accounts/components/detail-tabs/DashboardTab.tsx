@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   memberName: {
     color: uiColors.textStrong,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "600",
   },
   unpaidBadge: {
     borderRadius: uiRadius.full,

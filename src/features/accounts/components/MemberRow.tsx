@@ -187,9 +187,9 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   memberName: {
-    color: uiColors.text,
+    color: uiColors.textStrong,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "600",
   },
   memberNameRow: {
     flexDirection: "row",

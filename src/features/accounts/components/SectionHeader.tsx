@@ -38,9 +38,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: uiColors.text,
+    fontSize: 17,
+    fontWeight: "800",
+    color: uiColors.textStrong,
   },
   action: {
     color: uiColors.primary,

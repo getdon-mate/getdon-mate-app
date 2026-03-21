@@ -130,9 +130,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   accountTitle: {
-    color: uiColors.text,
+    color: uiColors.textStrong,
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   accountTitleCompact: {
     fontSize: 16,
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   accountMembers: {
     color: uiColors.textMuted,
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: "400",
   },
   accountMembersCompact: {
     fontSize: 12,

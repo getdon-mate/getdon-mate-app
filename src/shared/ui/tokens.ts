@@ -58,18 +58,18 @@ export const uiTypography = {
     color: uiColors.text,
   },
   section: {
-    fontSize: 16,
-    fontWeight: "700" as const,
-    color: uiColors.text,
+    fontSize: 17,
+    fontWeight: "800" as const,
+    color: uiColors.textStrong,
   },
   body: {
     fontSize: 14,
-    fontWeight: "500" as const,
+    fontWeight: "400" as const,
     color: uiColors.textMuted,
   },
   caption: {
     fontSize: 12,
-    fontWeight: "600" as const,
+    fontWeight: "500" as const,
     color: uiColors.textSoft,
   },
   metric: {
