@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react"
-import { Pressable, StyleSheet, Text, View } from "react-native"
+import { Pressable, SectionList, StyleSheet, Text, View } from "react-native"
 import { useAppAccounts, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
@@ -23,6 +23,7 @@ function getCategoryLabel(type: TransactionType) {
 }
 
 type SortOrder = "latest" | "oldest"
+type TxSection = { title: string; data: Transaction[] }
 
 export function TransactionsTab({
   account,
@@ -113,6 +114,10 @@ export function TransactionsTab({
   const dates = Object.keys(grouped).sort((a, b) =>
     sortOrder === "latest" ? b.localeCompare(a) : a.localeCompare(b)
   )
+  const sections: TxSection[] = dates.map((d) => ({
+    title: d,
+    data: grouped[d],
+  }))
   const hasActiveFilter = Boolean(query) || filter !== "all" || categoryFilter !== "all" || sortOrder !== "latest"
   const selectedTransaction = useMemo(
     () => account.transactions.find((tx) => tx.id === editingId) ?? null,
@@ -195,259 +200,279 @@ export function TransactionsTab({
   }
 
   return (
-    <View style={styles.stack}>
-      <SectionCard>
-        <SectionHeader title={isEditing ? "거래 수정" : "새 거래 등록"} description="입금과 출금을 기록합니다." />
-        <View style={styles.formTypeRow}>
-          {(["income", "expense"] as const).map((item) => {
-            const active = draftType === item
-            return (
-              <ActionChip
-                key={item}
-                label={item === "income" ? "입금" : "출금"}
-                active={active}
-                style={styles.flexChip}
-                onPress={() => {
-                  setDraftType(item)
-                  if (!isEditing) {
-                    setCategory(getCategoryLabel(item))
-                  }
-                }}
-              />
-            )
-          })}
-        </View>
-        <View style={styles.formGrid}>
-          <NumericInputField
-            value={amount}
-            onChangeText={setAmount}
-            label="금액"
-            placeholder="금액"
-            containerStyle={styles.compactField}
-            inputStyle={styles.compactInput}
-          />
-          <InputField
-            value={date}
-            onChangeText={setDate}
-            label="거래일"
-            placeholder="YYYY-MM-DD"
-            containerStyle={styles.compactField}
-            inputStyle={styles.compactInput}
-          />
-          <InputField
-            value={description}
-            onChangeText={setDescription}
-            label="설명"
-            placeholder="예: 회비 입금, 모임 식비"
-            containerStyle={styles.compactField}
-            inputStyle={styles.compactInput}
-          />
-          <InputField
-            value={category}
-            onChangeText={setCategory}
-            label="카테고리"
-            placeholder="예: 회비, 식비"
-            containerStyle={styles.compactField}
-            inputStyle={styles.compactInput}
-          />
-        </View>
-        {recentCategories.length > 0 ? (
-          <View style={styles.recentCategoryWrap}>
-            <Text style={styles.recentCategoryLabel}>최근 카테고리</Text>
-            <View style={styles.recentCategoryRow}>
-              {recentCategories.map((item) => (
-                <ActionChip key={item} label={item} onPress={() => setCategory(item)} />
-              ))}
-            </View>
-          </View>
-        ) : null}
-        {recentDraftSuggestions.length > 0 ? (
-          <View style={styles.recentValueWrap}>
-            <Text style={styles.recentCategoryLabel}>최근 거래값</Text>
-            <View style={styles.recentValueRow}>
-              {recentDraftSuggestions.map((tx) => (
-                <ActionChip
-                  key={tx.id}
-                  label={`${tx.description} · ${formatKRW(tx.amount)}`}
-                  onPress={() => {
-                    setAmount(String(tx.amount))
-                    setDescription(tx.description)
-                    setCategory(tx.category)
-                    setDate(tx.date)
-                  }}
+    <>
+      <SectionList<Transaction, TxSection>
+        sections={sections}
+        keyExtractor={(item) => item.id}
+        style={styles.sectionList}
+        contentContainerStyle={styles.sectionListContent}
+        ListHeaderComponent={
+          <View style={styles.headerStack}>
+            <SectionCard>
+              <SectionHeader title={isEditing ? "거래 수정" : "새 거래 등록"} description="입금과 출금을 기록합니다." />
+              <View style={styles.formTypeRow}>
+                {(["income", "expense"] as const).map((item) => {
+                  const active = draftType === item
+                  return (
+                    <ActionChip
+                      key={item}
+                      label={item === "income" ? "입금" : "출금"}
+                      active={active}
+                      style={styles.flexChip}
+                      onPress={() => {
+                        setDraftType(item)
+                        if (!isEditing) {
+                          setCategory(getCategoryLabel(item))
+                        }
+                      }}
+                    />
+                  )
+                })}
+              </View>
+              <View style={styles.formGrid}>
+                <NumericInputField
+                  value={amount}
+                  onChangeText={setAmount}
+                  label="금액"
+                  placeholder="금액"
+                  containerStyle={styles.compactField}
+                  inputStyle={styles.compactInput}
                 />
-              ))}
-            </View>
-          </View>
-        ) : null}
-        <View style={styles.formActionRow}>
-          {isEditing ? (
-            <Button
-              label="편집 취소"
-              variant="ghost"
-              onPress={() => resetComposer(initialType)}
-              style={styles.formActionButton}
-              disabled={isMutating}
-            />
-          ) : null}
-          <Button
-            label={isMutating ? "저장 중..." : isEditing ? "거래 수정" : draftType === "income" ? "입금 등록" : "출금 등록"}
-            onPress={() => void handleSubmit()}
-            style={styles.formActionButton}
-            disabled={isMutating}
-          />
-        </View>
-      </SectionCard>
-
-      <View style={styles.summaryRow}>
-        <SectionCard>
-          <Text style={styles.summaryLabel}>총 입금</Text>
-          <Text style={[styles.metricText, styles.incomeText]}>+{formatKRW(income)}</Text>
-        </SectionCard>
-        <SectionCard>
-          <Text style={styles.summaryLabel}>총 출금</Text>
-          <Text style={[styles.metricText, styles.expenseText]}>-{formatKRW(expense)}</Text>
-        </SectionCard>
-      </View>
-
-      <SectionCard>
-        <View style={styles.filterHeaderRow}>
-          <SectionHeader title="거래 필터" />
-          <Pressable
-            style={styles.filterToggle}
-            onPress={() => setFiltersOpen((prev) => !prev)}
-            accessibilityRole="button"
-            accessibilityLabel={filtersOpen ? "거래 필터 닫기" : "거래 필터 열기"}
-          >
-            <Icon name="filter" size={16} color={uiColors.textStrong} />
-            <Text style={styles.filterToggleText}>{filtersOpen ? "접기" : "필터"}</Text>
-          </Pressable>
-        </View>
-        {filtersOpen ? (
-          <View style={styles.filterPanel}>
-            <InputField
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              label="검색"
-              accessibilityLabel="거래 검색"
-              placeholder="설명, 카테고리, 멤버명"
-            />
-            <View style={styles.filterRow}>
-              {(["all", "income", "expense"] as const).map((item) => (
-                <ActionChip
-                  key={item}
-                  label={item === "all" ? "전체" : item === "income" ? "입금" : "출금"}
-                  active={filter === item}
-                  onPress={() => setFilter(item)}
+                <InputField
+                  value={date}
+                  onChangeText={setDate}
+                  label="거래일"
+                  placeholder="YYYY-MM-DD"
+                  containerStyle={styles.compactField}
+                  inputStyle={styles.compactInput}
                 />
-              ))}
-              <ActionChip
-                label={sortOrder === "latest" ? "최신순" : "오래된순"}
-                active
-                onPress={() => setSortOrder((prev) => (prev === "latest" ? "oldest" : "latest"))}
-              />
-            </View>
-            <View style={styles.filterRow}>
-              {categories.map((item) => (
-                <ActionChip
-                  key={item}
-                  label={item === "all" ? "카테고리 전체" : item}
-                  active={categoryFilter === item}
-                  onPress={() => setCategoryFilter(item)}
+                <InputField
+                  value={description}
+                  onChangeText={setDescription}
+                  label="설명"
+                  placeholder="예: 회비 입금, 모임 식비"
+                  containerStyle={styles.compactField}
+                  inputStyle={styles.compactInput}
                 />
-              ))}
-            </View>
-          </View>
-        ) : (
-          <Text style={styles.filterSummary}>필터를 열어 검색, 유형, 카테고리를 빠르게 좁혀볼 수 있습니다.</Text>
-        )}
-        {hasActiveFilter ? (
-          <Text style={styles.activeFilterSummary}>
-            활성 필터 · {query ? "검색 적용" : "검색 없음"} · {filter === "all" ? "전체" : filter === "income" ? "입금" : "출금"} · {categoryFilter === "all" ? "카테고리 전체" : categoryFilter} · {sortOrder === "latest" ? "최신순" : "오래된순"}
-          </Text>
-        ) : null}
-      </SectionCard>
-
-      {dates.length > 0 ? (
-        dates.map((date) => (
-          <SectionCard key={date}>
-            <Text style={styles.subtleText}>{formatFullDate(date)}</Text>
-            <View style={styles.stackCompact}>
-              {grouped[date].map((tx) => (
-                <View key={tx.id} style={[styles.transactionCard, menuOpenId === tx.id && styles.transactionCardActive]}>
-                  <View style={styles.transactionCardRow}>
-                    <View style={styles.transactionContent}>
-                      <TransactionRow account={account} tx={tx} />
-                    </View>
-                    <View style={styles.menuWrap}>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`${tx.description} ${tx.date} 거래 메뉴 열기`}
-                        onPress={() => setMenuOpenId((prev) => (prev === tx.id ? null : tx.id))}
-                        hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
-                        style={[styles.menuButton, menuOpenId === tx.id && styles.menuButtonActive]}
-                      >
-                        <Icon name="ellipsis" size={16} color={uiColors.textStrong} />
-                      </Pressable>
-                    </View>
+                <InputField
+                  value={category}
+                  onChangeText={setCategory}
+                  label="카테고리"
+                  placeholder="예: 회비, 식비"
+                  containerStyle={styles.compactField}
+                  inputStyle={styles.compactInput}
+                />
+              </View>
+              {recentCategories.length > 0 ? (
+                <View style={styles.recentCategoryWrap}>
+                  <Text style={styles.recentCategoryLabel}>최근 카테고리</Text>
+                  <View style={styles.recentCategoryRow}>
+                    {recentCategories.map((item) => (
+                      <ActionChip key={item} label={item} onPress={() => setCategory(item)} />
+                    ))}
                   </View>
-                  {menuOpenId === tx.id ? (
-                    <View style={styles.menuInlinePanel}>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="수정"
-                        disabled={isMutating}
-                        onPress={() => handleEdit(tx)}
-                        style={[styles.menuItem, isMutating && styles.menuItemDisabled]}
-                      >
-                        <Icon name="edit" size={15} color={uiColors.textStrong} />
-                        <Text style={styles.menuText}>수정</Text>
-                      </Pressable>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="삭제"
-                        disabled={isMutating}
-                        onPress={() => {
-                          void handleDelete(tx)
-                        }}
-                        style={[styles.menuItem, styles.menuItemWithDivider, isMutating && styles.menuItemDisabled]}
-                      >
-                        <Icon name="trash" size={15} color={uiColors.danger} />
-                        <Text style={styles.menuTextDanger}>{isMutating ? "처리 중..." : "삭제"}</Text>
-                      </Pressable>
-                    </View>
-                  ) : null}
                 </View>
-              ))}
-            </View>
-          </SectionCard>
-        ))
-      ) : isMutating ? (
-        <>
-          <LoadingStateCard lines={4} />
-          <LoadingStateCard lines={3} />
-        </>
-      ) : (
-        <EmptyStateCard
-          title={hasActiveFilter ? "조건에 맞는 거래가 없습니다." : "표시할 거래내역이 없습니다."}
-          description={hasActiveFilter ? "검색어나 필터를 조정하면 다시 거래를 볼 수 있습니다." : "필터를 바꾸거나 새 거래를 추가하면 이 영역에 거래가 표시됩니다."}
-          actionLabel={hasActiveFilter ? "필터 초기화" : undefined}
-          onAction={hasActiveFilter ? resetFilters : undefined}
-        />
-      )}
+              ) : null}
+              {recentDraftSuggestions.length > 0 ? (
+                <View style={styles.recentValueWrap}>
+                  <Text style={styles.recentCategoryLabel}>최근 거래값</Text>
+                  <View style={styles.recentValueRow}>
+                    {recentDraftSuggestions.map((tx) => (
+                      <ActionChip
+                        key={tx.id}
+                        label={`${tx.description} · ${formatKRW(tx.amount)}`}
+                        onPress={() => {
+                          setAmount(String(tx.amount))
+                          setDescription(tx.description)
+                          setCategory(tx.category)
+                          setDate(tx.date)
+                        }}
+                      />
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+              <View style={styles.formActionRow}>
+                {isEditing ? (
+                  <Button
+                    label="편집 취소"
+                    variant="ghost"
+                    onPress={() => resetComposer(initialType)}
+                    style={styles.formActionButton}
+                    disabled={isMutating}
+                  />
+                ) : null}
+                <Button
+                  label={isMutating ? "저장 중..." : isEditing ? "거래 수정" : draftType === "income" ? "입금 등록" : "출금 등록"}
+                  onPress={() => void handleSubmit()}
+                  style={styles.formActionButton}
+                  disabled={isMutating}
+                />
+              </View>
+            </SectionCard>
 
-      {selectedTransaction ? (
-        <Text style={styles.editingMeta}>
-          현재 편집 중: {selectedTransaction.description} ({formatKRW(selectedTransaction.amount)})
-        </Text>
-      ) : null}
-    </View>
+            <View style={styles.summaryRow}>
+              <SectionCard>
+                <Text style={styles.summaryLabel}>총 입금</Text>
+                <Text style={[styles.metricText, styles.incomeText]}>+{formatKRW(income)}</Text>
+              </SectionCard>
+              <SectionCard>
+                <Text style={styles.summaryLabel}>총 출금</Text>
+                <Text style={[styles.metricText, styles.expenseText]}>-{formatKRW(expense)}</Text>
+              </SectionCard>
+            </View>
+
+            <SectionCard>
+              <View style={styles.filterHeaderRow}>
+                <SectionHeader title="거래 필터" />
+                <Pressable
+                  style={styles.filterToggle}
+                  onPress={() => setFiltersOpen((prev) => !prev)}
+                  accessibilityRole="button"
+                  accessibilityLabel={filtersOpen ? "거래 필터 닫기" : "거래 필터 열기"}
+                >
+                  <Icon name="filter" size={16} color={uiColors.textStrong} />
+                  <Text style={styles.filterToggleText}>{filtersOpen ? "접기" : "필터"}</Text>
+                </Pressable>
+              </View>
+              {filtersOpen ? (
+                <View style={styles.filterPanel}>
+                  <InputField
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    label="검색"
+                    accessibilityLabel="거래 검색"
+                    placeholder="설명, 카테고리, 멤버명"
+                  />
+                  <View style={styles.filterRow}>
+                    {(["all", "income", "expense"] as const).map((item) => (
+                      <ActionChip
+                        key={item}
+                        label={item === "all" ? "전체" : item === "income" ? "입금" : "출금"}
+                        active={filter === item}
+                        onPress={() => setFilter(item)}
+                      />
+                    ))}
+                    <ActionChip
+                      label={sortOrder === "latest" ? "최신순" : "오래된순"}
+                      active
+                      onPress={() => setSortOrder((prev) => (prev === "latest" ? "oldest" : "latest"))}
+                    />
+                  </View>
+                  <View style={styles.filterRow}>
+                    {categories.map((item) => (
+                      <ActionChip
+                        key={item}
+                        label={item === "all" ? "카테고리 전체" : item}
+                        active={categoryFilter === item}
+                        onPress={() => setCategoryFilter(item)}
+                      />
+                    ))}
+                  </View>
+                </View>
+              ) : (
+                <Text style={styles.filterSummary}>필터를 열어 검색, 유형, 카테고리를 빠르게 좁혀볼 수 있습니다.</Text>
+              )}
+              {hasActiveFilter ? (
+                <Text style={styles.activeFilterSummary}>
+                  활성 필터 · {query ? "검색 적용" : "검색 없음"} · {filter === "all" ? "전체" : filter === "income" ? "입금" : "출금"} · {categoryFilter === "all" ? "카테고리 전체" : categoryFilter} · {sortOrder === "latest" ? "최신순" : "오래된순"}
+                </Text>
+              ) : null}
+            </SectionCard>
+
+            {selectedTransaction ? (
+              <Text style={styles.editingMeta}>
+                현재 편집 중: {selectedTransaction.description} ({formatKRW(selectedTransaction.amount)})
+              </Text>
+            ) : null}
+          </View>
+        }
+        renderSectionHeader={({ section }) => (
+          <SectionCard>
+            <Text style={styles.subtleText}>{formatFullDate(section.title)}</Text>
+          </SectionCard>
+        )}
+        renderItem={({ item: tx }) => (
+          <View style={[styles.transactionCard, menuOpenId === tx.id && styles.transactionCardActive]}>
+            <View style={styles.transactionCardRow}>
+              <View style={styles.transactionContent}>
+                <TransactionRow account={account} tx={tx} />
+              </View>
+              <View style={styles.menuWrap}>
+                <Pressable
+                  hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${tx.description} ${tx.date} 거래 메뉴 열기`}
+                  onPress={() => setMenuOpenId((prev) => (prev === tx.id ? null : tx.id))}
+                  style={[styles.menuButton, menuOpenId === tx.id && styles.menuButtonActive]}
+                >
+                  <Icon name="ellipsis" size={16} color={uiColors.textStrong} />
+                </Pressable>
+              </View>
+            </View>
+            {menuOpenId === tx.id ? (
+              <View style={styles.menuInlinePanel}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="수정"
+                  disabled={isMutating}
+                  onPress={() => handleEdit(tx)}
+                  style={[styles.menuItem, isMutating && styles.menuItemDisabled]}
+                >
+                  <Icon name="edit" size={15} color={uiColors.textStrong} />
+                  <Text style={styles.menuText}>수정</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="삭제"
+                  disabled={isMutating}
+                  onPress={() => {
+                    void handleDelete(tx)
+                  }}
+                  style={[styles.menuItem, styles.menuItemWithDivider, isMutating && styles.menuItemDisabled]}
+                >
+                  <Icon name="trash" size={15} color={uiColors.danger} />
+                  <Text style={styles.menuTextDanger}>{isMutating ? "처리 중..." : "삭제"}</Text>
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
+        )}
+        ListEmptyComponent={
+          isMutating ? (
+            <View style={styles.headerStack}>
+              <LoadingStateCard lines={4} />
+              <LoadingStateCard lines={3} />
+            </View>
+          ) : (
+            <EmptyStateCard
+              title={hasActiveFilter ? "조건에 맞는 거래가 없습니다." : "표시할 거래내역이 없습니다."}
+              description={hasActiveFilter ? "검색어나 필터를 조정하면 다시 거래를 볼 수 있습니다." : "필터를 바꾸거나 새 거래를 추가하면 이 영역에 거래가 표시됩니다."}
+              actionLabel={hasActiveFilter ? "필터 초기화" : undefined}
+              onAction={hasActiveFilter ? resetFilters : undefined}
+            />
+          )
+        }
+      />
+    </>
   )
 }
 
 const styles = StyleSheet.create({
   stack: {
     gap: 12,
+  },
+  sectionList: {
+    flex: 1,
+  },
+  sectionListContent: {
+    paddingHorizontal: 14,
+    paddingBottom: 18,
+    gap: 12,
+  },
+  headerStack: {
+    gap: 12,
+    marginBottom: 4,
   },
   summaryRow: {
     flexDirection: "row",

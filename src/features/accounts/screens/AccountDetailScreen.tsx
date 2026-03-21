@@ -177,32 +177,40 @@ export function AccountDetailScreen() {
         onPressAction={openTransactionComposer}
       />
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-        <View style={[styles.contentWrap, isWide && styles.contentWrapWide]}>
-          {isBootstrapping ? (
-            <>
-              <LoadingStateCard />
-              <LoadingStateCard />
-            </>
-          ) : tab === "dashboard" ? (
-            <DashboardTab
-              account={account}
-              onOpenDues={() => setTab("dues")}
-              onOpenTransactions={() => setTab("transactions")}
-              onCopyAccountNumber={() => void handleCopyAccountNumber()}
-            />
-          ) : null}
-          {tab === "dues" ? <DuesTab account={account} selectedMonth={selectedMonth} onSelectMonth={setSelectedMonth} /> : null}
-          {tab === "transactions" ? (
-            <TransactionsTab account={account} initialType={transactionComposerType} composerSignal={transactionComposerSignal} />
-          ) : null}
-          {tab === "members" ? <MembersTab account={account} /> : null}
-          {tab === "statistics" ? <StatisticsTab account={account} /> : null}
-          {tab === "calendar" ? <CalendarTab account={account} onOpenQuickAction={setTab} /> : null}
-          {tab === "board" ? <BoardTab account={account} /> : null}
-          {tab === "settings" ? <SettingsTab account={account} /> : null}
+      {tab === "transactions" ? (
+        // TransactionsTab 은 자체 SectionList 스크롤 보유 → 외부 ScrollView 불필요
+        <View style={[styles.flexFill, styles.transactionsWrap, isWide && styles.contentWrapWide]}>
+          <TransactionsTab
+            account={account}
+            initialType={transactionComposerType}
+            composerSignal={transactionComposerSignal}
+          />
         </View>
-      </ScrollView>
+      ) : (
+        <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+          <View style={[styles.contentWrap, isWide && styles.contentWrapWide]}>
+            {isBootstrapping ? (
+              <>
+                <LoadingStateCard />
+                <LoadingStateCard />
+              </>
+            ) : tab === "dashboard" ? (
+              <DashboardTab
+                account={account}
+                onOpenDues={() => setTab("dues")}
+                onOpenTransactions={() => setTab("transactions")}
+                onCopyAccountNumber={() => void handleCopyAccountNumber()}
+              />
+            ) : null}
+            {tab === "dues" ? <DuesTab account={account} selectedMonth={selectedMonth} onSelectMonth={setSelectedMonth} /> : null}
+            {tab === "members" ? <MembersTab account={account} /> : null}
+            {tab === "statistics" ? <StatisticsTab account={account} /> : null}
+            {tab === "calendar" ? <CalendarTab account={account} onOpenQuickAction={setTab} /> : null}
+            {tab === "board" ? <BoardTab account={account} /> : null}
+            {tab === "settings" ? <SettingsTab account={account} /> : null}
+          </View>
+        </ScrollView>
+      )}
 
       <DetailTabBar activeTab={tab} onChangeTab={setTab} />
     </View>
@@ -249,5 +257,11 @@ const styles = StyleSheet.create({
   contentWrapWide: {
     maxWidth: 980,
     alignSelf: "center",
+  },
+  flexFill: {
+    flex: 1,
+  },
+  transactionsWrap: {
+    alignSelf: "stretch",
   },
 })
