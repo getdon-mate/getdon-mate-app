@@ -84,6 +84,10 @@ export function CalendarTab({
     setSelectedDate(latestDate)
   }, [initialMonth, latestDate])
 
+  const datesWithData = useMemo(
+    () => dates.filter((date) => events.some((event) => event.date === date)),
+    [dates, events]
+  )
   const focusedEvents = useMemo(() => getCalendarEventsForDate(events, selectedDate), [events, selectedDate])
 
   function handleChangeMonth(offset: number) {
@@ -131,26 +135,32 @@ export function CalendarTab({
             style={styles.resetMonthButton}
           />
         ) : null}
-        <View style={styles.grid}>
-          {dates.map((date) => {
-            const count = events.filter((event) => event.date === date).length
-            const active = selectedDate === date
-            return (
-              <Pressable
-                key={date}
-                style={[styles.dayCell, count > 0 && styles.dayCellActive, active && styles.dayCellSelected]}
-                onPress={() => setSelectedDate(date)}
-                accessibilityRole="button"
-                accessibilityLabel={`${date} 일정 보기`}
-              >
-                <Text style={[styles.dayLabel, count > 0 && styles.dayLabelActive]}>{Number(date.slice(-2))}</Text>
-                <View accessibilityLabel={`${date} 일정 수 ${count}건`} style={styles.eventCountSlot}>
-                  <Text style={[styles.eventCount, count === 0 && styles.eventCountPlaceholder]}>{count > 0 ? count : "0"}</Text>
-                </View>
-              </Pressable>
-            )
-          })}
-        </View>
+        {datesWithData.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>이 달에 기록된 내역이 없습니다.</Text>
+          </View>
+        ) : (
+          <View style={styles.grid}>
+            {dates.map((date) => {
+              const count = events.filter((event) => event.date === date).length
+              const active = selectedDate === date
+              return (
+                <Pressable
+                  key={date}
+                  style={[styles.dayCell, count > 0 && styles.dayCellActive, active && styles.dayCellSelected]}
+                  onPress={() => setSelectedDate(date)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${date} 일정 보기`}
+                >
+                  <Text style={[styles.dayLabel, count > 0 && styles.dayLabelActive]}>{Number(date.slice(-2))}</Text>
+                  <View accessibilityLabel={`${date} 일정 수 ${count}건`} style={styles.eventCountSlot}>
+                    <Text style={[styles.eventCount, count === 0 && styles.eventCountPlaceholder]}>{count > 0 ? count : "0"}</Text>
+                  </View>
+                </Pressable>
+              )
+            })}
+          </View>
+        )}
       </SectionCard>
 
       <SectionCard>
@@ -364,5 +374,17 @@ const styles = StyleSheet.create({
     color: uiColors.textMuted,
     fontSize: 12,
     fontWeight: "600",
+  },
+  emptyState: {
+    marginTop: 16,
+    paddingVertical: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyText: {
+    color: uiColors.textMuted,
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
   },
 })
