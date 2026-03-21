@@ -31,7 +31,6 @@ export function UserHeaderCard({
       </View>
       <View style={styles.headerInfo}>
         <Text style={[styles.headerName, compact && styles.headerNameCompact]}>{user?.name ?? "게스트"}</Text>
-        <Text style={styles.headerEmail}></Text>
       </View>
       <View style={[styles.actionGroup, compact && styles.actionGroupCompact]}>
         <Pressable style={[styles.iconButton, compact && styles.iconButtonCompact]} onPress={onToggleMaskAmounts} accessibilityRole="button" accessibilityLabel="금액 표시 전환">
@@ -106,11 +105,6 @@ const styles = StyleSheet.create({
   },
   headerNameCompact: {
     fontSize: 17,
-  },
-  headerEmail: {
-    color: uiColors.textMuted,
-    fontSize: 12,
-    fontWeight: "600",
   },
   iconButton: {
     width: 40,

@@ -91,6 +91,7 @@ export function AccountListScreen() {
             onChangeText={setSearchQuery}
             placeholder="모임명, 은행명, 계좌번호 검색"
             autoCapitalize="none"
+            accessibilityLabel="모임통장 검색"
           />
           <View testID="account-list-filter-actions" style={styles.filterActionsRow}>
             <View style={styles.filterRow}>
