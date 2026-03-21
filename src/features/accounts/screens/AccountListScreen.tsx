@@ -27,6 +27,10 @@ import type { GroupAccount } from "../model/types"
 
 type HomeFilter = "all" | "attention"
 
+function ItemSeparator() {
+  return <View style={styles.itemSeparator} />
+}
+
 export function AccountListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const { currentUser } = useAppAuth()
@@ -62,7 +66,7 @@ export function AccountListScreen() {
     showToast(source === "remote" ? feedbackPresets.refreshSuccess : feedbackPresets.refreshDemo)
   }
 
-  const listHeader = (
+  const listHeader = useMemo(() => (
     <View style={styles.listHeaderWrap}>
       <UserHeaderCard
         user={currentUser}
@@ -107,9 +111,13 @@ export function AccountListScreen() {
         </>
       ) : null}
     </View>
-  )
+  ), [
+    currentUser, initials, unreadNotificationCount, maskAmounts,
+    toggleMaskAmounts, navigation, isRefreshingAccounts, isBootstrapping,
+    searchQuery, filter,
+  ])
 
-  const listEmpty = !isBootstrapping ? (
+  const listEmpty = useMemo(() => !isBootstrapping ? (
     hasActiveFilter ? (
       <EmptyStateCard
         title="조건에 맞는 모임통장이 없습니다."
@@ -128,16 +136,16 @@ export function AccountListScreen() {
         onAction={() => navigation.navigate(ROUTES.AccountCreate)}
       />
     )
-  ) : null
+  ) : null, [isBootstrapping, hasActiveFilter, navigation])
 
-  const listFooter = !isBootstrapping ? (
+  const listFooter = useMemo(() => !isBootstrapping ? (
     <Button
       style={styles.addCard}
       variant="secondary"
       label={COPY.account.createButtonLabel}
       onPress={() => navigation.navigate(ROUTES.AccountCreate)}
     />
-  ) : null
+  ) : null, [isBootstrapping, navigation])
 
   return (
     <View style={styles.screen}>
@@ -157,7 +165,7 @@ export function AccountListScreen() {
             }}
           />
         )}
-        ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+        ItemSeparatorComponent={ItemSeparator}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
         ListFooterComponent={listFooter}
@@ -201,9 +209,6 @@ const styles = StyleSheet.create({
   },
   searchStack: {
     gap: 8,
-  },
-  searchField: {
-    gap: 4,
   },
   filterActionsRow: {
     flexDirection: "row",
