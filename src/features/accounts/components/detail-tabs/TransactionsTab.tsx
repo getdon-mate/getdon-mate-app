@@ -391,9 +391,9 @@ export function TransactionsTab({
           </View>
         }
         renderSectionHeader={({ section }) => (
-          <SectionCard>
-            <Text style={styles.subtleText}>{formatFullDate(section.title)}</Text>
-          </SectionCard>
+          <View style={styles.dateSectionHeader}>
+            <Text style={styles.dateSectionText}>{formatFullDate(section.title)}</Text>
+          </View>
         )}
         renderItem={({ item: tx }) => (
           <View style={styles.transactionCard}>
@@ -625,5 +625,15 @@ const styles = StyleSheet.create({
     color: uiColors.textMuted,
     fontSize: 12,
     textAlign: "center",
+  },
+  dateSectionHeader: {
+    paddingHorizontal: 4,
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  dateSectionText: {
+    color: uiColors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
   },
 })
