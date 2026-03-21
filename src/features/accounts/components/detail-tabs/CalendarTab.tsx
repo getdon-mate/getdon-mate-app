@@ -11,7 +11,11 @@ import { SectionHeader } from "../SectionHeader"
 function getDatesForMonth(referenceMonth: string) {
   const [year, month] = referenceMonth.split("-").map(Number)
   const days = new Date(year, month, 0).getDate()
-  return Array.from({ length: days }, (_, index) => `${referenceMonth}-${String(index + 1).padStart(2, "0")}`)
+  return Array.from({ length: days }, (_, index) => {
+    const m = String(month).padStart(2, "0")
+    const d = String(index + 1).padStart(2, "0")
+    return `${year}-${m}-${d}`
+  })
 }
 
 function getToneLabel(tone: "dues" | "transaction" | "notice") {
