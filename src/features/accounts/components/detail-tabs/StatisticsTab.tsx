@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native"
+import { BarChart, PieChart } from "react-native-gifted-charts"
 import { formatKRW, formatMonth } from "@shared/lib/format"
 import { ActionChip, uiColors, uiRadius, uiSpacing } from "@shared/ui"
 import { getExpenseCategoryBreakdown, getMonthlyTransactionTrend, getStatisticsSummary } from "../../model/selectors"
@@ -129,46 +130,51 @@ export function StatisticsTab({ account }: { account: GroupAccount }) {
                     <Text style={styles.boardSummaryValue}>{formatKRW(averageExpense)}</Text>
                   </View>
                 </View>
-                <View style={styles.trendColumns}>
-                  {visibleTrend.map((point) => {
-                    const incomeHeight = point.income === 0 ? 0 : Math.max((point.income / maxAmount) * 152, 14)
-                    const expenseHeight = point.expense === 0 ? 0 : Math.max((point.expense / maxAmount) * 152, 14)
-                    const active = activeTrendMonth === point.month
-
-                    return (
-                      <Pressable
-                        key={point.month}
-                        style={[styles.trendColumnCard, active && styles.trendColumnCardActive]}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${formatMonth(point.month)} 추이 보기`}
-                        onPress={() => setActiveTrendMonth(point.month)}
-                      >
-                        <Text style={[styles.trendColumnNet, active && styles.trendColumnNetActive]}>
-                          {formatKRW(point.income - point.expense)}
-                        </Text>
-                        <View style={styles.trendColumnBars}>
-                          <View style={styles.trendBarLane}>
-                            <View
-                              testID={`trend-income-bar-${point.month}`}
-                              style={[styles.trendColumnBar, styles.trendColumnBarIncome, { height: incomeHeight }]}
-                            />
-                          </View>
-                          <View style={styles.trendBarLane}>
-                            <View
-                              testID={`trend-expense-bar-${point.month}`}
-                              style={[styles.trendColumnBar, styles.trendColumnBarExpense, { height: expenseHeight }]}
-                            />
-                          </View>
-                        </View>
-                        <View style={styles.trendColumnFooter}>
-                          <Text style={styles.trendColumnLabel}>{getTrendRowLabel(point.month)}</Text>
-                          <Text style={styles.trendColumnMeta}>입금 {formatKRW(point.income)}</Text>
-                          <Text style={styles.trendColumnMeta}>출금 {formatKRW(point.expense)}</Text>
-                        </View>
-                      </Pressable>
-                    )
-                  })}
-                </View>
+                {(() => {
+                  const barData = visibleTrend.flatMap((point, i) => [
+                    {
+                      value: point.income,
+                      label: getTrendRowLabel(point.month),
+                      frontColor: activeTrendMonth === point.month ? uiColors.primary : uiColors.primarySoft,
+                      sideColor: uiColors.primaryBorder,
+                      topColor: uiColors.primaryBorder,
+                      spacing: 3,
+                      onPress: () => setActiveTrendMonth(activeTrendMonth === point.month ? null : point.month),
+                    },
+                    {
+                      value: point.expense,
+                      frontColor: activeTrendMonth === point.month ? uiColors.danger : uiColors.dangerSoft,
+                      sideColor: uiColors.dangerBorder,
+                      spacing: i < visibleTrend.length - 1 ? 16 : 0,
+                      onPress: () => setActiveTrendMonth(activeTrendMonth === point.month ? null : point.month),
+                    },
+                  ])
+                  return (
+                    <BarChart
+                      data={barData}
+                      barWidth={22}
+                      barBorderTopLeftRadius={5}
+                      barBorderTopRightRadius={5}
+                      height={160}
+                      maxValue={maxAmount === 1 ? 100000 : maxAmount}
+                      noOfSections={4}
+                      xAxisThickness={1}
+                      xAxisColor={uiColors.border}
+                      yAxisThickness={0}
+                      yAxisTextStyle={{ color: uiColors.textMuted, fontSize: 10 }}
+                      rulesType="dashed"
+                      rulesColor={uiColors.border}
+                      // @ts-ignore yAxisLabelFormatter exists at runtime but missing from types
+                      yAxisLabelFormatter={(val: number) =>
+                        val >= 10000 ? `${Math.round(val / 10000)}만` : `${val}`
+                      }
+                      labelWidth={40}
+                      xAxisLabelTextStyle={{ color: uiColors.textMuted, fontSize: 11, fontWeight: "600" }}
+                      isAnimated
+                      animationDuration={400}
+                    />
+                  )
+                })()}
               </View>
             </View>
           </View>
@@ -192,22 +198,32 @@ export function StatisticsTab({ account }: { account: GroupAccount }) {
                   <Text style={styles.boardSummaryValue}>{spotlightCategory?.category ?? "-"}</Text>
                 </View>
               </View>
-              <View style={styles.breakdownStackBar}>
-                {breakdown.map((item, index) => {
-                  const palette = breakdownPalette[index % breakdownPalette.length]
-                  return (
-                    <View
-                      key={item.category}
-                      style={[
-                        styles.breakdownStackSegment,
-                        {
-                          width: `${totalBreakdownAmount > 0 ? (item.amount / totalBreakdownAmount) * 100 : 0}%`,
-                          backgroundColor: palette.fill,
-                        },
-                      ]}
-                    />
-                  )
-                })}
+              <View style={styles.pieChartWrap}>
+                <PieChart
+                  data={breakdown.map((item, index) => ({
+                    value: item.amount,
+                    color: breakdownPalette[index % breakdownPalette.length].fill,
+                    focused: activeBreakdownCategory === item.category || (!activeBreakdownCategory && index === 0),
+                    onPress: () => {
+                      setSelectedCategory(item.category)
+                      setActiveBreakdownCategory(item.category)
+                    },
+                  }))}
+                  donut
+                  innerRadius={60}
+                  radius={90}
+                  focusOnPress
+                  toggleFocusOnPress
+                  sectionAutoFocus
+                  centerLabelComponent={() => (
+                    <View style={styles.pieCenterLabel}>
+                      <Text style={styles.pieCenterCategory}>{spotlightCategory?.category ?? "-"}</Text>
+                      <Text style={styles.pieCenterShare}>{spotlightCategory?.share ?? 0}%</Text>
+                    </View>
+                  )}
+                  isAnimated
+                  animationDuration={500}
+                />
               </View>
               <View style={styles.breakdownLegendGrid}>
                 {breakdown.map((item, index) => {
@@ -443,77 +459,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "800",
   },
-  trendColumns: {
-    flexDirection: "row",
-    gap: uiSpacing.sm,
-    flexWrap: "wrap",
-  },
-  trendColumnCard: {
-    flex: 1,
-    minWidth: 140,
-    borderRadius: uiRadius.lg,
-    padding: uiSpacing.md,
-    gap: uiSpacing.sm,
-    borderWidth: 1,
-    borderColor: uiColors.border,
-    backgroundColor: uiColors.surface,
-  },
-  trendColumnCardActive: {
-    borderColor: uiColors.primaryBorder,
-    backgroundColor: uiColors.primarySoft,
-  },
-  trendColumnNet: {
-    alignSelf: "flex-start",
-    borderRadius: uiRadius.full,
-    paddingHorizontal: uiSpacing.sm,
-    paddingVertical: 6,
-    color: uiColors.textMuted,
-    fontSize: 11,
-    fontWeight: "800",
-    backgroundColor: uiColors.surfaceMuted,
-  },
-  trendColumnNetActive: {
-    color: uiColors.primary,
-    backgroundColor: uiColors.surface,
-  },
-  trendColumnBars: {
-    height: 152,
-    flexDirection: "row",
-    gap: 10,
-    alignItems: "flex-end",
-  },
-  trendBarLane: {
-    flex: 1,
-    height: "100%",
-    borderRadius: 999,
-    justifyContent: "flex-end",
-    backgroundColor: uiColors.surfaceMuted,
-    overflow: "hidden",
-  },
-  trendColumnBar: {
-    width: "100%",
-    borderRadius: 999,
-    minHeight: 14,
-  },
-  trendColumnBarIncome: {
-    backgroundColor: uiColors.primary,
-  },
-  trendColumnBarExpense: {
-    backgroundColor: uiColors.textStrong,
-  },
-  trendColumnFooter: {
-    gap: 2,
-  },
-  trendColumnLabel: {
-    color: uiColors.textStrong,
-    fontSize: 13,
-    fontWeight: "800",
-  },
-  trendColumnMeta: {
-    color: uiColors.textMuted,
-    fontSize: 11,
-    fontWeight: "700",
-  },
   breakdownBoard: {
     borderRadius: uiRadius.xl,
     padding: uiSpacing.md,
@@ -522,15 +467,24 @@ const styles = StyleSheet.create({
     borderColor: uiColors.borderStrong,
     backgroundColor: uiColors.backgroundRaised,
   },
-  breakdownStackBar: {
-    flexDirection: "row",
-    height: 22,
-    borderRadius: 999,
-    overflow: "hidden",
-    backgroundColor: uiColors.surfaceMuted,
+  pieChartWrap: {
+    alignItems: "center",
+    paddingVertical: 8,
   },
-  breakdownStackSegment: {
-    height: "100%",
+  pieCenterLabel: {
+    alignItems: "center",
+    gap: 2,
+  },
+  pieCenterCategory: {
+    color: uiColors.textStrong,
+    fontSize: 12,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  pieCenterShare: {
+    color: uiColors.primary,
+    fontSize: 16,
+    fontWeight: "800",
   },
   breakdownLegendGrid: {
     flexDirection: "row",
