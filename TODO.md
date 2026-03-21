@@ -18,7 +18,7 @@
 | P0-7 로그인 300ms 딜레이 | ✅ 완료 | setTimeout 제거 |
 | P0-8 AppUser.password | ✅ 완료 | optional + isGuest 플래그 |
 | P0-9 "Manage" 텍스트 | ✅ 완료 | SettingsTab 리팩토링 시 제거 |
-| P1-1 Refresh Token | 🟠 미완 | 백엔드 엔드포인트 필요 |
+| P1-1 Refresh Token | ✅ 완료 | POST /api/token/refresh 연동. 401 시 자동 갱신 후 실패 시 로그아웃 |
 | P1-2 lastBackendFailure race | 🟠 미완 | 동시 호출 적어 영향 낮음 |
 | P1-3 apiConfig TODO 정리 | ✅ 완료 | failsafe 블록 제거 (parseApiMode가 이미 처리) |
 | P1-4 withdraw setAccounts 누락 | ✅ 완료 | setAccounts + setDataSource 추가 |
