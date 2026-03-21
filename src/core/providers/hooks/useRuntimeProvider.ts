@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { getErrorMessage, isApiError, mapApiFailureToUserMessage } from "@core/api"
 import { createAccountsBackendV1Adapter, getLastBackendFailure } from "@features/accounts/api"
 import { fetchMyMeetings, refreshAccessToken, type SwaggerMeetingSummary } from "@features/accounts/api/swagger-api"
+import { meetingKeys } from "@core/api/query-keys"
 import { toGroupAccountSummary } from "@features/accounts/api/mappers"
 import { defaultAccounts, defaultUsers } from "@features/accounts/model/fixtures"
 import type { AppUser, GroupAccount } from "@features/accounts/model/types"
@@ -74,7 +75,7 @@ export function useRuntimeProvider({
 
   // ─── Remote data query ───────────────────────────────────────────────────────
   const remoteMeetingsQuery = useQuery({
-    queryKey: ["swaggerMeetings", authTokens?.accessToken],
+    queryKey: meetingKeys.list(authTokens?.accessToken ?? ""),
     queryFn: async () => {
       if (!authTokens?.accessToken) return []
       return fetchMyMeetings(authTokens.accessToken)
@@ -227,7 +228,7 @@ export function useRuntimeProvider({
       setIsRefreshingAccounts(true)
       try {
         const meetings = await queryClient.fetchQuery({
-          queryKey: ["swaggerMeetings", authTokens.accessToken],
+          queryKey: meetingKeys.list(authTokens.accessToken),
           queryFn: () => fetchMyMeetings(authTokens.accessToken),
         })
         setAccounts(cloneAccounts(meetings.map((meeting: SwaggerMeetingSummary) => toGroupAccountSummary(meeting, currentUser))))

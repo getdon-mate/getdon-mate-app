@@ -1,6 +1,7 @@
 import { useCallback } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { getErrorMessage } from "@core/api"
+import { meetingKeys } from "@core/api/query-keys"
 import { createAccountsBackendV1Adapter } from "@features/accounts/api"
 import { fetchMyMeetings, loginWithSwaggerApi, signupWithSwaggerApi, type SwaggerMeetingSummary } from "@features/accounts/api/swagger-api"
 import { createRemoteUser, toGroupAccountSummary } from "@features/accounts/api/mappers"
@@ -64,7 +65,7 @@ export function useAuthProvider({
             return [...withoutDup, remoteUser]
           })
           const meetings = await queryClient.fetchQuery({
-            queryKey: ["swaggerMeetings", tokens.accessToken],
+            queryKey: meetingKeys.list(tokens.accessToken),
             queryFn: () => fetchMyMeetings(tokens.accessToken),
           })
           setAccounts(cloneAccounts(meetings.map((meeting: SwaggerMeetingSummary) => toGroupAccountSummary(meeting, remoteUser))))
@@ -108,7 +109,7 @@ export function useAuthProvider({
             return [...withoutDup, remoteUser]
           })
           const meetings = await queryClient.fetchQuery({
-            queryKey: ["swaggerMeetings", tokens.accessToken],
+            queryKey: meetingKeys.list(tokens.accessToken),
             queryFn: () => fetchMyMeetings(tokens.accessToken),
           })
           setAccounts(cloneAccounts(meetings.map((meeting: SwaggerMeetingSummary) => toGroupAccountSummary(meeting, remoteUser))))
