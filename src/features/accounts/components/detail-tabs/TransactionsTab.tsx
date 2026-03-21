@@ -5,6 +5,7 @@ import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
 import { ActionChip, ActionSheet, Button, Icon, InputField, NumericInputField, uiColors } from "@shared/ui"
 import { formatFullDate, formatKRW } from "@shared/lib/format"
+import { COPY } from "@shared/constants/copy"
 import { getMemberById } from "../../model/member-utils"
 import { getTransactionTotals, groupTransactionsByDate } from "../../model/selectors"
 import type { GroupAccount, Transaction, TransactionType } from "../../model/types"
@@ -148,7 +149,7 @@ export function TransactionsTab({
       validateIsoDate(date)
 
     if (validationError) {
-      showAlert({ title: "입력 오류", message: validationError, tone: "danger" })
+      showAlert({ title: COPY.common.inputError, message: validationError, tone: "danger" })
       return
     }
 
@@ -162,13 +163,13 @@ export function TransactionsTab({
 
     if (isEditing && editingId) {
       await updateTransaction(account.id, editingId, payload)
-      showToast({ tone: "success", title: "수정 완료", message: `${payload.description} 거래를 수정했습니다.` })
+      showToast({ tone: "success", title: COPY.common.editDone, message: COPY.transaction.editDone(payload.description) })
       resetComposer(payload.type)
       return
     }
 
     await createTransaction(account.id, payload)
-    showToast({ tone: "success", title: "등록 완료", message: `${payload.description} 거래를 추가했습니다.` })
+    showToast({ tone: "success", title: COPY.common.registerDone, message: COPY.transaction.registerDone(payload.description) })
     resetComposer(payload.type)
   }
 
@@ -185,9 +186,9 @@ export function TransactionsTab({
   async function handleDelete(transaction: Transaction) {
     setSelectedTxForMenu(null)
     const confirmed = await confirm({
-      title: "거래 삭제",
+      title: COPY.transaction.deleteTitle,
       message: `${transaction.description} 거래를 삭제합니다.`,
-      confirmLabel: "삭제",
+      confirmLabel: COPY.common.delete,
       confirmTone: "danger",
     })
     if (!confirmed) return
@@ -196,7 +197,7 @@ export function TransactionsTab({
     if (editingId === transaction.id) {
       resetComposer(draftType)
     }
-    showToast({ tone: "success", title: "삭제 완료", message: `${transaction.description} 거래를 제거했습니다.` })
+    showToast({ tone: "success", title: COPY.common.deleteDone, message: COPY.transaction.deleteDone(transaction.description) })
   }
 
   return (
@@ -209,14 +210,14 @@ export function TransactionsTab({
         ListHeaderComponent={
           <View style={styles.headerStack}>
             <SectionCard>
-              <SectionHeader title={isEditing ? "거래 수정" : "새 거래 등록"} description="입금과 출금을 기록합니다." />
+              <SectionHeader title={isEditing ? COPY.transaction.editTitle : COPY.transaction.newTitle} description="입금과 출금을 기록합니다." />
               <View style={styles.formTypeRow}>
                 {(["income", "expense"] as const).map((item) => {
                   const active = draftType === item
                   return (
                     <ActionChip
                       key={item}
-                      label={item === "income" ? "입금" : "출금"}
+                      label={item === "income" ? COPY.transaction.income : COPY.transaction.expense}
                       active={active}
                       style={styles.flexChip}
                       onPress={() => {
@@ -295,7 +296,7 @@ export function TransactionsTab({
               <View style={styles.formActionRow}>
                 {isEditing ? (
                   <Button
-                    label="편집 취소"
+                    label={COPY.transaction.cancelEditLabel}
                     variant="ghost"
                     onPress={() => resetComposer(initialType)}
                     style={styles.formActionButton}
@@ -303,7 +304,7 @@ export function TransactionsTab({
                   />
                 ) : null}
                 <Button
-                  label={isMutating ? "저장 중..." : isEditing ? "거래 수정" : draftType === "income" ? "입금 등록" : "출금 등록"}
+                  label={isMutating ? COPY.transaction.savingLabel : isEditing ? COPY.transaction.editButtonLabel : draftType === "income" ? COPY.transaction.incomeRegisterLabel : COPY.transaction.expenseRegisterLabel}
                   onPress={() => void handleSubmit()}
                   style={styles.formActionButton}
                   disabled={isMutating}
@@ -348,7 +349,7 @@ export function TransactionsTab({
                     {(["all", "income", "expense"] as const).map((item) => (
                       <ActionChip
                         key={item}
-                        label={item === "all" ? "전체" : item === "income" ? "입금" : "출금"}
+                        label={item === "all" ? "전체" : item === "income" ? COPY.transaction.income : COPY.transaction.expense}
                         active={filter === item}
                         onPress={() => setFilter(item)}
                       />
@@ -433,14 +434,14 @@ export function TransactionsTab({
         title={selectedTxForMenu?.description}
         items={[
           {
-            label: "수정",
+            label: COPY.common.edit,
             onPress: () => {
               if (selectedTxForMenu) handleEdit(selectedTxForMenu)
             },
             disabled: isMutating,
           },
           {
-            label: isMutating ? "처리 중..." : "삭제",
+            label: isMutating ? COPY.common.processing : COPY.common.delete,
             tone: "danger",
             onPress: () => {
               if (selectedTxForMenu) void handleDelete(selectedTxForMenu)

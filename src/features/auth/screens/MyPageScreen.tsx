@@ -7,6 +7,7 @@ import { useAppAuth } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validateEmail } from "@shared/lib/validation"
 import { Badge, Button, Card, Icon, InputField, PageHeader, uiColors, uiRadius, uiSpacing } from "@shared/ui"
+import { COPY } from "@shared/constants/copy"
 
 export function MyPageScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
@@ -38,7 +39,7 @@ export function MyPageScreen() {
         name: name.trim(),
         email: email.trim(),
       })
-      showToast({ tone: "success", title: "저장 완료", message: "마이페이지 정보를 수정했습니다." })
+      showToast({ tone: "success", title: COPY.common.saveDone, message: "마이페이지 정보를 수정했습니다." })
     } finally {
       savingRef.current = false
       setSaving(false)
@@ -89,7 +90,7 @@ export function MyPageScreen() {
               <InputField value={name} onChangeText={setName} label="이름" placeholder="이름" editable={!saving} />
               <InputField value={email} onChangeText={setEmail} label="이메일" placeholder="email@example.com" autoCapitalize="none" editable={!saving} />
               <View style={styles.actionRow}>
-                <Button label={saving ? "저장 중..." : "저장"} onPress={() => void handleSave()} style={styles.actionButton} disabled={saving} />
+                <Button label={saving ? COPY.common.saving : COPY.common.save} onPress={() => void handleSave()} style={styles.actionButton} disabled={saving} />
               </View>
             </Card>
           )}

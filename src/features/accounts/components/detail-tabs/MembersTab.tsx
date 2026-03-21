@@ -109,7 +109,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     setPhoneError(nextPhoneError)
 
     if (nextNameError || nextPhoneError) {
-      showAlert({ title: "입력 오류", message: nextNameError ?? nextPhoneError, tone: "danger" })
+      showAlert({ title: COPY.common.inputError, message: nextNameError ?? nextPhoneError, tone: "danger" })
       return
     }
 
@@ -123,13 +123,13 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     try {
       if (editingId) {
         await updateMember(account.id, editingId, payload)
-        showToast({ tone: "success", title: "수정 완료", message: "멤버 정보를 수정했습니다." })
+        showToast({ tone: "success", title: COPY.common.editDone, message: COPY.member.editDone })
         resetForm()
         return
       }
 
       await createMember(account.id, payload)
-      showToast({ tone: "success", title: "추가 완료", message: "새 멤버를 등록했습니다." })
+      showToast({ tone: "success", title: COPY.common.addDone, message: COPY.member.addDone })
       handleCloseAddModal()
     } finally {
       setSubmitting(false)
@@ -151,7 +151,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     if (!targetMember || !currentManager || !canDelegateManager || targetMember.id === currentManager.id) return
 
     const confirmed = await confirm({
-      title: "총무 위임",
+      title: COPY.member.delegateTitle,
       message: `${targetMember.name}님에게 총무 권한을 위임합니다. 위임 후 현재 총무는 일반 멤버로 변경됩니다.`,
       confirmLabel: "위임",
     })
@@ -163,7 +163,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
       showToast({
         tone: "success",
         title: "위임 완료",
-        message: `${targetMember.name}님이 새로운 총무가 되었습니다.`,
+        message: COPY.member.delegateDone(targetMember.name),
       })
     } finally {
       setDelegatingId(null)
@@ -174,9 +174,9 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     const member = account.members.find((item) => item.id === memberId)
     if (!member) return
     const confirmed = await confirm({
-      title: "멤버 삭제",
+      title: COPY.member.deleteTitle,
       message: `${member.name} 멤버를 목록에서 제거합니다.`,
-      confirmLabel: "삭제",
+      confirmLabel: COPY.common.delete,
       confirmTone: "danger",
     })
     if (!confirmed) return
@@ -184,7 +184,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     if (editingId === memberId) {
       resetForm()
     }
-    showToast({ tone: "success", title: "삭제 완료", message: "멤버를 제거했습니다." })
+    showToast({ tone: "success", title: COPY.common.deleteDone, message: COPY.member.deleteDone })
   }
 
   async function handleReminder(memberId: string, memberName: string, type: "payment-reminder" | "transfer-request") {
@@ -232,13 +232,13 @@ export function MembersTab({ account }: { account: GroupAccount }) {
             <ActionChip label="납부율순" active={sortBy === "payment-rate"} onPress={() => setSortBy("payment-rate")} />
             <ActionChip label="이름순" active={sortBy === "name"} onPress={() => setSortBy("name")} />
           </View>
-          <Button label="멤버 추가" onPress={handleOpenAddModal} style={styles.addButton} />
+          <Button label={COPY.member.addButtonLabel} onPress={handleOpenAddModal} style={styles.addButton} />
         </View>
       </SectionCard>
 
       {editingMember ? (
         <SectionCard>
-          <Text style={styles.sectionTitle}>멤버 수정</Text>
+          <Text style={styles.sectionTitle}>{COPY.member.editTitle}</Text>
           <View style={styles.formStack}>
             <InputField
               value={name}
@@ -263,9 +263,9 @@ export function MembersTab({ account }: { account: GroupAccount }) {
               error={phoneError}
             />
             <View style={styles.actionRow}>
-              <Button label="취소" variant="ghost" onPress={resetForm} style={styles.actionButton} disabled={submitting} />
+              <Button label={COPY.common.cancel} variant="ghost" onPress={resetForm} style={styles.actionButton} disabled={submitting} />
               <Button
-                label={submitting ? "처리 중..." : "멤버 수정"}
+                label={submitting ? COPY.common.processing : COPY.member.editButtonLabel}
                 variant="primary"
                 onPress={() => void handleSubmit()}
                 style={styles.actionButton}
@@ -352,7 +352,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
-              <Text style={styles.sectionTitle}>새 멤버 추가</Text>
+              <Text style={styles.sectionTitle}>{COPY.member.addTitle}</Text>
               <Pressable accessibilityRole="button" accessibilityLabel="멤버 추가 닫기" onPress={handleCloseAddModal} style={styles.closeButton}>
                 <Icon name="close" size={16} color={uiColors.textStrong} />
               </Pressable>
@@ -381,9 +381,9 @@ export function MembersTab({ account }: { account: GroupAccount }) {
                 error={phoneError}
               />
               <View style={styles.actionRow}>
-                <Button label="취소" variant="ghost" onPress={handleCloseAddModal} style={styles.actionButton} disabled={submitting} />
+                <Button label={COPY.common.cancel} variant="ghost" onPress={handleCloseAddModal} style={styles.actionButton} disabled={submitting} />
                 <Button
-                  label={submitting ? "처리 중..." : "멤버 추가"}
+                  label={submitting ? COPY.common.processing : COPY.member.addButtonLabel}
                   variant="primary"
                   onPress={() => void handleSubmit()}
                   style={styles.actionButton}

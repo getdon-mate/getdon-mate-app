@@ -6,6 +6,7 @@ import { copyText } from "@shared/lib/clipboard"
 import { formatActivityTimestamp } from "@shared/lib/format"
 import { requireText } from "@shared/lib/validation"
 import { ActionChip, ActionSheet, Button, Icon, InputField, ToggleSwitch, uiColors, uiRadius } from "@shared/ui"
+import { COPY } from "@shared/constants/copy"
 import type { BoardComment, BoardPost, GroupAccount } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
 import { LoadingStateCard } from "../LoadingStateCard"
@@ -100,11 +101,11 @@ function CommentItem({
                 title="댓글"
                 items={[
                   {
-                    label: "수정",
+                    label: COPY.common.edit,
                     onPress: onStartEdit,
                   },
                   {
-                    label: "삭제",
+                    label: COPY.common.delete,
                     tone: "danger",
                     onPress: onDelete,
                   },
@@ -151,12 +152,12 @@ function CommentComposer({
 }) {
   return (
     <View style={styles.commentComposer}>
-      <Text style={styles.commentComposerLabel}>{isEditing ? "댓글 수정" : "댓글"}</Text>
+      <Text style={styles.commentComposerLabel}>{isEditing ? COPY.board.commentEditLabel : COPY.board.commentLabel}</Text>
       <View style={styles.commentComposerRow}>
         <TextInput
           value={value}
           onChangeText={onChangeText}
-          accessibilityLabel={isEditing ? "댓글 수정" : "댓글"}
+          accessibilityLabel={isEditing ? COPY.board.commentEditLabel : COPY.board.commentLabel}
           placeholder={placeholder}
           placeholderTextColor={uiColors.textSoft}
           style={styles.commentComposerInput}
@@ -173,7 +174,7 @@ function CommentComposer({
       </View>
       {isEditing && onCancel ? (
         <Pressable accessibilityRole="button" accessibilityLabel="댓글 수정 취소" onPress={onCancel} style={styles.commentCancelButton}>
-          <Text style={styles.commentCancelText}>취소</Text>
+          <Text style={styles.commentCancelText}>{COPY.common.cancel}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -253,11 +254,11 @@ function PostCard({
               title="게시물"
               items={[
                 {
-                  label: "수정",
+                  label: COPY.common.edit,
                   onPress: onStartEditPost,
                 },
                 {
-                  label: "삭제",
+                  label: COPY.common.delete,
                   tone: "danger",
                   onPress: onDeletePost,
                 },
@@ -363,13 +364,13 @@ export function BoardTab({ account }: { account: GroupAccount }) {
   async function handleCreateOrUpdatePost() {
     const error = requireText(title, "제목을 입력해주세요.") ?? requireText(body, "내용을 입력해주세요.")
     if (error) {
-      showAlert({ title: "입력 오류", message: error, tone: "danger" })
+      showAlert({ title: COPY.common.inputError, message: error, tone: "danger" })
       return
     }
 
     if (editingPostId) {
       await updateBoardPost(account.id, editingPostId, { title, body, pinned })
-      showToast({ tone: "success", title: "수정 완료", message: "게시글을 수정했습니다." })
+      showToast({ tone: "success", title: COPY.common.editDone, message: COPY.board.postEditDone })
       resetComposer()
       setComposerOpen(false)
       return
@@ -378,14 +379,14 @@ export function BoardTab({ account }: { account: GroupAccount }) {
     await createBoardPost(account.id, { title, body, pinned })
     resetComposer()
     setComposerOpen(false)
-    showToast({ tone: "success", title: "게시 완료", message: "게시판에 새 글을 올렸습니다." })
+    showToast({ tone: "success", title: COPY.board.postDoneTitle, message: COPY.board.postDone })
   }
 
   async function handleDeletePost(post: BoardPost) {
     const confirmed = await confirmDanger({
-      title: "게시글 삭제",
+      title: COPY.board.deletePostTitle,
       message: "게시글과 댓글이 함께 삭제됩니다.",
-      confirmLabel: "삭제",
+      confirmLabel: COPY.common.delete,
     })
     if (!confirmed) return
 
@@ -394,7 +395,7 @@ export function BoardTab({ account }: { account: GroupAccount }) {
       resetComposer()
       setComposerOpen(false)
     }
-    showToast({ tone: "success", title: "삭제 완료", message: "게시글을 삭제했습니다." })
+    showToast({ tone: "success", title: COPY.common.deleteDone, message: COPY.board.postDeleteDone })
   }
 
   function handleStartEditPost(post: BoardPost) {
@@ -420,27 +421,27 @@ export function BoardTab({ account }: { account: GroupAccount }) {
     const editingCommentId = editingCommentIds[postId] ?? null
     const error = requireText(draft, "댓글 내용을 입력해주세요.")
     if (error) {
-      showAlert({ title: "입력 오류", message: error, tone: "danger" })
+      showAlert({ title: COPY.common.inputError, message: error, tone: "danger" })
       return
     }
 
     if (editingCommentId) {
       await updateBoardComment(account.id, postId, editingCommentId, { body: draft })
       handleCancelEditComment(postId)
-      showToast({ tone: "success", title: "수정 완료", message: "댓글을 수정했습니다." })
+      showToast({ tone: "success", title: COPY.common.editDone, message: COPY.board.commentEditDone })
       return
     }
 
     await addBoardComment(account.id, postId, { body: draft })
     setCommentDrafts((prev) => ({ ...prev, [postId]: "" }))
-    showToast({ tone: "success", title: "댓글 등록", message: "댓글을 남겼습니다." })
+    showToast({ tone: "success", title: COPY.board.commentRegisterTitle, message: COPY.board.commentAddDone })
   }
 
   async function handleDeleteComment(postId: string, commentId: string) {
     const confirmed = await confirmDanger({
-      title: "댓글 삭제",
+      title: COPY.board.deleteCommentTitle,
       message: "삭제한 댓글은 되돌릴 수 없습니다.",
-      confirmLabel: "삭제",
+      confirmLabel: COPY.common.delete,
     })
     if (!confirmed) return
 
@@ -448,7 +449,7 @@ export function BoardTab({ account }: { account: GroupAccount }) {
     if ((editingCommentIds[postId] ?? null) === commentId) {
       handleCancelEditComment(postId)
     }
-    showToast({ tone: "success", title: "삭제 완료", message: "댓글을 삭제했습니다." })
+    showToast({ tone: "success", title: COPY.common.deleteDone, message: COPY.board.commentDeleteDone })
   }
 
   async function handleToggleLike(post: BoardPost) {
@@ -480,7 +481,7 @@ export function BoardTab({ account }: { account: GroupAccount }) {
         <SectionHeader
           title="게시판"
           description="공지와 운영 메모를 정리합니다."
-          actionLabel={composerOpen ? "닫기" : "게시글 작성"}
+          actionLabel={composerOpen ? "닫기" : COPY.board.postTitle}
           onAction={() => {
             if (composerOpen) {
               resetComposer()
@@ -519,9 +520,9 @@ export function BoardTab({ account }: { account: GroupAccount }) {
               <ToggleSwitch value={pinned} onPress={() => setPinned((prev) => !prev)} />
             </View>
             <View style={styles.composerActions}>
-              {isEditingPost ? <Button label="취소" variant="ghost" onPress={() => { resetComposer(); setComposerOpen(false) }} style={styles.commentSecondaryButton} /> : null}
+              {isEditingPost ? <Button label={COPY.common.cancel} variant="ghost" onPress={() => { resetComposer(); setComposerOpen(false) }} style={styles.commentSecondaryButton} /> : null}
               <Button
-                label={!currentUser ? "로그인 후 게시" : isMutating ? "게시 중..." : isEditingPost ? "수정 저장" : "게시하기"}
+                label={!currentUser ? "로그인 후 게시" : isMutating ? COPY.board.posting : isEditingPost ? COPY.board.editPostTitle : "게시하기"}
                 onPress={() => void handleCreateOrUpdatePost()}
                 disabled={!currentUser || !title.trim() || !body.trim() || isMutating}
                 style={styles.submitButton}
@@ -584,7 +585,7 @@ export function BoardTab({ account }: { account: GroupAccount }) {
           <LoadingStateCard lines={2} />
         </>
       ) : (
-        <EmptyStateCard title="첫 공지를 남겨보세요." description="운영 소식은 짧게 바로 올릴 수 있습니다." actionLabel="게시글 작성" onAction={() => setComposerOpen(true)} />
+        <EmptyStateCard title="첫 공지를 남겨보세요." description="운영 소식은 짧게 바로 올릴 수 있습니다." actionLabel={COPY.board.postTitle} onAction={() => setComposerOpen(true)} />
       )}
     </View>
   )
