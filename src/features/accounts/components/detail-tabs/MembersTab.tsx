@@ -465,9 +465,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: uiColors.border,
     alignItems: "center",

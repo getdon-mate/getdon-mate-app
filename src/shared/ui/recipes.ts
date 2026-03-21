@@ -86,9 +86,9 @@ export const uiRecipes = StyleSheet.create({
     paddingTop: 8,
   },
   roundIconButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: uiColors.surfaceMuted,
     borderWidth: 1,
     borderColor: uiColors.border,

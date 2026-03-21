@@ -90,6 +90,7 @@ function CommentItem({
                 onPress={() => setMenuOpen((prev) => !prev)}
                 accessibilityRole="button"
                 accessibilityLabel={`${comment.authorName} 댓글 메뉴 열기`}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 style={[styles.inlineIconButton, menuOpen && styles.inlineIconButtonActive]}
               >
                 <Icon name="ellipsis" size={14} color={uiColors.textMuted} />
@@ -254,6 +255,7 @@ function PostCard({
               onPress={() => setMenuOpen((prev) => !prev)}
               accessibilityRole="button"
               accessibilityLabel={`${post.title} 게시글 메뉴 열기`}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               style={[styles.inlineIconButton, menuOpen && styles.inlineIconButtonActive]}
             >
               <Icon name="ellipsis" size={15} color={uiColors.textStrong} />
@@ -925,9 +927,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   commentSendButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: uiColors.primarySoft,

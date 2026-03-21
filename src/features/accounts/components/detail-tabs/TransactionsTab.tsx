@@ -384,6 +384,7 @@ export function TransactionsTab({
                         accessibilityRole="button"
                         accessibilityLabel={`${tx.description} ${tx.date} 거래 메뉴 열기`}
                         onPress={() => setMenuOpenId((prev) => (prev === tx.id ? null : tx.id))}
+                        hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
                         style={[styles.menuButton, menuOpenId === tx.id && styles.menuButtonActive]}
                       >
                         <Icon name="ellipsis" size={16} color={uiColors.textStrong} />
