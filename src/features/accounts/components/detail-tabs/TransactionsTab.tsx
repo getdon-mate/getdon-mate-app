@@ -1,5 +1,5 @@
 import { useDeferredValue, useCallback, useEffect, useMemo, useState } from "react"
-import { Modal, Pressable, ScrollView, SectionList, StyleSheet, Text, View } from "react-native"
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, SectionList, StyleSheet, Text, View } from "react-native"
 import { useAppAccounts, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { requireText, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
@@ -396,7 +396,10 @@ export function TransactionsTab({
         presentationStyle="pageSheet"
         onRequestClose={() => { setFormOpen(false); resetComposer(initialType) }}
       >
-        <View style={styles.modalContainer}>
+        <KeyboardAvoidingView
+          style={styles.modalContainer}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{isEditing ? COPY.transaction.editTitle : COPY.transaction.newTitle}</Text>
             <Pressable
@@ -408,7 +411,11 @@ export function TransactionsTab({
               <Icon name="close" size={18} color={uiColors.textStrong} />
             </Pressable>
           </View>
-          <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent}>
+          <ScrollView
+            style={styles.modalScroll}
+            contentContainerStyle={styles.modalScrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
             {selectedTransaction ? (
               <Text style={styles.editingMeta}>
                 현재 편집 중: {selectedTransaction.description} ({formatKRW(selectedTransaction.amount)})
@@ -441,6 +448,7 @@ export function TransactionsTab({
                 placeholder="금액"
                 containerStyle={styles.compactField}
                 inputStyle={styles.compactInput}
+                autoFocus={formOpen && !isEditing}
               />
               <InputField
                 value={date}
@@ -509,7 +517,7 @@ export function TransactionsTab({
               />
             </View>
           </ScrollView>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </>
   )
