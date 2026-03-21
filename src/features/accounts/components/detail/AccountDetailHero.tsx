@@ -1,5 +1,5 @@
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native"
-import { useState } from "react"
+import { Animated, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native"
+import { useEffect, useRef, useState } from "react"
 import { AmountMask, Icon, uiColors, uiRadius, uiSpacing } from "@shared/ui"
 import { formatKRW } from "@shared/lib/format"
 import type { GroupAccount, TransactionType } from "../../model/types"
@@ -23,6 +23,22 @@ export function AccountDetailHero({
   const compact = width < 390
   const [revealingBalance, setRevealingBalance] = useState(false)
   const balanceMasked = maskAmounts && !revealingBalance
+
+  const shimmerOpacity = useRef(new Animated.Value(1)).current
+  useEffect(() => {
+    if (!balanceMasked) {
+      shimmerOpacity.setValue(1)
+      return
+    }
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerOpacity, { toValue: 0.25, duration: 800, useNativeDriver: true }),
+        Animated.timing(shimmerOpacity, { toValue: 1, duration: 800, useNativeDriver: true }),
+      ])
+    )
+    animation.start()
+    return () => animation.stop()
+  }, [balanceMasked, shimmerOpacity])
 
   return (
     <View style={[styles.heroCard, compact && styles.heroCardCompact]}>
@@ -61,9 +77,9 @@ export function AccountDetailHero({
           skeletonHeight={compact ? 26 : 30}
         />
         {balanceMasked ? (
-          <View testID="masked-balance-overlay" pointerEvents="none" style={styles.maskOverlay}>
+          <Animated.View testID="masked-balance-overlay" pointerEvents="none" style={[styles.maskOverlay, { opacity: shimmerOpacity }]}>
             <Text style={styles.maskOverlayLabel}>금액을 확인하려면 꾹 누르세요.</Text>
-          </View>
+          </Animated.View>
         ) : null}
       </Pressable>
       <View style={[styles.heroActionRow, compact && styles.heroActionRowCompact]}>
@@ -158,17 +174,12 @@ const styles = StyleSheet.create({
   },
   maskOverlay: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 14,
-    backgroundColor: "rgba(248, 250, 252, 0.82)",
-    borderWidth: 1,
-    borderColor: uiColors.border,
     alignItems: "flex-start",
     justifyContent: "center",
-    paddingHorizontal: 12,
   },
   maskOverlayLabel: {
     color: uiColors.textSoft,
-    fontSize: 11,
+    fontSize: 16,
     fontWeight: "600",
   },
   heroActionRow: {
