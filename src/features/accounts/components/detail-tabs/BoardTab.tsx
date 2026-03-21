@@ -467,12 +467,18 @@ export function BoardTab({ account }: { account: GroupAccount }) {
   }
 
   async function handleSharePost(post: BoardPost) {
-    await Share.share({
-      message: `${post.title}\n${buildPostShareLink(post)}`,
-      url: buildPostShareLink(post),
-      title: post.title,
-    })
-    showToast({ tone: "success", title: "공유 준비", message: "공유할 내용을 열었습니다." })
+    try {
+      const result = await Share.share({
+        message: `${post.title}\n${buildPostShareLink(post)}`,
+        url: buildPostShareLink(post),
+        title: post.title,
+      })
+      if (result.action === Share.sharedAction) {
+        showToast({ tone: "success", title: "공유 준비", message: "공유할 내용을 열었습니다." })
+      }
+    } catch {
+      // silently fail — do not show misleading success message
+    }
   }
 
   return (
