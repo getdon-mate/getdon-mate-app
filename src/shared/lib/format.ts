@@ -7,13 +7,22 @@ export function formatMonth(month: string): string {
   return `${year}년 ${parseInt(m, 10)}월`
 }
 
+/**
+ * "YYYY-MM-DD" 형식의 날짜 문자열을 로컬 타임존 기준으로 파싱합니다.
+ * new Date("YYYY-MM-DD")는 UTC 자정으로 파싱되어 KST(UTC+9)에서 하루 앞서 표시되는 문제를 방지합니다.
+ */
+function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number)
+  return new Date(year, month - 1, day)
+}
+
 export function formatDate(dateStr: string): string {
-  const date = new Date(dateStr)
+  const date = parseLocalDate(dateStr)
   return `${date.getMonth() + 1}월 ${date.getDate()}일`
 }
 
 export function formatFullDate(dateStr: string): string {
-  const date = new Date(dateStr)
+  const date = parseLocalDate(dateStr)
   return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
 }
 
