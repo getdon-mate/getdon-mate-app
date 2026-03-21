@@ -5,7 +5,7 @@
 
 ---
 
-## 진행 상태 요약 (2026-03-21 기준)
+## 진행 상태 요약 (2026-03-21 최종)
 
 | 항목 | 상태 | 비고 |
 |------|------|------|
@@ -19,12 +19,12 @@
 | P0-8 AppUser.password | ✅ 완료 | optional + isGuest 플래그 |
 | P0-9 "Manage" 텍스트 | ✅ 완료 | SettingsTab 리팩토링 시 제거 |
 | P1-1 Refresh Token | ✅ 완료 | POST /api/token/refresh 연동. 401 시 자동 갱신 후 실패 시 로그아웃 |
-| P1-2 lastBackendFailure race | 🟠 미완 | 동시 호출 적어 영향 낮음 |
+| P1-2 lastBackendFailure race | 🟠 보류 | 동시 호출 적어 실사용 영향 없음 |
 | P1-3 apiConfig TODO 정리 | ✅ 완료 | failsafe 블록 제거 (parseApiMode가 이미 처리) |
 | P1-4 withdraw setAccounts 누락 | ✅ 완료 | setAccounts + setDataSource 추가 |
 | P1-5 createMeeting bankAccount 타입 | ✅ 완료 | Number() 변환 → string 직전달 |
 | P1-6 signup 에러 메시지 | ✅ 완료 | lastSyncError 폼에 반영 |
-| P1-7 updateProfile API 미연동 | 🟠 미완 | 백엔드 엔드포인트 확인 필요 |
+| P1-7 updateProfile API 미연동 | 🟠 보류 | 백엔드 프로필 수정 엔드포인트 없음 — 백엔드 구현 후 연동 |
 | P1-8 detailTabMemory 누수 | ✅ 완료 | DETAIL_TAB_MEMORY_LIMIT=20 LRU |
 | P1-9 lastMutationError 미표시 | ✅ 완료 | AppRouter에서 Toast 표시 |
 | P1-10 게스트 UI 구분 없음 | ✅ 완료 | isGuest 플래그 + MyPage 분기 |
@@ -35,21 +35,21 @@
 | P2-5 SpinnerOverlay 전체 화면 | ✅ 완료 | isMutating 연동 |
 | P2-6 빈 계좌 상태 화면 | ✅ 완료 | "목록으로 돌아가기" 버튼 추가 |
 | P2-7 LoginScreen 하드코딩 배경 | ✅ 완료 | uiColors.background 교체 |
-| P2-8 소셜 로그인 버튼 | ✅ 완료 | disabled 처리 + "(준비 중)" 표시 |
-| P2-9 COPY 상수 정리 | 🟡 부분완료 | account/dues 네임스페이스 추가, 주요 중복 문자열 통일 |
+| P2-8 소셜 로그인 버튼 | ✅ 완료 | 미구현 버튼 완전 제거 |
+| P2-9 COPY 상수 정리 | ✅ 완료 | common/member/board/transaction 네임스페이스 추가, 5개 파일 교체 |
 | P2-10 새로고침 토스트 통일 | ✅ 완료 | feedbackPresets 표준화 |
 | P2-11 Android 키보드 | ✅ 완료 | android: "height" 적용 |
 | P2-12 빈 계좌번호 복사 버튼 | ✅ 완료 | accountNumber 조건부 렌더링 |
 | P3-1 SettingsTab 분리 | ✅ 완료 | detail-panels/ 4개 패널로 분리 |
 | P3-2 useApp() 스프레드 | ✅ 완료 | useApp() 제거, 개별 훅 사용 중 |
 | P3-3 DuesTab useApp() | ✅ 완료 | useAppAccounts() 사용 중 |
-| P3-4 swagger-api/mappers 분리 | ✅ 완료 | toGroupAccountSummary → mappers.ts |
-| P3-5 useAccountsOperations 확인 | 🔵 미완 | 코드 검토 필요 |
+| P3-4 swagger-api/mappers 분리 | ✅ 완료 | toGroupAccountSummary → mappers.ts, meetings-api.ts/auth-api.ts로 피처 분리 |
+| P3-5 useAccountsOperations 확인 | ✅ 완료 | dep 배열 최적화, 불필요한 타입 어노테이션 제거 |
 | P3-6 getNextTransferDate 위치 | ✅ 완료 | shared/lib/date.ts로 이동 |
 | P3-7 validateAll 헬퍼 | ✅ 완료 | validation.ts에 구현됨 |
-| P3-8 TypeScript strict | 🔵 미완 | as 캐스팅 정리 필요 |
+| P3-8 TypeScript strict | ✅ 완료 | as 캐스팅 3곳 제거 (selectors, FeedbackProvider, AppRouter) |
 | P3-9 console.log 배포 노출 | ✅ 완료 | __DEV__ 가드 적용됨 |
-| P3-10 데드코드 login/signup | 🔵 미완 | 인터페이스 의존성으로 보류 |
+| P3-10 데드코드 login/signup | ✅ 완료 | auth-api.ts로 분리, swagger-api.ts에서 re-export 유지 |
 
 ---
 
