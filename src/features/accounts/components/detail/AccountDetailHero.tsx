@@ -33,6 +33,9 @@ export function AccountDetailHero({
           <Text style={styles.heroMeta}>모임원 {account.members.length}명</Text>
         </View>
         <View style={[styles.heroQuickActions, compact && styles.heroQuickActionsCompact]}>
+          <Pressable style={[styles.iconButton, compact && styles.iconButtonCompact]} onPress={onToggleMask} accessibilityRole="button" accessibilityLabel={maskAmounts ? "잔액 보기" : "잔액 숨기기"}>
+            <Icon name={maskAmounts ? "eyeOff" : "eye"} size={18} color={uiColors.textStrong} />
+          </Pressable>
           <Pressable style={[styles.iconButton, compact && styles.iconButtonCompact]} onPress={() => void onCopyInvite()} accessibilityRole="button" accessibilityLabel="초대 링크 복사">
             <Icon name="copy" size={18} color={uiColors.textStrong} />
           </Pressable>
