@@ -1,23 +1,11 @@
 import { apiClient } from "@core/api"
 
-interface SwaggerLoginRequest {
-  email: string
-  password: string
-}
-
-interface SwaggerJoinRequest extends SwaggerLoginRequest {
-  userName: string
-}
+export { loginWithApi as loginWithSwaggerApi, signupWithApi as signupWithSwaggerApi, refreshTokenWithApi as refreshAccessToken } from "@features/auth/api/auth-api"
 
 interface SwaggerCreateMeetingRequest {
   title: string
   bankName: string
   bankAccount: string
-}
-
-interface SwaggerLoginResponse {
-  accessToken: string
-  refreshToken: string
 }
 
 export interface SwaggerMeetingSummary {
@@ -48,14 +36,6 @@ function withAuthHeaders(accessToken: string) {
   }
 }
 
-export async function loginWithSwaggerApi(payload: SwaggerLoginRequest) {
-  return apiClient.post<SwaggerLoginResponse>("/api/member/login", payload)
-}
-
-export async function signupWithSwaggerApi(payload: SwaggerJoinRequest) {
-  return apiClient.post<null>("/api/member/join", payload)
-}
-
 export async function fetchMyMeetings(accessToken: string) {
   return apiClient.get<SwaggerMeetingSummary[]>("/api/meeting/my-list", withAuthHeaders(accessToken))
 }
@@ -68,6 +48,3 @@ export async function fetchMeetingDetail(accessToken: string, meetingId: number)
   return apiClient.get<SwaggerMeetingDetail>(`/api/meeting/${meetingId}`, withAuthHeaders(accessToken))
 }
 
-export async function refreshAccessToken(refreshToken: string) {
-  return apiClient.post<SwaggerLoginResponse>("/api/token/refresh", { refreshToken })
-}
