@@ -21,7 +21,7 @@ export function LoginScreen() {
   const { showError } = useFeedback()
   const { width } = useWindowDimensions()
   const isWide = width >= 900
-  const { isSignup, name, email, password, error, submitting, setName, setEmail, setPassword, handleSubmit, resetForm } =
+  const { isSignup, name, email, password, error, nameError, emailError, passwordError, submitting, setName, setEmail, setPassword, handleSubmit, resetForm } =
     useAuthForm({ login, signup, showError, lastSyncError })
 
   useEffect(() => {
@@ -77,6 +77,9 @@ export function LoginScreen() {
               email={email}
               password={password}
               error={error}
+              nameError={nameError}
+              emailError={emailError}
+              passwordError={passwordError}
               onChangeName={setName}
               onChangeEmail={setEmail}
               onChangePassword={setPassword}

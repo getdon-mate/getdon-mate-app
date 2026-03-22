@@ -8,6 +8,9 @@ interface AuthFormCardProps {
     email: string
     password: string
     error: string
+    nameError?: string
+    emailError?: string
+    passwordError?: string
     onChangeName: (value: string) => void
     onChangeEmail: (value: string) => void
     onChangePassword: (value: string) => void
@@ -24,6 +27,9 @@ export function AuthFormCard({
     email,
     password,
     error,
+    nameError,
+    emailError,
+    passwordError,
     onChangeName,
     onChangeEmail,
     onChangePassword,
@@ -45,6 +51,7 @@ export function AuthFormCard({
                     autoCapitalize="none"
                     editable={!submitting}
                     label="이름"
+                    error={nameError}
                 />
             )}
 
@@ -56,6 +63,7 @@ export function AuthFormCard({
                 keyboardType="email-address"
                 editable={!submitting}
                 label="이메일"
+                error={emailError}
             />
 
             <InputField
@@ -65,6 +73,7 @@ export function AuthFormCard({
                 secureTextEntry
                 editable={!submitting}
                 label="비밀번호"
+                error={passwordError}
             />
 
             {error ? <Text style={styles.error}>{error}</Text> : null}

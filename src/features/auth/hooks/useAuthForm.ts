@@ -16,6 +16,9 @@ export function useAuthForm({ login, signup, showError, lastSyncError }: UseAuth
   const [email, setEmail] = useState<string>("")
   const [password, setPassword] = useState<string>("")
   const [error, setError] = useState("")
+  const [emailError, setEmailError] = useState("")
+  const [passwordError, setPasswordError] = useState("")
+  const [nameError, setNameError] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
   // 실서버 에러 메시지가 도착하면 폼 에러로 표시
@@ -26,14 +29,19 @@ export function useAuthForm({ login, signup, showError, lastSyncError }: UseAuth
   async function handleSubmit() {
     if (submitting) return
     setError("")
+    setNameError("")
+    setEmailError("")
+    setPasswordError("")
 
     if (isSignup) {
-      const validationError = requireText(name, "이름을 입력해주세요.") ?? validateEmail(email) ?? validatePassword(password)
-      if (validationError) {
-        setError(validationError)
-        showError(validationError, feedbackPresets.validationError.title)
-        return
-      }
+      const nameErr = requireText(name, "이름을 입력해주세요.")
+      const emailErr = !nameErr ? validateEmail(email) : null
+      const passwordErr = !nameErr && !emailErr ? validatePassword(password) : null
+
+      if (nameErr) { setNameError(nameErr); showError(nameErr, feedbackPresets.validationError.title); return }
+      if (emailErr) { setEmailError(emailErr); showError(emailErr, feedbackPresets.validationError.title); return }
+      if (passwordErr) { setPasswordError(passwordErr); showError(passwordErr, feedbackPresets.validationError.title); return }
+
       setSubmitting(true)
       const ok = await signup(name, email, password)
       if (!ok) {
@@ -44,12 +52,11 @@ export function useAuthForm({ login, signup, showError, lastSyncError }: UseAuth
       return
     }
 
-    const validationError = validateEmail(email) ?? requireText(password, "비밀번호를 입력해주세요.")
-    if (validationError) {
-      setError(validationError)
-      showError(validationError, feedbackPresets.validationError.title)
-      return
-    }
+    const emailErr = validateEmail(email)
+    const passwordErr = !emailErr ? requireText(password, "비밀번호를 입력해주세요.") : null
+
+    if (emailErr) { setEmailError(emailErr); showError(emailErr, feedbackPresets.validationError.title); return }
+    if (passwordErr) { setPasswordError(passwordErr); showError(passwordErr, feedbackPresets.validationError.title); return }
 
     setSubmitting(true)
     const ok = await login(email.trim(), password.trim())
@@ -64,6 +71,9 @@ export function useAuthForm({ login, signup, showError, lastSyncError }: UseAuth
     if (submitting) return
     setIsSignup(nextSignup)
     setError("")
+    setNameError("")
+    setEmailError("")
+    setPasswordError("")
     setName("")
     // NOTE: We don't reset email if it already exists to improve UX (especially when switching back from signup)
     if (nextSignup) {
@@ -78,6 +88,9 @@ export function useAuthForm({ login, signup, showError, lastSyncError }: UseAuth
     email,
     password,
     error,
+    nameError,
+    emailError,
+    passwordError,
     submitting,
     setName,
     setEmail,
