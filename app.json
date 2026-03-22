@@ -1,11 +1,12 @@
 {
   "expo": {
-    "name": "getdon-mate-app",
+    "name": "겟돈 메이트",
     "slug": "getdon-mate-app",
     "version": "1.0.0",
     "newArchEnabled": false,
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "scheme": "getdonmate",
     "splash": {
       "backgroundColor": "#ffffff"
     },
@@ -23,9 +24,11 @@
     ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.anonymous.getdon-mate-app"
+      "bundleIdentifier": "com.YOURCOMPANY.getdonmate"
     },
-    "android": {},
+    "android": {
+      "package": "com.YOURCOMPANY.getdonmate"
+    },
     "web": {
       "bundler": "metro",
       "output": "single"
