@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native"
 import { useAppAccounts } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
-import { requireText, validateAll, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
+import { requireText, validateIsoDate, validatePositiveNumber } from "@shared/lib/validation"
 import { ActionChip, Button, InputField, NumericInputField, RadioButton, uiColors, uiRadius } from "@shared/ui"
 import { formatKRW } from "@shared/lib/format"
 import { getMemberById } from "../../model/member-utils"
@@ -13,13 +13,16 @@ type RecordFilter = "all" | "paid" | "unpaid"
 
 export function OneTimeDuesPanel({ account }: { account: GroupAccount }) {
   const { createOneTimeDues, updateOneTimeDues, closeOneTimeDues, deleteOneTimeDues, toggleOneTimeDuesRecord } = useAppAccounts()
-  const { showError, showToast, confirmDanger } = useFeedback()
+  const { showToast, confirmDanger } = useFeedback()
 
   const [title, setTitle] = useState("")
   const [duesAmount, setDuesAmount] = useState("")
   const [dueDate, setDueDate] = useState("")
   const [editingDuesId, setEditingDuesId] = useState<string | null>(null)
   const [recordFilter, setRecordFilter] = useState<RecordFilter>("all")
+  const [titleError, setTitleError] = useState("")
+  const [amountError, setAmountError] = useState("")
+  const [dueDateError, setDueDateError] = useState("")
 
   useEffect(() => {
     resetForm()
@@ -31,19 +34,27 @@ export function OneTimeDuesPanel({ account }: { account: GroupAccount }) {
     setTitle("")
     setDuesAmount("")
     setDueDate("")
+    setTitleError("")
+    setAmountError("")
+    setDueDateError("")
   }
 
   async function handleSubmit() {
     const parsedAmount = Number(duesAmount)
-    const validationError = validateAll(
-      requireText(title, "회비 명목을 입력해주세요."),
-      validatePositiveNumber(duesAmount, "금액을 올바르게 입력해주세요."),
-      validateIsoDate(dueDate),
-    )
-    if (validationError) {
-      showError(validationError, feedbackPresets.validationError.title)
-      return
-    }
+
+    setTitleError("")
+    setAmountError("")
+    setDueDateError("")
+
+    const tErr = requireText(title, "회비 명목을 입력해주세요.")
+    const aErr = validatePositiveNumber(duesAmount, "금액을 올바르게 입력해주세요.")
+    const dErr = validateIsoDate(dueDate)
+
+    if (tErr) setTitleError(tErr)
+    if (aErr) setAmountError(aErr)
+    if (dErr) setDueDateError(dErr)
+
+    if (tErr || aErr || dErr) return
 
     if (editingDuesId) {
       await updateOneTimeDues(account.id, editingDuesId, { title: title.trim(), amount: parsedAmount, dueDate: dueDate.trim() })
@@ -83,9 +94,9 @@ export function OneTimeDuesPanel({ account }: { account: GroupAccount }) {
     <View style={styles.panelCard}>
       <Text style={styles.panelTitle}>{editingDuesId ? "1회성 회비 수정" : "1회성 회비"}</Text>
       <View style={styles.formStack}>
-        <InputField value={title} onChangeText={setTitle} label="회비 명목" placeholder="회비 명목" />
-        <NumericInputField value={duesAmount} onChangeText={setDuesAmount} label="금액" placeholder="금액" />
-        <InputField value={dueDate} onChangeText={setDueDate} label="마감일" placeholder="YYYY-MM-DD" />
+        <InputField value={title} onChangeText={setTitle} label="회비 명목" placeholder="회비 명목" error={titleError} />
+        <NumericInputField value={duesAmount} onChangeText={setDuesAmount} label="금액" placeholder="금액" error={amountError} />
+        <InputField value={dueDate} onChangeText={setDueDate} label="마감일" placeholder="YYYY-MM-DD" error={dueDateError} />
         <View style={styles.actionRow}>
           {editingDuesId ? <Button label="수정 취소" variant="ghost" onPress={resetForm} style={styles.actionButton} /> : null}
           <Button label={editingDuesId ? "수정 저장" : "생성"} onPress={() => void handleSubmit()} style={styles.actionButton} />
