@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import type { RootStackParamList } from "@core/navigation/types"
 import { useAppAuth } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
+import { feedbackPresets } from "@shared/lib/feedback-presets"
 import { requireText, validateEmail } from "@shared/lib/validation"
 import { Badge, Button, Card, Icon, InputField, PageHeader, uiColors, uiRadius, uiSpacing } from "@shared/ui"
 import { COPY } from "@shared/constants/copy"
@@ -39,7 +40,7 @@ export function MyPageScreen() {
         name: name.trim(),
         email: email.trim(),
       })
-      showToast({ tone: "success", title: COPY.common.saveDone, message: "마이페이지 정보를 수정했습니다." })
+      showToast(feedbackPresets.profileSaved)
     } finally {
       savingRef.current = false
       setSaving(false)
@@ -60,11 +61,11 @@ export function MyPageScreen() {
               <View style={styles.avatarCircle}>
                 <Text style={styles.avatarText}>{(name.trim() || currentUser?.name || "나").slice(0, 1)}</Text>
               </View>
-              <Badge label="My Account" tone="primary" />
+              <Badge label="내 계정" tone="primary" />
             </View>
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>{currentUser?.name ?? "사용자"}</Text>
-              <Text style={styles.profileEmail}>{currentUser?.email ?? "email@example.com"}</Text>
+              <Text style={styles.profileEmail}>{currentUser?.email || "이메일 미설정"}</Text>
               <Text style={styles.profileHint}>이름과 이메일을 정리할 수 있습니다.</Text>
             </View>
             <View style={styles.summaryGrid}>
