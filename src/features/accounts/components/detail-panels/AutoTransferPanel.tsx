@@ -75,7 +75,16 @@ export function AutoTransferPanel({ account }: { account: GroupAccount }) {
     <View style={styles.panelCard}>
       <View style={styles.rowBetween}>
         <Text style={styles.panelTitle}>자동이체 설정</Text>
-        <ToggleSwitch value={enabled} onPress={() => setEnabled((prev) => !prev)} accessibilityLabel="자동이체 활성화" />
+        <ToggleSwitch
+          value={enabled}
+          onPress={() => {
+            setEnabled((prev) => !prev)
+            setDayError("")
+            setAmountError("")
+            setFromAccountError("")
+          }}
+          accessibilityLabel="자동이체 활성화"
+        />
       </View>
 
       {enabled ? (
