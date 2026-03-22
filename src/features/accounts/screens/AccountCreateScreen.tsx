@@ -23,6 +23,11 @@ export function AccountCreateScreen() {
   const [monthlyDues, setMonthlyDues] = useState("")
   const [dueDay, setDueDay] = useState("")
   const [error, setError] = useState("")
+  const [groupNameError, setGroupNameError] = useState("")
+  const [bankNameError, setBankNameError] = useState("")
+  const [accountNumberError, setAccountNumberError] = useState("")
+  const [monthlyDuesError, setMonthlyDuesError] = useState("")
+  const [dueDayError, setDueDayError] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const { width } = useWindowDimensions()
   const isWide = width >= 960
@@ -30,17 +35,25 @@ export function AccountCreateScreen() {
   async function handleCreate() {
     if (submitting) return
     setError("")
+    setGroupNameError("")
+    setBankNameError("")
+    setAccountNumberError("")
+    setMonthlyDuesError("")
+    setDueDayError("")
 
-    const validationError =
-      requireText(groupName, "모임명을 입력해주세요.") ??
-      requireText(bankName, "은행명을 입력해주세요.") ??
-      requireText(accountNumber, "계좌번호를 입력해주세요.") ??
-      validatePositiveNumber(monthlyDues, "월 회비를 올바르게 입력해주세요.") ??
-      validateDayOfMonth(dueDay)
-    if (validationError) {
-      setError(validationError)
-      return
-    }
+    const gnErr = requireText(groupName, "모임명을 입력해주세요.")
+    const bnErr = requireText(bankName, "은행명을 입력해주세요.")
+    const anErr = requireText(accountNumber, "계좌번호를 입력해주세요.")
+    const mdErr = validatePositiveNumber(monthlyDues, "월 회비를 올바르게 입력해주세요.")
+    const ddErr = validateDayOfMonth(dueDay)
+
+    if (gnErr) setGroupNameError(gnErr)
+    if (bnErr) setBankNameError(bnErr)
+    if (anErr) setAccountNumberError(anErr)
+    if (mdErr) setMonthlyDuesError(mdErr)
+    if (ddErr) setDueDayError(ddErr)
+
+    if (gnErr || bnErr || anErr || mdErr || ddErr) return
 
     setSubmitting(true)
     try {
@@ -79,6 +92,11 @@ export function AccountCreateScreen() {
             monthlyDues={monthlyDues}
             dueDay={dueDay}
             error={error}
+            groupNameError={groupNameError}
+            bankNameError={bankNameError}
+            accountNumberError={accountNumberError}
+            monthlyDuesError={monthlyDuesError}
+            dueDayError={dueDayError}
             onChangeGroupName={setGroupName}
             onChangeBankName={setBankName}
             onChangeAccountNumber={setAccountNumber}

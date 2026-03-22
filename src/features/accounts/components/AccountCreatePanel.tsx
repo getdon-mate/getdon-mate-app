@@ -8,6 +8,11 @@ interface AccountCreatePanelProps {
   monthlyDues: string
   dueDay: string
   error: string
+  groupNameError?: string
+  bankNameError?: string
+  accountNumberError?: string
+  monthlyDuesError?: string
+  dueDayError?: string
   onChangeGroupName: (value: string) => void
   onChangeBankName: (value: string) => void
   onChangeAccountNumber: (value: string) => void
@@ -25,6 +30,11 @@ export function AccountCreatePanel({
   monthlyDues,
   dueDay,
   error,
+  groupNameError,
+  bankNameError,
+  accountNumberError,
+  monthlyDuesError,
+  dueDayError,
   onChangeGroupName,
   onChangeBankName,
   onChangeAccountNumber,
@@ -37,17 +47,18 @@ export function AccountCreatePanel({
   return (
     <Card style={styles.createPanel}>
       <Text style={styles.panelTitle}>새 모임통장 정보</Text>
-      <InputField value={groupName} onChangeText={onChangeGroupName} placeholder="모임명" editable={!submitting} label="모임명 *" maxLength={50} />
-      <InputField value={bankName} onChangeText={onChangeBankName} placeholder="은행명" editable={!submitting} label="은행명 *" maxLength={20} />
-      <InputField value={accountNumber} onChangeText={onChangeAccountNumber} placeholder="계좌번호" editable={!submitting} label="계좌번호 *" maxLength={20} />
+      <InputField value={groupName} onChangeText={onChangeGroupName} placeholder="모임명" editable={!submitting} label="모임명 *" maxLength={50} error={groupNameError} />
+      <InputField value={bankName} onChangeText={onChangeBankName} placeholder="은행명" editable={!submitting} label="은행명 *" maxLength={20} error={bankNameError} />
+      <InputField value={accountNumber} onChangeText={onChangeAccountNumber} placeholder="계좌번호" editable={!submitting} label="계좌번호 *" maxLength={20} error={accountNumberError} />
       <NumericInputField
         value={monthlyDues}
         onChangeText={onChangeMonthlyDues}
         placeholder="월 회비"
         editable={!submitting}
         label="월 회비 *"
+        error={monthlyDuesError}
       />
-      <DayOfMonthSelectField value={dueDay} onChangeValue={onChangeDueDay} placeholder="납부일 선택" label="납부일 *" />
+      <DayOfMonthSelectField value={dueDay} onChangeValue={onChangeDueDay} placeholder="납부일 선택" label="납부일 *" error={dueDayError} />
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
