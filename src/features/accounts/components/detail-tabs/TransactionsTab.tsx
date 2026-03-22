@@ -168,16 +168,16 @@ export function TransactionsTab({
     setDateError("")
 
     const aErr = validatePositiveNumber(amount, "금액을 올바르게 입력해주세요.")
+    const dtErr = validateIsoDate(date)
     const dErr = requireText(description, "거래 설명을 입력해주세요.")
     const cErr = requireText(category, "카테고리를 입력해주세요.")
-    const dtErr = validateIsoDate(date)
 
     if (aErr) setAmountError(aErr)
+    if (dtErr) setDateError(dtErr)
     if (dErr) setDescriptionError(dErr)
     if (cErr) setCategoryError(cErr)
-    if (dtErr) setDateError(dtErr)
 
-    if (aErr || dErr || cErr || dtErr) return
+    if (aErr || dtErr || dErr || cErr) return
 
     const payload = {
       type: draftType,
@@ -203,6 +203,10 @@ export function TransactionsTab({
 
   function handleEdit(transaction: Transaction) {
     setSelectedTxForMenu(null)
+    setAmountError("")
+    setDescriptionError("")
+    setCategoryError("")
+    setDateError("")
     setEditingId(transaction.id)
     setDraftType(transaction.type)
     setAmount(String(transaction.amount))
@@ -417,7 +421,7 @@ export function TransactionsTab({
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{isEditing ? COPY.transaction.editTitle : COPY.transaction.newTitle}</Text>
             <Pressable
-              onPress={() => { setFormOpen(false); if (!isEditing) resetComposer(initialType) }}
+              onPress={() => { setFormOpen(false); resetComposer(initialType) }}
               style={styles.modalCloseButton}
               accessibilityRole="button"
               accessibilityLabel="폼 닫기"
