@@ -71,6 +71,9 @@ export function OneTimeDuesPanel({ account }: { account: GroupAccount }) {
   function handleEdit(duesId: string) {
     const target = account.oneTimeDues.find((dues) => dues.id === duesId)
     if (!target) return
+    setTitleError("")
+    setAmountError("")
+    setDueDateError("")
     setEditingDuesId(target.id)
     setTitle(target.title)
     setDuesAmount(String(target.amount))
