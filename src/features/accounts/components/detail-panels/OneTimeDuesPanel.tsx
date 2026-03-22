@@ -47,14 +47,14 @@ export function OneTimeDuesPanel({ account }: { account: GroupAccount }) {
 
     if (editingDuesId) {
       await updateOneTimeDues(account.id, editingDuesId, { title: title.trim(), amount: parsedAmount, dueDate: dueDate.trim() })
-      showToast({ tone: "success", title: "수정 완료", message: "1회성 회비를 수정했습니다." })
+      showToast(feedbackPresets.oneTimeDuesUpdated)
       resetForm()
       return
     }
 
     await createOneTimeDues(account.id, { title: title.trim(), amount: parsedAmount, dueDate: dueDate.trim() })
     resetForm()
-    showToast({ tone: "success", title: "생성 완료", message: "1회성 회비를 생성했습니다." })
+    showToast(feedbackPresets.oneTimeDuesCreated)
   }
 
   function handleEdit(duesId: string) {
@@ -68,19 +68,15 @@ export function OneTimeDuesPanel({ account }: { account: GroupAccount }) {
 
   async function handleToggleClose(duesId: string, closed: boolean) {
     await closeOneTimeDues(account.id, duesId, closed)
-    showToast({
-      tone: "success",
-      title: closed ? "마감 완료" : "마감 해제",
-      message: closed ? "1회성 회비를 종료 상태로 전환했습니다." : "1회성 회비를 다시 진행 상태로 전환했습니다.",
-    })
+    showToast(feedbackPresets.oneTimeDuesClosed(closed))
   }
 
   async function handleDelete(duesId: string) {
-    const confirmed = await confirmDanger({ title: "1회성 회비 삭제", message: "회비 항목과 납부 상태가 함께 삭제됩니다.", confirmLabel: "삭제" })
+    const confirmed = await confirmDanger(feedbackPresets.oneTimeDuesDelete)
     if (!confirmed) return
     await deleteOneTimeDues(account.id, duesId)
     if (editingDuesId === duesId) resetForm()
-    showToast({ tone: "success", title: "삭제 완료", message: "1회성 회비를 삭제했습니다." })
+    showToast(feedbackPresets.oneTimeDuesDeleted)
   }
 
   return (

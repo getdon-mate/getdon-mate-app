@@ -114,10 +114,10 @@ export function AccountDetailScreen() {
     const inviteLink = buildAccountInviteLink(account)
     const copied = await copyText(inviteLink)
     if (copied) {
-      showToast({ tone: "success", title: "링크 복사 완료", message: "초대 링크를 복사했습니다." })
+      showToast(feedbackPresets.inviteLinkCopied)
       return
     }
-    showAlert({ title: "복사 실패", message: "초대 링크를 복사하지 못했습니다.", tone: "danger" })
+    showAlert(feedbackPresets.inviteLinkCopyFail)
   }
 
   async function handleCopyAccountNumber() {
@@ -140,7 +140,7 @@ export function AccountDetailScreen() {
         title: `${account.groupName} 초대`,
       })
     } catch {
-      showAlert({ title: "공유 실패", message: "공유 시트를 열지 못했습니다.", tone: "danger" })
+      showAlert(feedbackPresets.inviteShareFail)
     }
   }
 

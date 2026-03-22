@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from "react"
+import { memo, useCallback, useMemo, useState } from "react"
 import { Pressable, Share, StyleSheet, Text, TextInput, View } from "react-native"
 import { useAppAccounts, useAppAuth, useAppRuntime } from "@core/providers/AppProvider"
 import { useFeedback } from "@core/providers/FeedbackProvider"
@@ -6,6 +6,7 @@ import { copyText } from "@shared/lib/clipboard"
 import { formatActivityTimestamp } from "@shared/lib/format"
 import { requireText } from "@shared/lib/validation"
 import { ActionChip, ActionSheet, Button, Icon, InputField, ToggleSwitch, uiColors, uiRadius } from "@shared/ui"
+import { feedbackPresets } from "@shared/lib/feedback-presets"
 import { COPY } from "@shared/constants/copy"
 import type { BoardComment, BoardPost, GroupAccount } from "../../model/types"
 import { EmptyStateCard } from "../EmptyStateCard"
@@ -207,11 +208,11 @@ const PostCard = memo(function PostCard({
   editingCommentId: string | null
   onChangeCommentDraft: (value: string) => void
   onSubmitComment: () => void
-  onStartEditPost: () => void
-  onDeletePost: () => void
-  onToggleLike: () => void
-  onCopyLink: () => void
-  onSharePost: () => void
+  onStartEditPost: (postId: string) => void
+  onDeletePost: (postId: string) => void
+  onToggleLike: (postId: string) => void
+  onCopyLink: (postId: string) => void
+  onSharePost: (postId: string) => void
   onStartEditComment: (comment: BoardComment) => void
   onCancelEditComment: () => void
   onDeleteComment: (commentId: string) => void
@@ -255,12 +256,12 @@ const PostCard = memo(function PostCard({
               items={[
                 {
                   label: COPY.common.edit,
-                  onPress: onStartEditPost,
+                  onPress: () => onStartEditPost(post.id),
                 },
                 {
                   label: COPY.common.delete,
                   tone: "danger",
-                  onPress: onDeletePost,
+                  onPress: () => onDeletePost(post.id),
                 },
               ]}
               onClose={() => setMenuOpen(false)}
@@ -274,15 +275,15 @@ const PostCard = memo(function PostCard({
       </View>
 
       <View style={styles.postActionsRow}>
-        <Pressable accessibilityRole="button" accessibilityLabel="게시글 좋아요" onPress={onToggleLike} style={styles.postActionChip}>
+        <Pressable accessibilityRole="button" accessibilityLabel="게시글 좋아요" onPress={() => onToggleLike(post.id)} style={styles.postActionChip}>
           <Icon name={liked ? "heart" : "heartOutline"} size={15} color={liked ? uiColors.danger : uiColors.textStrong} />
           <Text style={[styles.postActionText, liked && styles.postActionTextActive]}>좋아요 {post.likedByUserIds.length}</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="게시글 링크 복사" onPress={onCopyLink} style={styles.postActionChip}>
+        <Pressable accessibilityRole="button" accessibilityLabel="게시글 링크 복사" onPress={() => onCopyLink(post.id)} style={styles.postActionChip}>
           <Icon name="copy" size={15} color={uiColors.textStrong} />
           <Text style={styles.postActionText}>링크 복사</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="게시글 공유" onPress={onSharePost} style={styles.postActionChip}>
+        <Pressable accessibilityRole="button" accessibilityLabel="게시글 공유" onPress={() => onSharePost(post.id)} style={styles.postActionChip}>
           <Icon name="share" size={15} color={uiColors.textStrong} />
           <Text style={styles.postActionText}>공유</Text>
         </Pressable>
@@ -382,29 +383,31 @@ export function BoardTab({ account }: { account: GroupAccount }) {
     showToast({ tone: "success", title: COPY.board.postDoneTitle, message: COPY.board.postDone })
   }
 
-  async function handleDeletePost(post: BoardPost) {
+  const handleDeletePost = useCallback(async (postId: string) => {
     const confirmed = await confirmDanger({
       title: COPY.board.deletePostTitle,
-      message: "게시글과 댓글이 함께 삭제됩니다.",
+      message: feedbackPresets.postDeleteWarning.message,
       confirmLabel: COPY.common.delete,
     })
     if (!confirmed) return
 
-    await deleteBoardPost(account.id, post.id)
-    if (editingPostId === post.id) {
+    await deleteBoardPost(account.id, postId)
+    if (editingPostId === postId) {
       resetComposer()
       setComposerOpen(false)
     }
     showToast({ tone: "success", title: COPY.common.deleteDone, message: COPY.board.postDeleteDone })
-  }
+  }, [account.id, confirmDanger, deleteBoardPost, editingPostId, showToast])
 
-  function handleStartEditPost(post: BoardPost) {
+  const handleStartEditPost = useCallback((postId: string) => {
+    const post = account.boardPosts.find((p) => p.id === postId)
+    if (!post) return
     setComposerOpen(true)
     setEditingPostId(post.id)
     setTitle(post.title)
     setBody(post.body)
     setPinned(post.pinned)
-  }
+  }, [account.boardPosts])
 
   function handleStartEditComment(postId: string, comment: BoardComment) {
     setEditingCommentIds((prev) => ({ ...prev, [postId]: comment.id }))
@@ -440,7 +443,7 @@ export function BoardTab({ account }: { account: GroupAccount }) {
   async function handleDeleteComment(postId: string, commentId: string) {
     const confirmed = await confirmDanger({
       title: COPY.board.deleteCommentTitle,
-      message: "삭제한 댓글은 되돌릴 수 없습니다.",
+      message: feedbackPresets.commentDeleteWarning.message,
       confirmLabel: COPY.common.delete,
     })
     if (!confirmed) return
@@ -452,21 +455,24 @@ export function BoardTab({ account }: { account: GroupAccount }) {
     showToast({ tone: "success", title: COPY.common.deleteDone, message: COPY.board.commentDeleteDone })
   }
 
-  async function handleToggleLike(post: BoardPost) {
-    await toggleBoardPostLike(account.id, post.id)
-  }
+  const handleToggleLike = useCallback(async (postId: string) => {
+    await toggleBoardPostLike(account.id, postId)
+  }, [account.id, toggleBoardPostLike])
 
-  async function handleCopyPostLink(post: BoardPost) {
+  const handleCopyPostLink = useCallback(async (postId: string) => {
+    const post = account.boardPosts.find((p) => p.id === postId)
+    if (!post) return
     const copied = await copyText(buildPostShareLink(post))
     if (!copied) {
-      showAlert({ title: "복사 실패", message: "링크를 복사하지 못했습니다.", tone: "danger" })
+      showAlert(feedbackPresets.postLinkCopyFail)
       return
     }
+    showToast(feedbackPresets.postLinkCopied)
+  }, [account.boardPosts, account.id, showAlert, showToast])
 
-    showToast({ tone: "success", title: "링크 복사", message: "게시글 링크를 복사했어요." })
-  }
-
-  async function handleSharePost(post: BoardPost) {
+  const handleSharePost = useCallback(async (postId: string) => {
+    const post = account.boardPosts.find((p) => p.id === postId)
+    if (!post) return
     try {
       const result = await Share.share({
         message: `${post.title}\n${buildPostShareLink(post)}`,
@@ -474,12 +480,12 @@ export function BoardTab({ account }: { account: GroupAccount }) {
         title: post.title,
       })
       if (result.action === Share.sharedAction) {
-        showToast({ tone: "success", title: "공유 준비", message: "공유할 내용을 열었습니다." })
+        showToast(feedbackPresets.postShared)
       }
     } catch {
       // silently fail — do not show misleading success message
     }
-  }
+  }, [account.boardPosts, account.id, showToast])
 
   return (
     <View style={styles.stack}>
@@ -552,11 +558,11 @@ export function BoardTab({ account }: { account: GroupAccount }) {
               editingCommentId={editingCommentIds[post.id] ?? null}
               onChangeCommentDraft={(value) => setCommentDrafts((prev) => ({ ...prev, [post.id]: value }))}
               onSubmitComment={() => void handleSubmitComment(post.id)}
-              onStartEditPost={() => handleStartEditPost(post)}
-              onDeletePost={() => void handleDeletePost(post)}
-              onToggleLike={() => void handleToggleLike(post)}
-              onCopyLink={() => void handleCopyPostLink(post)}
-              onSharePost={() => void handleSharePost(post)}
+              onStartEditPost={handleStartEditPost}
+              onDeletePost={handleDeletePost}
+              onToggleLike={handleToggleLike}
+              onCopyLink={handleCopyPostLink}
+              onSharePost={handleSharePost}
               onStartEditComment={(comment) => handleStartEditComment(post.id, comment)}
               onCancelEditComment={() => handleCancelEditComment(post.id)}
               onDeleteComment={(commentId) => void handleDeleteComment(post.id, commentId)}
@@ -574,11 +580,11 @@ export function BoardTab({ account }: { account: GroupAccount }) {
               editingCommentId={editingCommentIds[post.id] ?? null}
               onChangeCommentDraft={(value) => setCommentDrafts((prev) => ({ ...prev, [post.id]: value }))}
               onSubmitComment={() => void handleSubmitComment(post.id)}
-              onStartEditPost={() => handleStartEditPost(post)}
-              onDeletePost={() => void handleDeletePost(post)}
-              onToggleLike={() => void handleToggleLike(post)}
-              onCopyLink={() => void handleCopyPostLink(post)}
-              onSharePost={() => void handleSharePost(post)}
+              onStartEditPost={handleStartEditPost}
+              onDeletePost={handleDeletePost}
+              onToggleLike={handleToggleLike}
+              onCopyLink={handleCopyPostLink}
+              onSharePost={handleSharePost}
               onStartEditComment={(comment) => handleStartEditComment(post.id, comment)}
               onCancelEditComment={() => handleCancelEditComment(post.id)}
               onDeleteComment={(commentId) => void handleDeleteComment(post.id, commentId)}

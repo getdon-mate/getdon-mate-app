@@ -56,7 +56,7 @@ export function AutoTransferPanel({ account }: { account: GroupAccount }) {
       fromAccount: fromAccount.trim(),
     })
 
-    showToast({ tone: "success", title: "저장 완료", message: "자동이체 설정을 저장했습니다." })
+    showToast(feedbackPresets.autoTransferSaved)
   }
 
   return (

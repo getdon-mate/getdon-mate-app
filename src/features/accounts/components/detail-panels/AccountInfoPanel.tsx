@@ -5,7 +5,7 @@ import { useFeedback } from "@core/providers/FeedbackProvider"
 import { copyText } from "@shared/lib/clipboard"
 import { feedbackPresets } from "@shared/lib/feedback-presets"
 import { COPY } from "@shared/constants/copy"
-import { requireText, validateAll, validateDayOfMonth, validatePositiveNumber } from "@shared/lib/validation"
+import { requireText, validateDayOfMonth, validatePositiveNumber } from "@shared/lib/validation"
 import { Button, DayOfMonthSelectField, Icon, InputField, NumericInputField, uiColors, uiRadius, uiSpacing } from "@shared/ui"
 import { formatKRW } from "@shared/lib/format"
 import type { GroupAccount } from "../../model/types"
@@ -19,6 +19,11 @@ export function AccountInfoPanel({ account }: { account: GroupAccount }) {
   const [accountNumber, setAccountNumber] = useState(account.accountNumber)
   const [monthlyDues, setMonthlyDues] = useState(String(account.monthlyDuesAmount))
   const [accountDueDay, setAccountDueDay] = useState(String(account.dueDay))
+  const [groupNameError, setGroupNameError] = useState("")
+  const [bankNameError, setBankNameError] = useState("")
+  const [accountNumberError, setAccountNumberError] = useState("")
+  const [monthlyDuesError, setMonthlyDuesError] = useState("")
+  const [dueDayError, setDueDayError] = useState("")
 
   useEffect(() => {
     setGroupName(account.groupName)
@@ -31,24 +36,33 @@ export function AccountInfoPanel({ account }: { account: GroupAccount }) {
   async function handleCopyAccountNumber() {
     const copied = await copyText(account.accountNumber)
     if (copied) {
-      showToast({ tone: "success", title: "복사 완료", message: COPY.account.copyAccountNumber })
+      showToast({ ...feedbackPresets.copySuccess, message: COPY.account.copyAccountNumber })
       return
     }
-    showAlert({ title: "복사 실패", message: "권한이나 기기 설정 때문에 자동 복사를 완료하지 못했습니다.", tone: "danger" })
+    showAlert(feedbackPresets.copyFail)
   }
 
   async function handleSaveAccountInfo() {
-    const validationError = validateAll(
-      requireText(groupName, "모임명을 입력해주세요."),
-      requireText(bankName, "은행명을 입력해주세요."),
-      requireText(accountNumber, "계좌번호를 입력해주세요."),
-      validatePositiveNumber(monthlyDues, "월 회비를 올바르게 입력해주세요."),
-      validateDayOfMonth(accountDueDay),
-    )
-    if (validationError) {
-      showAlert({ title: "입력 오류", message: validationError, tone: "danger" })
-      return
-    }
+    setGroupNameError("")
+    setBankNameError("")
+    setAccountNumberError("")
+    setMonthlyDuesError("")
+    setDueDayError("")
+
+    const gnErr = requireText(groupName, "모임명을 입력해주세요.")
+    const bnErr = requireText(bankName, "은행명을 입력해주세요.")
+    const anErr = requireText(accountNumber, "계좌번호를 입력해주세요.")
+    const mdErr = validatePositiveNumber(monthlyDues, "월 회비를 올바르게 입력해주세요.")
+    const ddErr = validateDayOfMonth(accountDueDay)
+
+    if (gnErr) setGroupNameError(gnErr)
+    if (bnErr) setBankNameError(bnErr)
+    if (anErr) setAccountNumberError(anErr)
+    if (mdErr) setMonthlyDuesError(mdErr)
+    if (ddErr) setDueDayError(ddErr)
+
+    if (gnErr || bnErr || anErr || mdErr || ddErr) return
+
     await updateAccount(account.id, {
       groupName: groupName.trim(),
       bankName: bankName.trim(),
@@ -56,7 +70,7 @@ export function AccountInfoPanel({ account }: { account: GroupAccount }) {
       monthlyDuesAmount: Number(monthlyDues),
       dueDay: Number(accountDueDay),
     })
-    showToast({ tone: "success", title: "저장 완료", message: "모임통장 기본정보를 수정했습니다." })
+    showToast(feedbackPresets.accountInfoSaved)
   }
 
   return (
@@ -97,11 +111,11 @@ export function AccountInfoPanel({ account }: { account: GroupAccount }) {
       <View style={styles.panelCard}>
         <Text style={styles.panelTitle}>기본 정보</Text>
         <View style={styles.formStack}>
-          <InputField value={groupName} onChangeText={setGroupName} label="모임명" placeholder="모임명" />
-          <InputField value={bankName} onChangeText={setBankName} label="은행명" placeholder="은행명" />
-          <InputField value={accountNumber} onChangeText={setAccountNumber} label="계좌번호" placeholder="계좌번호" />
-          <NumericInputField value={monthlyDues} onChangeText={setMonthlyDues} label="월 회비" placeholder="금액" />
-          <DayOfMonthSelectField value={accountDueDay} onChangeValue={setAccountDueDay} label="납부일" placeholder="납부일 선택" />
+          <InputField value={groupName} onChangeText={setGroupName} label="모임명" placeholder="모임명" error={groupNameError} />
+          <InputField value={bankName} onChangeText={setBankName} label="은행명" placeholder="은행명" error={bankNameError} />
+          <InputField value={accountNumber} onChangeText={setAccountNumber} label="계좌번호" placeholder="계좌번호" error={accountNumberError} />
+          <NumericInputField value={monthlyDues} onChangeText={setMonthlyDues} label="월 회비" placeholder="금액" error={monthlyDuesError} />
+          <DayOfMonthSelectField value={accountDueDay} onChangeValue={setAccountDueDay} label="납부일" placeholder="납부일 선택" error={dueDayError} />
           <Button label="기본정보 저장" onPress={() => void handleSaveAccountInfo()} />
         </View>
       </View>
