@@ -37,7 +37,7 @@ export function TransactionsTab({
 }) {
   const { isMutating } = useAppRuntime()
   const { createTransaction, updateTransaction, deleteTransaction } = useAppAccounts()
-  const { showAlert, showToast, confirm } = useFeedback()
+  const { showToast, confirm } = useFeedback()
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all")
   const [sortOrder, setSortOrder] = useState<SortOrder>("latest")
   const [searchQuery, setSearchQuery] = useState("")
@@ -52,6 +52,10 @@ export function TransactionsTab({
   const [date, setDate] = useState(getToday())
   const [category, setCategory] = useState(getCategoryLabel(initialType))
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [amountError, setAmountError] = useState("")
+  const [descriptionError, setDescriptionError] = useState("")
+  const [categoryError, setCategoryError] = useState("")
+  const [dateError, setDateError] = useState("")
   const deferredSearchQuery = useDeferredValue(searchQuery)
 
   useEffect(() => {
@@ -137,6 +141,10 @@ export function TransactionsTab({
     setDescription("")
     setDate(getToday())
     setCategory(getCategoryLabel(nextType))
+    setAmountError("")
+    setDescriptionError("")
+    setCategoryError("")
+    setDateError("")
   }
 
   function resetFilters() {
@@ -154,16 +162,22 @@ export function TransactionsTab({
   }, [])
 
   async function handleSubmit() {
-    const validationError =
-      requireText(description, "거래 설명을 입력해주세요.") ??
-      validatePositiveNumber(amount, "금액을 올바르게 입력해주세요.") ??
-      requireText(category, "카테고리를 입력해주세요.") ??
-      validateIsoDate(date)
+    setAmountError("")
+    setDescriptionError("")
+    setCategoryError("")
+    setDateError("")
 
-    if (validationError) {
-      showAlert({ title: COPY.common.inputError, message: validationError, tone: "danger" })
-      return
-    }
+    const aErr = validatePositiveNumber(amount, "금액을 올바르게 입력해주세요.")
+    const dErr = requireText(description, "거래 설명을 입력해주세요.")
+    const cErr = requireText(category, "카테고리를 입력해주세요.")
+    const dtErr = validateIsoDate(date)
+
+    if (aErr) setAmountError(aErr)
+    if (dErr) setDescriptionError(dErr)
+    if (cErr) setCategoryError(cErr)
+    if (dtErr) setDateError(dtErr)
+
+    if (aErr || dErr || cErr || dtErr) return
 
     const payload = {
       type: draftType,
@@ -449,6 +463,7 @@ export function TransactionsTab({
                 containerStyle={styles.compactField}
                 inputStyle={styles.compactInput}
                 autoFocus={formOpen && !isEditing}
+                error={amountError}
               />
               <InputField
                 value={date}
@@ -457,6 +472,7 @@ export function TransactionsTab({
                 placeholder="YYYY-MM-DD"
                 containerStyle={styles.compactField}
                 inputStyle={styles.compactInput}
+                error={dateError}
               />
               <InputField
                 value={description}
@@ -465,6 +481,7 @@ export function TransactionsTab({
                 placeholder="예: 회비 입금, 모임 식비"
                 containerStyle={styles.compactField}
                 inputStyle={styles.compactInput}
+                error={descriptionError}
               />
               <InputField
                 value={category}
@@ -473,6 +490,7 @@ export function TransactionsTab({
                 placeholder="예: 회비, 식비"
                 containerStyle={styles.compactField}
                 inputStyle={styles.compactInput}
+                error={categoryError}
               />
             </View>
             {recentCategories.length > 0 ? (
