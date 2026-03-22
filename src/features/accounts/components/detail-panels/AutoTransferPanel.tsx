@@ -11,18 +11,25 @@ import type { GroupAccount } from "../../model/types"
 
 export function AutoTransferPanel({ account }: { account: GroupAccount }) {
   const { updateAutoTransfer } = useAppAccounts()
-  const { showError, showToast } = useFeedback()
+  const { showToast } = useFeedback()
 
   const [enabled, setEnabled] = useState(account.autoTransfer.enabled)
   const [day, setDay] = useState(String(account.autoTransfer.dayOfMonth))
   const [amount, setAmount] = useState(String(account.autoTransfer.amount))
   const [fromAccount, setFromAccount] = useState(account.autoTransfer.fromAccount)
 
+  const [dayError, setDayError] = useState("")
+  const [amountError, setAmountError] = useState("")
+  const [fromAccountError, setFromAccountError] = useState("")
+
   useEffect(() => {
     setEnabled(account.autoTransfer.enabled)
     setDay(String(account.autoTransfer.dayOfMonth))
     setAmount(String(account.autoTransfer.amount))
     setFromAccount(account.autoTransfer.fromAccount)
+    setDayError("")
+    setAmountError("")
+    setFromAccountError("")
   }, [account.id, account.autoTransfer.enabled, account.autoTransfer.dayOfMonth, account.autoTransfer.amount, account.autoTransfer.fromAccount])
 
   const nextTransferPreview = useMemo(() => {
@@ -38,15 +45,20 @@ export function AutoTransferPanel({ account }: { account: GroupAccount }) {
     const parsedDay = Number(day)
     const parsedAmount = Number(amount)
 
+    setDayError("")
+    setAmountError("")
+    setFromAccountError("")
+
     if (enabled) {
-      const dayError = validateDayOfMonth(day)
-      if (dayError) { showError(dayError, feedbackPresets.validationError.title); return }
+      const dErr = validateDayOfMonth(day)
+      const aErr = validatePositiveNumber(amount, "금액을 올바르게 입력해주세요.")
+      const fErr = requireText(fromAccount, "출금 계좌를 입력해주세요.")
 
-      const amountError = validatePositiveNumber(amount, "금액을 올바르게 입력해주세요.")
-      if (amountError) { showError(amountError, feedbackPresets.validationError.title); return }
+      if (dErr) setDayError(dErr)
+      if (aErr) setAmountError(aErr)
+      if (fErr) setFromAccountError(fErr)
 
-      const fromAccountError = requireText(fromAccount, "출금 계좌를 입력해주세요.")
-      if (fromAccountError) { showError(fromAccountError, feedbackPresets.validationError.title); return }
+      if (dErr || aErr || fErr) return
     }
 
     await updateAutoTransfer(account.id, {
@@ -68,9 +80,9 @@ export function AutoTransferPanel({ account }: { account: GroupAccount }) {
 
       {enabled ? (
         <View style={styles.formStack}>
-          <DayOfMonthSelectField value={day} onChangeValue={setDay} label="이체일" placeholder="이체일 선택" />
-          <NumericInputField value={amount} onChangeText={setAmount} label="금액" placeholder="금액" />
-          <InputField value={fromAccount} onChangeText={setFromAccount} label="출금 계좌" placeholder="출금 계좌" />
+          <DayOfMonthSelectField value={day} onChangeValue={setDay} label="이체일" placeholder="이체일 선택" error={dayError} />
+          <NumericInputField value={amount} onChangeText={setAmount} label="금액" placeholder="금액" error={amountError} />
+          <InputField value={fromAccount} onChangeText={setFromAccount} label="출금 계좌" placeholder="출금 계좌" error={fromAccountError} />
           {nextTransferPreview ? <Text style={styles.previewText}>{nextTransferPreview}</Text> : null}
           <Button label="저장" onPress={() => void handleSaveAutoTransfer()} />
         </View>
