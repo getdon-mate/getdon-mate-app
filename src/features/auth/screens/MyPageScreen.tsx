@@ -14,36 +14,63 @@ export function MyPageScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const { currentUser, updateProfile, withdraw, logout } = useAppAuth()
   const isGuest = currentUser?.isGuest === true
-  const { showError, showToast } = useFeedback()
+  const { showToast, confirmDanger, showAlert } = useFeedback()
 
   const [name, setName] = useState(currentUser?.name ?? "")
   const [email, setEmail] = useState(currentUser?.email ?? "")
   const [saving, setSaving] = useState(false)
   const savingRef = useRef(false)
+  const [nameError, setNameError] = useState("")
+  const [emailError, setEmailError] = useState("")
   const { width } = useWindowDimensions()
   const isWide = width >= 960
 
   async function handleSave() {
     if (savingRef.current) return
-    const validationError =
-      requireText(name, "이름을 입력해주세요.") ??
-      validateEmail(email)
-    if (validationError) {
-      showError(validationError)
-      return
-    }
+
+    setNameError("")
+    setEmailError("")
+
+    const nErr = requireText(name, "이름을 입력해주세요.")
+    const eErr = validateEmail(email)
+
+    if (nErr) setNameError(nErr)
+    if (eErr) setEmailError(eErr)
+
+    if (nErr || eErr) return
 
     savingRef.current = true
     setSaving(true)
     try {
-      await updateProfile({
-        name: name.trim(),
-        email: email.trim(),
-      })
+      await updateProfile({ name: name.trim(), email: email.trim() })
       showToast(feedbackPresets.profileSaved)
     } finally {
       savingRef.current = false
       setSaving(false)
+    }
+  }
+
+  async function handleLogout() {
+    const confirmed = await confirmDanger({
+      title: feedbackPresets.logout.title,
+      message: feedbackPresets.logout.message,
+      confirmLabel: feedbackPresets.logout.confirmLabel,
+    })
+    if (!confirmed) return
+    logout()
+  }
+
+  async function handleWithdraw() {
+    const confirmed = await confirmDanger({
+      title: feedbackPresets.withdraw.title,
+      message: feedbackPresets.withdraw.message,
+      confirmLabel: feedbackPresets.withdraw.confirmLabel,
+    })
+    if (!confirmed) return
+    try {
+      await withdraw()
+    } catch {
+      showAlert({ title: "탈퇴 실패", message: "탈퇴를 처리하는 중 오류가 발생했습니다.", tone: "danger" })
     }
   }
 
@@ -88,10 +115,26 @@ export function MyPageScreen() {
           ) : (
             <Card style={styles.formCard}>
               <Text style={styles.sectionTitle}>기본 정보</Text>
-              <InputField value={name} onChangeText={setName} label="이름" placeholder="이름" editable={!saving} />
-              <InputField value={email} onChangeText={setEmail} label="이메일" placeholder="email@example.com" autoCapitalize="none" editable={!saving} />
+              <InputField value={name} onChangeText={setName} label="이름" placeholder="이름" editable={!saving} error={nameError} />
+              <InputField value={email} onChangeText={setEmail} label="이메일" placeholder="이메일" autoCapitalize="none" editable={!saving} error={emailError} />
               <View style={styles.actionRow}>
                 <Button label={saving ? COPY.common.saving : COPY.common.save} onPress={() => void handleSave()} style={styles.actionButton} disabled={saving} />
+              </View>
+              <View style={styles.accountActionsRow}>
+                <Button
+                  label="로그아웃"
+                  variant="ghost"
+                  onPress={() => void handleLogout()}
+                  style={styles.accountActionButton}
+                  disabled={saving}
+                />
+                <Button
+                  label="회원 탈퇴"
+                  variant="ghost"
+                  onPress={() => void handleWithdraw()}
+                  style={styles.accountActionButton}
+                  disabled={saving}
+                />
               </View>
             </Card>
           )}
@@ -208,6 +251,16 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     minHeight: 50,
+  },
+  accountActionsRow: {
+    flexDirection: "row",
+    gap: uiSpacing.sm,
+    paddingTop: uiSpacing.xs,
+    borderTopWidth: 1,
+    borderTopColor: uiColors.border,
+  },
+  accountActionButton: {
+    flex: 1,
   },
   guestNotice: {
     color: uiColors.textMuted,
