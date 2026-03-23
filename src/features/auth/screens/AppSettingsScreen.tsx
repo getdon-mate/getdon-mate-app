@@ -75,20 +75,6 @@ export function AppSettingsScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <PageHeader title="설정" subtitle="관리와 계정 정보를 수정할 수 있습니다." />
-
-      <Card style={styles.summaryCard}>
-        <View style={styles.summaryTop}>
-          <View style={styles.summaryBadge}>
-            <Icon name="settings" size={18} color={uiColors.primary} />
-          </View>
-          <Badge label="Global" tone="primary" />
-        </View>
-        <View style={styles.summaryText}>
-          <Text style={styles.summaryTitle}>전역 설정 허브</Text>
-          <Text style={styles.summaryBody}>알림, 계정, 보안 액션을 여기에서만 정리합니다.</Text>
-        </View>
-      </Card>
-
       <Card style={styles.card}>
         <Text style={styles.sectionTitle}>빠른 이동</Text>
         <SettingsActionRow
@@ -106,7 +92,7 @@ export function AppSettingsScreen() {
       </Card>
 
       <Card style={styles.card}>
-        <Text style={styles.sectionTitle}>계정 액션</Text>
+        <Text style={styles.sectionTitle}>계정</Text>
         <View style={styles.accountStrip}>
           <View style={styles.accountAvatar}>
             <Text style={styles.accountAvatarText}>{(currentUser?.name ?? "사").slice(0, 1)}</Text>
@@ -116,17 +102,16 @@ export function AppSettingsScreen() {
             <Text style={styles.accountEmail}>{currentUser?.email ?? "email@example.com"}</Text>
           </View>
         </View>
-        <Text style={styles.sectionDescription}>세션 종료와 탈퇴는 여기에서만 다룹니다.</Text>
         <View style={styles.dangerGroup}>
           <SettingsActionRow
             label="로그아웃"
-            caption="현재 기기에서 세션을 종료합니다."
+            caption="현재 기기에서 로그아웃합니다."
             icon="logout"
             onPress={() => void handleLogout()}
           />
           <SettingsActionRow
             label="회원 탈퇴"
-            caption="계정을 삭제하고 모든 세션을 종료합니다."
+            caption="계정을 삭제하고 모든 기기에서 로그아웃합니다."
             icon="trash"
             onPress={() => void handleWithdraw()}
             tone="danger"
