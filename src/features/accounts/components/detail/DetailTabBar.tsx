@@ -8,7 +8,7 @@ export type DetailTab = "dashboard" | "dues" | "transactions" | "members" | "sta
 export const DETAIL_TAB_META: { key: DetailTab; label: string }[] = [
   { key: "dashboard", label: "홈" },
   { key: "dues", label: "회비" },
-  { key: "transactions", label: "거래" },
+  { key: "transactions", label: "거래내역" },
   { key: "members", label: "멤버" },
   { key: "statistics", label: "통계" },
   { key: "calendar", label: "일정" },
@@ -22,7 +22,7 @@ const MORE_TABS: DetailTab[] = ["statistics", "calendar", "board", "settings"]
 
 const TAB_LABELS: Record<DetailTab, string> = {
   dashboard: "홈",
-  transactions: "거래",
+  transactions: "거래내역",
   dues: "회비",
   members: "멤버",
   statistics: "통계",

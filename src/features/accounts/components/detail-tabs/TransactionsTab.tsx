@@ -242,18 +242,6 @@ export function TransactionsTab({
         contentContainerStyle={styles.sectionListContent}
         ListHeaderComponent={
           <View style={styles.headerStack}>
-            <View style={styles.addButtonRow}>
-              <Pressable
-                style={styles.addButton}
-                onPress={() => setFormOpen(true)}
-                accessibilityRole="button"
-                accessibilityLabel="거래 추가"
-              >
-                <Icon name="plus" size={16} color={uiColors.primary} />
-                <Text style={styles.addButtonText}>거래 추가</Text>
-              </Pressable>
-            </View>
-
             <SectionCard>
               {(() => {
                 const total = income + expense
@@ -285,20 +273,21 @@ export function TransactionsTab({
               })()}
             </SectionCard>
 
-            <SectionCard>
+            <View style={styles.filterContainer}>
               <View style={styles.filterHeaderRow}>
-                <SectionHeader title="거래 필터" />
                 <Pressable
                   style={styles.filterToggle}
                   onPress={() => setFiltersOpen((prev) => !prev)}
                   accessibilityRole="button"
                   accessibilityLabel={filtersOpen ? "거래 필터 닫기" : "거래 필터 열기"}
                 >
-                  <Icon name="filter" size={16} color={uiColors.textStrong} />
-                  <Text style={styles.filterToggleText}>{filtersOpen ? "접기" : "필터"}</Text>
+                  <Icon name="filter" size={16} color={hasActiveFilter ? uiColors.primary : uiColors.textStrong} />
+                  <Text style={[styles.filterToggleText, hasActiveFilter && styles.filterToggleTextActive]}>
+                    {filtersOpen ? "필터 닫기" : "목록 필터"}
+                  </Text>
                 </Pressable>
               </View>
-              {filtersOpen ? (
+              {filtersOpen && (
                 <View style={styles.filterPanel}>
                   <InputField
                     value={searchQuery}
@@ -333,15 +322,14 @@ export function TransactionsTab({
                     ))}
                   </View>
                 </View>
-              ) : (
-                <Text style={styles.filterSummary}>필터를 열어 검색, 유형, 카테고리를 빠르게 좁혀볼 수 있습니다.</Text>
               )}
-              {hasActiveFilter ? (
+              {hasActiveFilter && (
                 <Text style={styles.activeFilterSummary}>
-                  활성 필터 · {query ? "검색 적용" : "검색 없음"} · {filter === "all" ? "전체" : filter === "income" ? "입금" : "출금"} · {categoryFilter === "all" ? "카테고리 전체" : categoryFilter} · {sortOrder === "latest" ? "최신순" : "오래된순"}
+                  {query ? `"${query}" 검색됨 · ` : ""}
+                  {filter === "all" ? "모든 거래" : filter === "income" ? "입금만" : "출금만"} · {categoryFilter === "all" ? "모든 카테고리" : categoryFilter} · {sortOrder === "latest" ? "최신순" : "오래된순"}
                 </Text>
-              ) : null}
-            </SectionCard>
+              )}
+            </View>
           </View>
         }
         renderSectionHeader={({ section }) => (
@@ -662,43 +650,42 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     marginTop: 10,
   },
+  filterContainer: {
+    paddingHorizontal: 4,
+    paddingTop: 8,
+    paddingBottom: 16,
+    gap: 12,
+  },
   filterHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
+    justifyContent: "flex-end",
   },
   filterToggle: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderColor: uiColors.border,
-    backgroundColor: uiColors.surfaceMuted,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: 4,
+    backgroundColor: "transparent",
+    paddingVertical: 6,
+    paddingHorizontal: 8,
   },
   filterToggleText: {
     color: uiColors.textStrong,
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  filterToggleTextActive: {
+    color: uiColors.primary,
   },
   filterPanel: {
     gap: 4,
-    marginTop: 10,
-  },
-  filterSummary: {
-    marginTop: 10,
-    color: uiColors.textMuted,
-    fontSize: 12,
-    lineHeight: 17,
   },
   activeFilterSummary: {
-    marginTop: 8,
     color: uiColors.textSoft,
     fontSize: 12,
     fontWeight: "600",
+    textAlign: "right",
+    paddingRight: 8,
   },
   subtleText: {
     color: uiColors.textMuted,
@@ -790,26 +777,6 @@ const styles = StyleSheet.create({
   dateSectionText: {
     color: uiColors.textMuted,
     fontSize: 12,
-    fontWeight: "700",
-  },
-  addButtonRow: {
-    marginBottom: 4,
-  },
-  addButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderColor: uiColors.primaryBorder,
-    backgroundColor: uiColors.primarySoft,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    justifyContent: "center",
-  },
-  addButtonText: {
-    color: uiColors.primary,
-    fontSize: 15,
     fontWeight: "700",
   },
   modalContainer: {

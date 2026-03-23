@@ -22,7 +22,6 @@ export function MembersTab({ account }: { account: GroupAccount }) {
   const { currentUser } = useAppAuth()
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
-  const [editingId, setEditingId] = useState<string | null>(null)
   const [nameError, setNameError] = useState<string | undefined>(undefined)
   const [phoneError, setPhoneError] = useState<string | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState("")
@@ -37,7 +36,6 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     if (account.duesRecords.length === 0) return "데이터 없음"
     return `${Math.round(account.members.reduce((sum, member) => sum + getMemberPaymentRate(account.duesRecords, member.id), 0) / account.members.length)}%`
   }, [account.members, account.duesRecords])
-  const editingMember = useMemo(() => account.members.find((member) => member.id === editingId) ?? null, [account.members, editingId])
   const currentManager = useMemo(() => account.members.find((member) => member.role === "총무") ?? null, [account.members])
   const currentUserMember = useMemo(
     () =>
@@ -86,7 +84,6 @@ export function MembersTab({ account }: { account: GroupAccount }) {
   }, [account.duesRecords, account.members, roleFilter, searchQuery, sortBy])
 
   function resetForm() {
-    setEditingId(null)
     setName("")
     setPhone("")
     setNameError(undefined)
@@ -123,29 +120,12 @@ export function MembersTab({ account }: { account: GroupAccount }) {
 
     setSubmitting(true)
     try {
-      if (editingId) {
-        await updateMember(account.id, editingId, payload)
-        showToast({ tone: "success", title: COPY.common.editDone, message: COPY.member.editDone })
-        resetForm()
-        return
-      }
-
       await createMember(account.id, payload)
       showToast({ tone: "success", title: COPY.common.addDone, message: COPY.member.addDone })
       handleCloseAddModal()
     } finally {
       setSubmitting(false)
     }
-  }
-
-  function handleEdit(memberId: string) {
-    const member = account.members.find((item) => item.id === memberId)
-    if (!member) return
-    setEditingId(member.id)
-    setName(member.name)
-    setPhone(member.phone)
-    setNameError(undefined)
-    setPhoneError(undefined)
   }
 
   async function handleDelegateManager(memberId: string) {
@@ -183,9 +163,6 @@ export function MembersTab({ account }: { account: GroupAccount }) {
     })
     if (!confirmed) return
     await deleteMember(account.id, memberId)
-    if (editingId === memberId) {
-      resetForm()
-    }
     showToast({ tone: "success", title: COPY.common.deleteDone, message: COPY.member.deleteDone })
   }
 
@@ -216,68 +193,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
         </SectionCard> */}
       {/* </View> */}
       {/* 검색/정렬 영역 : 미사용 */}
-      {/* <SectionCard>
-        <SectionHeader title="멤버 검색/정렬" />
-        <View style={styles.formStack}>
-          <InputField
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            label="검색"
-            placeholder="이름 또는 연락처"
-            accessibilityLabel="멤버 검색"
-          />
-          <View style={styles.filterRow}>
-            <ActionChip label="전체" active={roleFilter === "all"} onPress={() => setRoleFilter("all")} />
-            <ActionChip label="총무" active={roleFilter === "총무"} onPress={() => setRoleFilter("총무")} />
-            <ActionChip label="멤버" active={roleFilter === "멤버"} onPress={() => setRoleFilter("멤버")} />
-          </View>
-          <View style={styles.filterRow}>
-            <ActionChip label="납부율순" active={sortBy === "payment-rate"} onPress={() => setSortBy("payment-rate")} />
-            <ActionChip label="이름순" active={sortBy === "name"} onPress={() => setSortBy("name")} />
-          </View>
-          <Button label={COPY.member.addButtonLabel} onPress={handleOpenAddModal} style={styles.addButton} />
-        </View>
-      </SectionCard> */}
-
-      {editingMember ? (
-        <SectionCard>
-          <Text style={styles.sectionTitle}>{COPY.member.editTitle}</Text>
-          <View style={styles.formStack}>
-            <InputField
-              value={name}
-              onChangeText={(value) => {
-                setName(value)
-                if (nameError) setNameError(undefined)
-              }}
-              label="이름"
-              placeholder="멤버 이름"
-              editable={!submitting}
-              error={nameError}
-            />
-            <InputField
-              value={phone}
-              onChangeText={(value) => {
-                setPhone(value)
-                if (phoneError) setPhoneError(undefined)
-              }}
-              label="연락처"
-              placeholder="010-0000-0000"
-              editable={!submitting}
-              error={phoneError}
-            />
-            <View style={styles.actionRow}>
-              <Button label={COPY.common.cancel} variant="ghost" onPress={resetForm} style={styles.actionButton} disabled={submitting} />
-              <Button
-                label={submitting ? COPY.common.processing : COPY.member.editButtonLabel}
-                variant="primary"
-                onPress={() => void handleSubmit()}
-                style={styles.actionButton}
-                disabled={submitting}
-              />
-            </View>
-          </View>
-        </SectionCard>
-      ) : null}
+      {/* ... (생략된 주석들) ... */}
 
       {visibleMembers.length > 0 ? (
         <SectionCard>
@@ -286,13 +202,11 @@ export function MembersTab({ account }: { account: GroupAccount }) {
             {visibleMembers.map((member) => {
               const rate = getMemberPaymentRate(account.duesRecords, member.id)
               return (
-                // TODO: progressBar에 가려지는 문제 수정 필요
                 <MemberRow
                   key={member.id}
                   member={member}
                   rate={rate}
                   duesRecords={account.duesRecords}
-                  onEdit={() => handleEdit(member.id)}
                   onDelegateOwner={
                     canDelegateManager && member.role !== "총무" && member.id !== currentUserMember?.id
                       ? () => {

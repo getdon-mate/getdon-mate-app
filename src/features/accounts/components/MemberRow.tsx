@@ -70,7 +70,7 @@ export const MemberRow = memo(function MemberRow({
 
     if (member.role !== "총무" && onDelete) {
       items.push({
-        label: "삭제",
+        label: "멤버삭제",
         icon: "trash",
         tone: "danger",
         onPress: onDelete,
@@ -81,8 +81,8 @@ export const MemberRow = memo(function MemberRow({
   }, [delegatePending, member.role, onDelegateOwner, onDelete, onEdit, reminderActions])
 
   return (
-    <View style={styles.card}>
-      <View style={styles.rowBetween}>
+    <View style={[styles.card, menuOpen && styles.cardActive]}>
+      <View style={[styles.rowBetween, menuOpen && styles.rowActive]}>
         <View style={styles.memberIdentity}>
           <Text style={[styles.avatar, { backgroundColor: member.color }]}>{member.initials}</Text>
           <View style={styles.memberIdentityText}>
@@ -158,12 +158,21 @@ const styles = StyleSheet.create({
     gap: 8,
     backgroundColor: uiColors.surfaceMuted,
     overflow: "visible",
+    position: "relative",
+    zIndex: 1,
+  },
+  cardActive: {
+    zIndex: 100,
   },
   rowBetween: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 8,
+    position: "relative",
+  },
+  rowActive: {
+    zIndex: 10,
   },
   memberIdentity: {
     flexDirection: "row",

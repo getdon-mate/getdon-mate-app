@@ -27,21 +27,13 @@ export function DashboardTab({
     <View style={styles.stack}>
       <SectionCard>
         <SectionHeader title="회비 현황" actionLabel="자세히" onAction={onOpenDues} />
-        <View style={styles.summaryPillRow}>
-          <View style={styles.summaryPill}>
-            <Text style={styles.summaryPillLabel}>완납</Text>
-            <Text style={styles.summaryPillValue}>{paid}명</Text>
-          </View>
-          <View style={styles.summaryPill}>
-            <Text style={styles.summaryPillLabel}>미납</Text>
-            <Text style={styles.summaryPillValue}>{unpaidMembers.length}명</Text>
-          </View>
-          <View style={styles.summaryPill}>
-            <Text style={styles.summaryPillLabel}>진행률</Text>
-            <Text style={styles.summaryPillValue}>{progress}%</Text>
-          </View>
+        
+        <View style={styles.progressHeader}>
+          <Text style={styles.metricText}>
+            완납 {paid}명 <Text style={styles.subtleText}>/ {payableMembers}명</Text>
+          </Text>
+          <Text style={styles.progressText}>{progress}%</Text>
         </View>
-        <Text style={styles.metricText}>{paid}/{payableMembers}명 완납</Text>
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: `${progress}%` }]} />
         </View>
@@ -103,29 +95,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
   },
-  summaryPillRow: {
+  progressHeader: {
     flexDirection: "row",
-    gap: 10,
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    marginBottom: 4,
+    marginTop: 8,
   },
-  summaryPill: {
-    flex: 1,
-    borderRadius: uiRadius.md,
-    paddingHorizontal: uiSpacing.md,
-    paddingVertical: uiSpacing.md,
-    backgroundColor: uiColors.backgroundScreen,
-    borderWidth: 1,
-    borderColor: uiColors.border,
-    gap: 4,
-  },
-  summaryPillLabel: {
-    color: uiColors.textMuted,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  summaryPillValue: {
-    color: uiColors.textStrong,
+  progressText: {
+    color: uiColors.primary,
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   progressTrack: {
     height: 10,

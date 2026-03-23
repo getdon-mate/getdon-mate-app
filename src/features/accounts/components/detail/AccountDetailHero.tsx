@@ -83,11 +83,11 @@ export function AccountDetailHero({
         ) : null}
       </Pressable>
       <View style={[styles.heroActionRow, compact && styles.heroActionRowCompact]}>
-        <Pressable style={[styles.heroGhostButton, compact && styles.heroButtonCompact]} onPress={() => onPressAction("income")}>
-          <Text style={styles.heroGhostButtonText}>채우기</Text>
+        <Pressable style={[styles.incomeButton, compact && styles.heroButtonCompact]} onPress={() => onPressAction("income")}>
+          <Text style={styles.incomeButtonText}>채우기</Text>
         </Pressable>
-        <Pressable style={[styles.heroPrimaryButton, compact && styles.heroButtonCompact]} onPress={() => onPressAction("expense")}>
-          <Text style={styles.heroPrimaryButtonText}>보내기</Text>
+        <Pressable style={[styles.expenseButton, compact && styles.heroButtonCompact]} onPress={() => onPressAction("expense")}>
+          <Text style={styles.expenseButtonText}>보내기</Text>
         </Pressable>
       </View>
     </View>
@@ -198,6 +198,36 @@ const styles = StyleSheet.create({
   heroQuickActionsCompact: {
     gap: 6,
   },
+  incomeButton: {
+    flexGrow: 1,
+    minWidth: 120,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: uiColors.primaryBorder,
+    backgroundColor: uiColors.primarySoft,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  incomeButtonText: {
+    color: uiColors.primary,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  expenseButton: {
+    flexGrow: 1,
+    minWidth: 120,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: uiColors.dangerBorder,
+    backgroundColor: uiColors.dangerSoft,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  expenseButtonText: {
+    color: uiColors.danger,
+    fontSize: 14,
+    fontWeight: "700",
+  },
   iconButton: {
     width: 36,
     height: 36,
@@ -213,37 +243,7 @@ const styles = StyleSheet.create({
     height: 34,
     borderRadius: 17,
   },
-  heroGhostButton: {
-    flexGrow: 1,
-    minWidth: 120,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: uiColors.primaryBorder,
-    backgroundColor: uiColors.primarySoft,
-    paddingVertical: 10,
-    alignItems: "center",
-  },
   heroButtonCompact: {
     paddingVertical: 9,
-  },
-  heroGhostButtonText: {
-    color: uiColors.primary,
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  heroPrimaryButton: {
-    flexGrow: 1,
-    minWidth: 120,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: uiColors.border,
-    backgroundColor: uiColors.surface,
-    paddingVertical: 10,
-    alignItems: "center",
-  },
-  heroPrimaryButtonText: {
-    color: uiColors.textStrong,
-    fontSize: 14,
-    fontWeight: "700",
   },
 })

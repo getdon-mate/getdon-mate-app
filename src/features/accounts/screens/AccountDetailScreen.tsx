@@ -92,6 +92,11 @@ export function AccountDetailScreen() {
     navigation.navigate(ROUTES.AccountList)
   }
 
+  function handleTabChange(nextTab: DetailTab) {
+    setTransactionComposerSignal(0)
+    setTab(nextTab)
+  }
+
   function openTransactionComposer(type: TransactionType) {
     setTransactionComposerType(type)
     setTransactionComposerSignal((prev) => prev + 1)
@@ -197,8 +202,8 @@ export function AccountDetailScreen() {
             ) : tab === "dashboard" ? (
               <DashboardTab
                 account={account}
-                onOpenDues={() => setTab("dues")}
-                onOpenTransactions={() => setTab("transactions")}
+                onOpenDues={() => handleTabChange("dues")}
+                onOpenTransactions={() => handleTabChange("transactions")}
               />
             ) : null}
             {tab === "dues" ? (
@@ -211,7 +216,7 @@ export function AccountDetailScreen() {
               isBootstrapping ? <LoadingStateCard lines={4} /> : <StatisticsTab account={account} />
             ) : null}
             {tab === "calendar" ? (
-              isBootstrapping ? <LoadingStateCard lines={4} /> : <CalendarTab account={account} onOpenQuickAction={setTab} />
+              isBootstrapping ? <LoadingStateCard lines={4} /> : <CalendarTab account={account} onOpenQuickAction={handleTabChange} />
             ) : null}
             {tab === "board" ? (
               isBootstrapping ? <LoadingStateCard lines={4} /> : <BoardTab account={account} />
@@ -223,7 +228,7 @@ export function AccountDetailScreen() {
         </ScrollView>
       )}
 
-      <DetailTabBar activeTab={tab} onChangeTab={setTab} />
+      <DetailTabBar activeTab={tab} onChangeTab={handleTabChange} />
     </View>
   )
 }

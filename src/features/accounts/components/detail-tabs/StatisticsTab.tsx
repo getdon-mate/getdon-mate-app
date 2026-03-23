@@ -15,9 +15,9 @@ function getTrendRowLabel(month: string) {
 
 const breakdownPalette = [
   { track: uiColors.primarySoft, fill: uiColors.primary, text: uiColors.primary },
-  { track: uiColors.warningSoft, fill: uiColors.warning, text: uiColors.warning },
-  { track: uiColors.accentSoft, fill: uiColors.textStrong, text: uiColors.textStrong },
-  { track: uiColors.successSoft, fill: uiColors.success, text: uiColors.success },
+  { track: uiColors.accentSoft, fill: uiColors.accent, text: uiColors.accent },
+  { track: "#e4ebff", fill: "#7a8aff", text: "#7a8aff" },
+  { track: "#f0e6ff", fill: "#9b7df0", text: "#9b7df0" },
 ] as const
 
 export function StatisticsTab({ account }: { account: GroupAccount }) {
