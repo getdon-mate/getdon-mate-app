@@ -157,6 +157,7 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 8,
     backgroundColor: uiColors.surfaceMuted,
+    overflow: "visible",
   },
   rowBetween: {
     flexDirection: "row",
@@ -203,6 +204,7 @@ const styles = StyleSheet.create({
   },
   menuWrap: {
     position: "relative",
+    zIndex: 9999,
   },
   menuButton: {
     width: 34,
@@ -228,7 +230,12 @@ const styles = StyleSheet.create({
     borderColor: uiColors.border,
     backgroundColor: uiColors.surface,
     overflow: "hidden",
-    zIndex: 10,
+    zIndex: 9999,
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
   },
   menuItem: {
     flexDirection: "row",

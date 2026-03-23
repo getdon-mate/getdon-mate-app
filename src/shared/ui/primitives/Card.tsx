@@ -27,5 +27,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 14,
     elevation: 2,
+    overflow: "visible",
   },
 })

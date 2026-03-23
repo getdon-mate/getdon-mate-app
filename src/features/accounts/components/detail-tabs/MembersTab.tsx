@@ -204,18 +204,19 @@ export function MembersTab({ account }: { account: GroupAccount }) {
 
   return (
     <View style={styles.stack}>
-      <View style={styles.summaryRow}>
-        <SectionCard>
+      {/* 요약 정보 영역 : 미사용 */}
+      {/* <View style={styles.summaryRow}> */}
+        {/* <SectionCard>
           <Text style={styles.summaryLabel}>총 멤버</Text>
           <Text style={styles.metricText}>{account.members.length}명</Text>
         </SectionCard>
         <SectionCard>
           <Text style={styles.summaryLabel}>평균 납부율</Text>
           <Text style={styles.metricText}>{avgRate}</Text>
-        </SectionCard>
-      </View>
-
-      <SectionCard>
+        </SectionCard> */}
+      {/* </View> */}
+      {/* 검색/정렬 영역 : 미사용 */}
+      {/* <SectionCard>
         <SectionHeader title="멤버 검색/정렬" />
         <View style={styles.formStack}>
           <InputField
@@ -236,7 +237,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
           </View>
           <Button label={COPY.member.addButtonLabel} onPress={handleOpenAddModal} style={styles.addButton} />
         </View>
-      </SectionCard>
+      </SectionCard> */}
 
       {editingMember ? (
         <SectionCard>
@@ -285,6 +286,7 @@ export function MembersTab({ account }: { account: GroupAccount }) {
             {visibleMembers.map((member) => {
               const rate = getMemberPaymentRate(account.duesRecords, member.id)
               return (
+                // TODO: progressBar에 가려지는 문제 수정 필요
                 <MemberRow
                   key={member.id}
                   member={member}
@@ -411,6 +413,7 @@ const styles = StyleSheet.create({
   stackCompact: {
     gap: 10,
     marginTop: 10,
+    overflow: "visible",
   },
   formStack: {
     gap: 8,
